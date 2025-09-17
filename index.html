@@ -1,188 +1,122 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Interactive Flipbook</title>
   <style>
-    :root{--bg:#f2f2f6;--paper:#fff;--accent:#2b6cb0}
-    html,body{height:100%;margin:0;font-family:system-ui,-apple-system,Segoe UI,Roboto,'Helvetica Neue',Arial}
-    body{background:linear-gradient(180deg,var(--bg),#e9eef7);display:flex;align-items:center;justify-content:center;padding:30px}
-    .viewer{width:min(1100px,96vw);height:min(720px,82vh);position:relative;perspective:2000px}
+    body {
+      margin: 0;
+      font-family: sans-serif;
+      background: #f4f4f4;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
 
-    .book{width:100%;height:100%;position:relative;transform-style:preserve-3d}
-    .page{position:absolute;top:0;left:50%;width:50%;height:100%;transform-origin:left center;transition:transform 700ms cubic-bezier(.2,.9,.2,1),box-shadow 400ms;box-shadow:0 10px 25px rgba(10,10,25,0.06);background:var(--paper);overflow:hidden;display:flex;align-items:center;justify-content:center;border-left:1px solid rgba(0,0,0,0.04)}
-    .page.back{left:0;transform-origin:right center}
-    .page img{max-width:100%;max-height:100%;object-fit:contain;display:block}
-    .page.flipped{transform:rotateY(-180deg);z-index:1}
-    .page.back.flipped{transform:rotateY(0deg);z-index:2}
-    .page::after{content:'';position:absolute;inset:0;pointer-events:none;box-shadow:inset -10px 0 60px rgba(20,20,40,0.06)}
+    #flipbook {
+      width: 100%;
+      max-width: 1200px;   /* desktop upper limit */
+      height: auto;
+      margin: auto;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
 
-    .controls{position:absolute;right:12px;top:12px;display:flex;gap:8px}
-    .btn{background:#fff;border-radius:8px;padding:8px 10px;box-shadow:0 6px 18px rgba(12,12,40,0.06);cursor:pointer;border:1px solid rgba(0,0,0,0.05);font-weight:600}
-    .pager{position:absolute;left:12px;top:12px;background:rgba(255,255,255,0.9);padding:8px 10px;border-radius:8px;border:1px solid rgba(0,0,0,0.04)}
+    .flipbook-page img {
+      width: 100%;
+      height: auto;
+      max-width: 100%;
+      object-fit: contain;
+      display: block;
+    }
 
-    .thumbs{position:absolute;bottom:12px;left:50%;transform:translateX(-50%);display:flex;gap:8px;padding:6px;background:rgba(255,255,255,0.9);border-radius:10px;max-width:90%;overflow:auto}
-    .thumbs img{height:60px;cursor:pointer;border-radius:6px;border:2px solid transparent}
-    .thumbs img.active{border-color:var(--accent)}
+    .controls {
+      margin: 1rem;
+      display: flex;
+      justify-content: center;
+      gap: 1rem;
+      flex-wrap: wrap;
+    }
 
-    @media (max-width:720px){
-      .viewer{height:70vh}
-      .thumbs img{height:44px}
+    button {
+      padding: 0.5rem 1rem;
+      border: none;
+      border-radius: 8px;
+      background: #007acc;
+      color: white;
+      font-size: 1rem;
+      cursor: pointer;
+      transition: background 0.3s;
+    }
+
+    button:hover {
+      background: #005fa3;
+    }
+
+    @media (max-width: 768px) {
+      #flipbook {
+        max-width: 100%;
+        padding: 0 5px;
+      }
+
+      .controls {
+        gap: 0.5rem;
+      }
     }
   </style>
 </head>
 <body>
-  <div class="viewer" id="viewer" aria-label="Flipbook viewer">
-    <div class="book" id="book"></div>
-
-    <div class="controls">
-      <button class="btn" id="prevBtn">◀ Prev</button>
-      <button class="btn" id="nextBtn">Next ▶</button>
-      <button class="btn" id="zoomBtn">Zoom</button>
-    </div>
-
-    <div class="pager" id="pager">Page <span id="cur">1</span> / <span id="tot">1</span></div>
-
-    <div class="thumbs" id="thumbs" aria-hidden="false"></div>
+  <div class="controls">
+    <button onclick="prevPage()">⬅ Prev</button>
+    <button onclick="nextPage()">Next ➡</button>
   </div>
+
+  <div id="flipbook"></div>
 
   <script>
     // ======== USER SETTINGS ========
-    // Auto-generate image filenames from the images folder: Book_PHYS101_0.png ... Book_PHYS101_293.png
     const totalPages = 294; // 0 through 293
     const images = Array.from({length: totalPages}, (_, i) => `images/Book_PHYS101_${i}.png`);
     // ===============================
 
-    const book = document.getElementById('book');
-    const thumbs = document.getElementById('thumbs');
-    const curSpan = document.getElementById('cur');
-    const totSpan = document.getElementById('tot');
-    const prevBtn = document.getElementById('prevBtn');
-    const nextBtn = document.getElementById('nextBtn');
-    const zoomBtn = document.getElementById('zoomBtn');
+    let currentPage = 0;
+    const flipbook = document.getElementById('flipbook');
 
-    let pageIndex = 0;
-    const pageCount = images.length;
-    totSpan.textContent = pageCount;
-
-    function makePage(className){
-      const p = document.createElement('div');
-      p.className = 'page ' + className;
+    function renderPage() {
+      flipbook.innerHTML = '';
       const img = document.createElement('img');
-      img.alt = 'Flipbook page image';
-      p.appendChild(img);
-      return p;
+      img.src = images[currentPage];
+      img.alt = `Page ${currentPage + 1}`;
+      const wrapper = document.createElement('div');
+      wrapper.className = 'flipbook-page';
+      wrapper.appendChild(img);
+      flipbook.appendChild(wrapper);
     }
 
-    const right = makePage('front');
-    const left = makePage('back');
-
-    right.style.right = '0';
-    right.style.left = '50%';
-    left.style.left = '0';
-    left.style.right = '50%';
-
-    book.appendChild(left);
-    book.appendChild(right);
-
-    images.forEach((src, i)=>{
-      const t = document.createElement('img');
-      t.src = src;
-      t.title = 'Go to page ' + (i+1);
-      t.loading = 'lazy';
-      t.addEventListener('click', ()=>{gotoPage(i)});
-      thumbs.appendChild(t);
-    });
-
-    function updateThumbActive(){
-      const all = thumbs.querySelectorAll('img');
-      all.forEach((img,i)=>img.classList.toggle('active', i===pageIndex));
-    }
-
-    function setSpread(leftIndex){
-      const leftImg = left.querySelector('img');
-      const rightImg = right.querySelector('img');
-
-      leftImg.src = images[leftIndex] || '';
-      rightImg.src = images[leftIndex+1] || '';
-
-      curSpan.textContent = Math.min(leftIndex+1, pageCount);
-      updateThumbActive();
-    }
-
-    function clampIndex(i){
-      if(i<0) return 0;
-      if(i>=pageCount) return pageCount-1;
-      return i;
-    }
-
-    let animating = false;
-    function flipForward(){
-      if(animating) return;
-      if(pageIndex+2 >= pageCount){
-        pageIndex = pageCount - (pageCount%2===0?2:1);
-        setSpread(pageIndex);
-        return;
+    function nextPage() {
+      if (currentPage < images.length - 1) {
+        currentPage++;
+        renderPage();
       }
-      animating = true;
-      right.classList.add('flipped');
-      setTimeout(()=>{
-        pageIndex += 2;
-        setSpread(pageIndex);
-        right.classList.remove('flipped');
-        animating = false;
-      }, 420);
     }
 
-    function flipBackward(){
-      if(animating) return;
-      if(pageIndex-2 < 0){
-        pageIndex = 0;
-        setSpread(pageIndex);
-        return;
+    function prevPage() {
+      if (currentPage > 0) {
+        currentPage--;
+        renderPage();
       }
-      animating = true;
-      left.classList.add('flipped');
-      setTimeout(()=>{
-        pageIndex -= 2;
-        setSpread(pageIndex);
-        left.classList.remove('flipped');
-        animating = false;
-      }, 420);
     }
 
-    prevBtn.addEventListener('click', flipBackward);
-    nextBtn.addEventListener('click', flipForward);
-
-    window.addEventListener('keydown', (e)=>{
-      if(e.key==='ArrowRight') flipForward();
-      if(e.key==='ArrowLeft') flipBackward();
+    // Keyboard navigation
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'ArrowRight') nextPage();
+      if (e.key === 'ArrowLeft') prevPage();
     });
 
-    let sx=null;
-    const viewer = document.getElementById('viewer');
-    viewer.addEventListener('touchstart', e=>{sx=e.changedTouches[0].clientX});
-    viewer.addEventListener('touchend', e=>{
-      const ex = e.changedTouches[0].clientX;
-      if(!sx) return; const dx=ex-sx; if(Math.abs(dx)>40){ if(dx<0) flipForward(); else flipBackward(); } sx=null;
-    });
-
-    function gotoPage(i){
-      i = clampIndex(i);
-      if(i%2===1) i = i-1;
-      pageIndex = clampIndex(i);
-      setSpread(pageIndex);
-    }
-
-    let zoomed = false;
-    zoomBtn.addEventListener('click', ()=>{
-      zoomed = !zoomed;
-      if(zoomed){ book.style.transform = 'scale(1.15)'; zoomBtn.textContent='Unzoom'}
-      else { book.style.transform = 'scale(1)'; zoomBtn.textContent='Zoom'}
-    });
-
-    gotoPage(0);
+    // Initial render
+    renderPage();
   </script>
 </body>
 </html>
