@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Interactive Flipbook</title>
+  <title>PHYS101 Flipbook</title>
   <style>
     body {
       margin: 0;
@@ -16,12 +16,12 @@
 
     #flipbook {
       width: 100%;
-      max-width: 1200px;   /* desktop upper limit */
-      height: auto;
+      max-width: 1200px;
       margin: auto;
       display: flex;
       flex-direction: column;
       align-items: center;
+      background: #fff;
     }
 
     .flipbook-page img {
@@ -32,11 +32,17 @@
       display: block;
     }
 
+    #pageCounter {
+      margin: 0.5rem;
+      font-size: 1rem;
+      color: #333;
+    }
+
     .controls {
-      margin: 1rem;
+      margin: 0.5rem;
       display: flex;
       justify-content: center;
-      gap: 1rem;
+      gap: 0.5rem;
       flex-wrap: wrap;
     }
 
@@ -55,44 +61,107 @@
       background: #005fa3;
     }
 
-    @media (max-width: 768px) {
-      #flipbook {
-        max-width: 100%;
-        padding: 0 5px;
-      }
+    #pageInput {
+      width: 70px;
+      padding: 0.3rem;
+      font-size: 1rem;
+      text-align: center;
+    }
 
-      .controls {
-        gap: 0.5rem;
+    .thumbbar {
+      display: flex;
+      overflow-x: auto;
+      padding: 0.5rem;
+      background: #fff;
+      border-top: 1px solid #ccc;
+      border-bottom: 1px solid #ccc;
+      gap: 4px;
+      width: 100%;
+      max-width: 1200px;
+    }
+
+    .thumbbar img {
+      height: 80px;
+      cursor: pointer;
+      border: 2px solid transparent;
+      transition: border 0.2s;
+    }
+
+    .thumbbar img.active {
+      border: 2px solid #007acc;
+    }
+
+    @media (max-width: 768px) {
+      .thumbbar img {
+        height: 60px;
       }
     }
   </style>
 </head>
 <body>
+
   <div class="controls">
+    <button onclick="firstPage()">⏮ First</button>
     <button onclick="prevPage()">⬅ Prev</button>
     <button onclick="nextPage()">Next ➡</button>
+    <button onclick="lastPage()">⏭ Last</button>
+    <input id="pageInput" type="number" min="1" max="294" placeholder="Page #" />
+    <button onclick="jumpToPage()">Go</button>
+    <button onclick="toggleFullScreen()">⛶ Full Screen</button>
+    <button onclick="shareBook()">🔗 Share</button>
   </div>
 
-  <div id="flipbook"></div>
+  <div id="thumbbar" class="thumbbar"></div>
+
+  <div id="flipbook">
+    <!-- Main page image -->
+  </div>
+
+  <div id="pageCounter"></div>
 
   <script>
-    // ======== USER SETTINGS ========
-    const totalPages = 294; // 0 through 293
-    const images = Array.from({length: totalPages}, (_, i) => `images/Book_PHYS101_${i}.png`);
-    // ===============================
+    // ===== USER SETTINGS =====
+    const totalPages = 294;
+    const images = Array.from({ length: totalPages }, (_, i) => `images/Book_PHYS101_${i}.png`);
+    const thumbs = Array.from({ length: totalPages }, (_, i) => `thumbs/Book_PHYS101_${i}.jpg`);
+    // =========================
 
     let currentPage = 0;
-    const flipbook = document.getElementById('flipbook');
+    const flipbook = document.getElementById("flipbook");
+    const thumbbar = document.getElementById("thumbbar");
+    const counter = document.getElementById("pageCounter");
 
     function renderPage() {
-      flipbook.innerHTML = '';
-      const img = document.createElement('img');
+      flipbook.innerHTML = "";
+      const img = document.createElement("img");
       img.src = images[currentPage];
       img.alt = `Page ${currentPage + 1}`;
-      const wrapper = document.createElement('div');
-      wrapper.className = 'flipbook-page';
+      const wrapper = document.createElement("div");
+      wrapper.className = "flipbook-page";
       wrapper.appendChild(img);
       flipbook.appendChild(wrapper);
+
+      counter.textContent = `Page ${currentPage + 1} / ${totalPages}`;
+      highlightThumb();
+    }
+
+    function renderThumbs() {
+      thumbs.forEach((src, i) => {
+        const t = document.createElement("img");
+        t.src = src;
+        t.alt = `Thumb ${i + 1}`;
+        t.addEventListener("click", () => {
+          currentPage = i;
+          renderPage();
+        });
+        thumbbar.appendChild(t);
+      });
+    }
+
+    function highlightThumb() {
+      document.querySelectorAll(".thumbbar img").forEach((img, i) => {
+        img.classList.toggle("active", i === currentPage);
+      });
     }
 
     function nextPage() {
@@ -101,22 +170,56 @@
         renderPage();
       }
     }
-
     function prevPage() {
       if (currentPage > 0) {
         currentPage--;
         renderPage();
       }
     }
+    function firstPage() {
+      currentPage = 0;
+      renderPage();
+    }
+    function lastPage() {
+      currentPage = images.length - 1;
+      renderPage();
+    }
+    function jumpToPage() {
+      const val = parseInt(document.getElementById("pageInput").value, 10);
+      if (!isNaN(val) && val >= 1 && val <= totalPages) {
+        currentPage = val - 1;
+        renderPage();
+      }
+    }
+    function toggleFullScreen() {
+      if (!document.fullscreenElement) {
+        document.documentElement.requestFullscreen();
+      } else {
+        document.exitFullscreen();
+      }
+    }
+    function shareBook() {
+      if (navigator.share) {
+        navigator.share({
+          title: "PHYS101 Flipbook",
+          url: window.location.href
+        });
+      } else {
+        navigator.clipboard.writeText(window.location.href);
+        alert("Link copied to clipboard!");
+      }
+    }
 
     // Keyboard navigation
-    document.addEventListener('keydown', (e) => {
-      if (e.key === 'ArrowRight') nextPage();
-      if (e.key === 'ArrowLeft') prevPage();
+    document.addEventListener("keydown", e => {
+      if (e.key === "ArrowRight") nextPage();
+      if (e.key === "ArrowLeft") prevPage();
     });
 
-    // Initial render
+    // Init
+    renderThumbs();
     renderPage();
   </script>
+
 </body>
 </html>
