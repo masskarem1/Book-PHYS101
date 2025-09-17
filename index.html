@@ -193,6 +193,28 @@
 
     <!-- PageFlip.js Library -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/page-flip/2.0.7/page-flip.browser.min.js"></script>
+    <script>
+        // Fallback loading for PageFlip library
+        window.addEventListener('load', function() {
+            if (typeof St === 'undefined') {
+                console.log('Loading PageFlip library fallback...');
+                const script = document.createElement('script');
+                script.src = 'https://unpkg.com/page-flip@2.0.7/dist/page-flip.browser.min.js';
+                script.onload = function() {
+                    console.log('PageFlip library loaded successfully');
+                    initializeBook();
+                };
+                script.onerror = function() {
+                    console.error('Failed to load PageFlip library');
+                    document.getElementById('book').innerHTML = 
+                        '<div class="error">Failed to load the page flip library. Please check your internet connection.</div>';
+                };
+                document.head.appendChild(script);
+            } else {
+                initializeBook();
+            }
+        });
+    </script>
     
     <script>
         let flipBook;
@@ -235,6 +257,13 @@
         // Initialize the flipbook
         async function initializeBook() {
             try {
+                // Check if PageFlip library is available
+                if (typeof St === 'undefined') {
+                    document.getElementById('book').innerHTML = 
+                        '<div class="error">PageFlip library not loaded. Please refresh the page.</div>';
+                    return;
+                }
+
                 // Detect total pages
                 totalPages = await detectPages();
                 
@@ -281,10 +310,12 @@
                 // Initial page update
                 document.getElementById('currentPage').textContent = '1';
 
+                console.log('📖 Flipbook initialized successfully with', totalPages, 'pages');
+
             } catch (error) {
                 console.error('Error initializing book:', error);
                 document.getElementById('book').innerHTML = 
-                    '<div class="error">Error loading book. Please check the console for details.</div>';
+                    '<div class="error">Error loading book: ' + error.message + '</div>';
             }
         }
 
@@ -325,8 +356,7 @@
             }
         });
 
-        // Initialize when page loads
-        window.addEventListener('load', initializeBook);
+        // Remove the duplicate event listener since we're handling it above
     </script>
 </body>
 </html>
