@@ -1,0 +1,332 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PHYS101 - Interactive Book</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Arial', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+            color: white;
+        }
+
+        .header h1 {
+            font-size: 2.5rem;
+            font-weight: bold;
+            margin-bottom: 10px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        }
+
+        .header p {
+            font-size: 1.2rem;
+            opacity: 0.9;
+        }
+
+        .book-container {
+            position: relative;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.3);
+            border-radius: 15px;
+            overflow: hidden;
+            background: white;
+            max-width: 90vw;
+            max-height: 80vh;
+        }
+
+        .flipbook {
+            width: 800px;
+            height: 600px;
+            max-width: 90vw;
+            max-height: 70vh;
+        }
+
+        .page {
+            background: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+        }
+
+        .page img {
+            max-width: 100%;
+            max-height: 100%;
+            object-fit: contain;
+            display: block;
+        }
+
+        .controls {
+            margin-top: 30px;
+            display: flex;
+            gap: 15px;
+            align-items: center;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+
+        .btn {
+            background: rgba(255,255,255,0.2);
+            border: 2px solid rgba(255,255,255,0.3);
+            color: white;
+            padding: 12px 24px;
+            border-radius: 25px;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            backdrop-filter: blur(10px);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .btn:hover {
+            background: rgba(255,255,255,0.3);
+            border-color: rgba(255,255,255,0.5);
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+        }
+
+        .btn:active {
+            transform: translateY(0);
+        }
+
+        .page-info {
+            color: white;
+            font-size: 18px;
+            font-weight: 600;
+            background: rgba(255,255,255,0.2);
+            padding: 10px 20px;
+            border-radius: 20px;
+            backdrop-filter: blur(10px);
+        }
+
+        .loading {
+            color: white;
+            font-size: 1.5rem;
+            text-align: center;
+            padding: 50px;
+        }
+
+        .error {
+            color: #ff6b6b;
+            background: rgba(255,255,255,0.1);
+            padding: 20px;
+            border-radius: 10px;
+            text-align: center;
+            backdrop-filter: blur(10px);
+        }
+
+        /* Responsive design */
+        @media (max-width: 768px) {
+            .header h1 {
+                font-size: 2rem;
+            }
+            
+            .flipbook {
+                width: 90vw;
+                height: 60vh;
+            }
+
+            .controls {
+                flex-direction: column;
+                gap: 10px;
+            }
+
+            .btn {
+                padding: 10px 20px;
+                font-size: 14px;
+            }
+        }
+
+        /* Page flip animations */
+        .stf__parent {
+            perspective: 2000px;
+        }
+
+        .stf__item {
+            transition: all 0.6s ease-in-out;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>PHYS101</h1>
+        <p>Interactive Physics Textbook</p>
+    </div>
+
+    <div class="book-container">
+        <div id="book" class="flipbook">
+            <div class="loading">Loading book pages...</div>
+        </div>
+    </div>
+
+    <div class="controls">
+        <button class="btn" onclick="flipBook.flipPrev()">◀ Previous</button>
+        <div class="page-info">
+            Page <span id="currentPage">1</span> of <span id="totalPages">-</span>
+        </div>
+        <button class="btn" onclick="flipBook.flipNext()">Next ▶</button>
+    </div>
+
+    <div class="controls">
+        <button class="btn" onclick="flipBook.flip(0)">First Page</button>
+        <button class="btn" onclick="jumpToPage()">Jump to Page</button>
+        <button class="btn" onclick="flipBook.flip(flipBook.getPageCount() - 1)">Last Page</button>
+    </div>
+
+    <!-- PageFlip.js Library -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/page-flip/2.0.7/page-flip.browser.min.js"></script>
+    
+    <script>
+        let flipBook;
+        let totalPages = 0;
+        
+        // Auto-detect number of pages - exact match for your files
+        async function detectPages() {
+            let pageCount = 0;
+            let consecutiveErrors = 0;
+            const maxConsecutiveErrors = 5;
+            
+            console.log('Starting page detection...');
+            
+            while (consecutiveErrors < maxConsecutiveErrors) {
+                const imagePath = `images/Book_PHYS101_${pageCount}.png`;
+                console.log(`Trying to load: ${imagePath}`);
+                
+                try {
+                    const response = await fetch(imagePath);
+                    console.log(`Response for ${imagePath}:`, response.status, response.ok);
+                    
+                    if (response.ok) {
+                        console.log(`✅ Found: ${imagePath}`);
+                        pageCount++;
+                        consecutiveErrors = 0;
+                    } else {
+                        console.log(`❌ Not found: ${imagePath} (Status: ${response.status})`);
+                        consecutiveErrors++;
+                    }
+                } catch (error) {
+                    console.log(`❌ Error loading ${imagePath}:`, error);
+                    consecutiveErrors++;
+                }
+            }
+            
+            console.log(`🎯 Total pages detected: ${pageCount}`);
+            return pageCount;
+        }
+
+        // Initialize the flipbook
+        async function initializeBook() {
+            try {
+                // Detect total pages
+                totalPages = await detectPages();
+                
+                if (totalPages === 0) {
+                    document.getElementById('book').innerHTML = 
+                        '<div class="error">No pages found! Make sure your images are in the "images" folder with names like "Book_PHYS101_0.png"</div>';
+                    return;
+                }
+
+                document.getElementById('totalPages').textContent = totalPages;
+
+                // Create flipbook
+                flipBook = new St.PageFlip(document.getElementById('book'), {
+                    width: 400, // Single page width
+                    height: 600,
+                    size: "stretch",
+                    minWidth: 315,
+                    maxWidth: 1000,
+                    minHeight: 400,
+                    maxHeight: 1350,
+                    maxShadowOpacity: 0.5,
+                    showCover: true,
+                    mobileScrollSupport: false
+                });
+
+                // Create pages
+                const pages = [];
+                for (let i = 0; i < totalPages; i++) {
+                    pages.push(`
+                        <div class="page">
+                            <img src="images/Book_PHYS101_${i}.png" alt="Page ${i + 1}" loading="lazy">
+                        </div>
+                    `);
+                }
+
+                // Load pages into flipbook
+                flipBook.loadFromHTML(pages);
+
+                // Update page counter on flip
+                flipBook.on('flip', (e) => {
+                    document.getElementById('currentPage').textContent = e.data + 1;
+                });
+
+                // Initial page update
+                document.getElementById('currentPage').textContent = '1';
+
+            } catch (error) {
+                console.error('Error initializing book:', error);
+                document.getElementById('book').innerHTML = 
+                    '<div class="error">Error loading book. Please check the console for details.</div>';
+            }
+        }
+
+        // Jump to specific page
+        function jumpToPage() {
+            const page = prompt(`Enter page number (1-${totalPages}):`);
+            if (page && !isNaN(page)) {
+                const pageNum = parseInt(page) - 1;
+                if (pageNum >= 0 && pageNum < totalPages) {
+                    flipBook.flip(pageNum);
+                } else {
+                    alert(`Please enter a number between 1 and ${totalPages}`);
+                }
+            }
+        }
+
+        // Keyboard navigation
+        document.addEventListener('keydown', (e) => {
+            if (!flipBook) return;
+            
+            switch(e.key) {
+                case 'ArrowLeft':
+                    e.preventDefault();
+                    flipBook.flipPrev();
+                    break;
+                case 'ArrowRight':
+                    e.preventDefault();
+                    flipBook.flipNext();
+                    break;
+                case 'Home':
+                    e.preventDefault();
+                    flipBook.flip(0);
+                    break;
+                case 'End':
+                    e.preventDefault();
+                    flipBook.flip(flipBook.getPageCount() - 1);
+                    break;
+            }
+        });
+
+        // Initialize when page loads
+        window.addEventListener('load', initializeBook);
+    </script>
+</body>
+</html>
