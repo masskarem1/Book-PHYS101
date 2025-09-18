@@ -1,8 +1,8 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>PHYS101 Flipbook</title>
   <style>
     body {
@@ -22,42 +22,38 @@
       flex-direction: column;
       align-items: center;
       background: #fff;
+      padding: 8px 0;
     }
 
+    /* === main image sizing (back to full width) === */
     .flipbook-page img {
       width: 100%;
       height: auto;
       max-width: 100%;
       object-fit: contain;
       display: block;
+      margin: 0 auto;
     }
 
-    #pageCounter {
-      margin: 0.5rem;
-      font-size: 1rem;
-      color: #333;
-      position: relative;
-    }
-
-    .controls {
+    /* === TOP TOOLBAR === */
+    .toolbar {
       margin: 0.5rem;
       display: flex;
       justify-content: center;
-      gap: 0.5rem;
+      gap: 0.6rem;
       flex-wrap: wrap;
     }
 
     button {
-      padding: 0.5rem 1rem;
+      padding: 0.45rem 0.9rem;
       border: none;
       border-radius: 8px;
       background: #007acc;
       color: white;
-      font-size: 1rem;
+      font-size: 0.95rem;
       cursor: pointer;
-      transition: background 0.3s;
+      transition: background 0.18s;
     }
-
     button:hover { background: #005fa3; }
 
     #pageInput {
@@ -67,63 +63,55 @@
       text-align: center;
     }
 
+    /* === THUMBNAILS === */
     .thumbbar {
       display: flex;
       overflow-x: auto;
-      padding: 0.5rem;
+      padding: 0.45rem;
       background: #fff;
       border-top: 1px solid #ccc;
       border-bottom: 1px solid #ccc;
-      gap: 4px;
+      gap: 6px;
       width: 100%;
       max-width: 1200px;
     }
-
     .thumbbar img {
       height: 80px;
       cursor: pointer;
       border: 2px solid transparent;
-      transition: border 0.2s;
+      transition: border 0.18s;
     }
-
     .thumbbar img.active { border: 2px solid #007acc; }
 
     @media (max-width: 768px) {
       .thumbbar img { height: 60px; }
     }
 
-    /* === Index menu styles === */
-    #indexMenu {
-      position: absolute;
-      bottom: 45px;
-      left: 20px;
-      background: white;
-      border: 1px solid #ccc;
-      border-radius: 6px;
-      box-shadow: 0 4px 12px rgba(0,0,0,0.2);
-      display: none;
-      flex-direction: column;
-      padding: 0.5rem;
-      min-width: 220px;
-      z-index: 1000;
-    }
-
-    #indexMenu button {
-      background: none;
-      border: none;
-      text-align: left;
-      padding: 0.3rem 0.5rem;
-      font-size: 0.95rem;
-      cursor: pointer;
+    /* === FOOTER === */
+    #footer {
       width: 100%;
+      max-width: 1200px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0.5rem 1rem;
+      box-sizing: border-box;
+      position: relative; /* anchor for menu */
+    }
+    #pageCounter {
+      font-size: 1rem;
+      color: #333;
+    }
+    .footer-center,
+    .footer-right {
+      display: flex;
+      align-items: center;
+      gap: 0.6rem;
     }
 
-    #indexMenu button:hover { background: #f0f0f0; }
-
-    #indexToggle {
-      position: absolute;
-      bottom: 10px;
-      left: 20px;
+    #indexToggle,
+    #fullBtn,
+    #shareBtn {
       padding: 0.4rem 0.8rem;
       font-size: 0.9rem;
       border: none;
@@ -132,149 +120,211 @@
       color: white;
       cursor: pointer;
     }
+
+    /* === INDEX MENU === */
+    #indexMenu {
+      position: absolute;
+      display: none;
+      flex-direction: column;
+      background: rgba(128,128,128,0.75); /* transparent grey */
+      border: 1px solid rgba(0,0,0,0.15);
+      border-radius: 6px;
+      box-shadow: 0 6px 18px rgba(0,0,0,0.2);
+      padding: 0.4rem;
+      min-width: 260px;
+      z-index: 1200;
+    }
+    #indexMenu button {
+      background: none;
+      border: none;
+      text-align: left;
+      padding: 0.35rem 0.5rem;
+      font-size: 0.95rem;
+      cursor: pointer;
+      width: 100%;
+      color: #000;
+    }
+    #indexMenu button:hover { background: rgba(255,255,255,0.15); }
   </style>
 </head>
 <body>
 
-  <div class="controls">
+  <!-- Top toolbar -->
+  <div class="toolbar">
     <button onclick="firstPage()">⏮ First</button>
     <button onclick="prevPage()">⬅ Prev</button>
-    <button onclick="nextPage()">Next ➡</button>
-    <button onclick="lastPage()">⏭ Last</button>
     <input id="pageInput" type="number" min="1" max="294" placeholder="Page #" />
     <button onclick="jumpToPage()">Go</button>
-    <button onclick="toggleFullScreen()">⛶ Full Screen</button>
-    <button onclick="shareBook()">🔗 Share</button>
+    <button onclick="nextPage()">Next ➡</button>
+    <button onclick="lastPage()">⏭ Last</button>
   </div>
 
   <div id="thumbbar" class="thumbbar"></div>
 
   <div id="flipbook"></div>
 
-  <div id="pageCounter">Page 1 / 294</div>
+  <!-- Footer -->
+  <div id="footer">
+    <div id="pageCounter">Page 1 / 294</div>
 
-  <!-- Index toggle + menu -->
-  <button id="indexToggle">☰ Index</button>
-  <div id="indexMenu">
-    <button onclick="goToPage(10)">CHAPTER 1 – Physics and Measurements</button>
-    <button onclick="goToPage(42)">CHAPTER 2 – Solids and Elasticity</button>
-    <button onclick="goToPage(64)">CHAPTER 3 – Fluids</button>
-    <button onclick="goToPage(136)">CHAPTER 4 – Thermal Physics</button>
-    <button onclick="goToPage(218)">CHAPTER 5 – Waves and Sound</button>
-    <button onclick="goToPage(280)">APPENDIX</button>
+    <div class="footer-center">
+      <button id="indexToggle" aria-expanded="false">☰ Index</button>
+    </div>
+
+    <div class="footer-right">
+      <button id="fullBtn" onclick="toggleFullScreen()">⛶</button>
+      <button id="shareBtn" onclick="shareBook()">🔗</button>
+    </div>
+
+    <!-- Index menu -->
+    <div id="indexMenu" role="menu" aria-hidden="true">
+      <button onclick="goToPage(10)">CHAPTER 1 – Physics and Measurements</button>
+      <button onclick="goToPage(42)">CHAPTER 2 – Solids and Elasticity</button>
+      <button onclick="goToPage(64)">CHAPTER 3 – Fluids</button>
+      <button onclick="goToPage(136)">CHAPTER 4 – Thermal Physics</button>
+      <button onclick="goToPage(218)">CHAPTER 5 – Waves and Sound</button>
+      <button onclick="goToPage(280)">APPENDIX</button>
+    </div>
   </div>
 
   <script>
-    // ===== USER SETTINGS =====
     const totalPages = 294;
     const images = Array.from({ length: totalPages }, (_, i) => `images/Book_PHYS101_${i}.png`);
     const thumbs = Array.from({ length: totalPages }, (_, i) => `thumbs/Book_PHYS101_${i}.jpg`);
-    // =========================
 
     let currentPage = 0;
     const flipbook = document.getElementById("flipbook");
     const thumbbar = document.getElementById("thumbbar");
     const counter = document.getElementById("pageCounter");
+    const footer = document.getElementById("footer");
+    const indexToggle = document.getElementById("indexToggle");
+    const indexMenu = document.getElementById("indexMenu");
 
     function renderPage() {
       flipbook.innerHTML = "";
       const img = document.createElement("img");
       img.src = images[currentPage];
       img.alt = `Page ${currentPage + 1}`;
-      const wrapper = document.createElement("div");
-      wrapper.className = "flipbook-page";
-      wrapper.appendChild(img);
-      flipbook.appendChild(wrapper);
-
+      img.onerror = () => { img.alt = "Image not available"; img.style.opacity = 0.5; };
+      const wrap = document.createElement("div");
+      wrap.className = "flipbook-page";
+      wrap.appendChild(img);
+      flipbook.appendChild(wrap);
       counter.textContent = `Page ${currentPage + 1} / ${totalPages}`;
       highlightThumb();
     }
 
     function renderThumbs() {
+      thumbbar.innerHTML = "";
       thumbs.forEach((src, i) => {
         const t = document.createElement("img");
         t.src = src;
         t.alt = `Thumb ${i + 1}`;
-        t.addEventListener("click", () => {
-          currentPage = i;
-          renderPage();
-        });
+        t.loading = "lazy";
+        t.addEventListener("click", () => { currentPage = i; renderPage(); });
+        t.onerror = () => { t.style.opacity = 0.6; };
         thumbbar.appendChild(t);
       });
     }
 
     function highlightThumb() {
-      document.querySelectorAll(".thumbbar img").forEach((img, i) => {
-        img.classList.toggle("active", i === currentPage);
-      });
+      thumbbar.querySelectorAll("img").forEach((im, i) =>
+        im.classList.toggle("active", i === currentPage)
+      );
     }
 
-    function nextPage() {
-      if (currentPage < images.length - 1) { currentPage++; renderPage(); }
+    function nextPage(){ if(currentPage < images.length-1){ currentPage++; renderPage(); } }
+    function prevPage(){ if(currentPage > 0){ currentPage--; renderPage(); } }
+    function firstPage(){ currentPage = 0; renderPage(); }
+    function lastPage(){ currentPage = images.length-1; renderPage(); }
+    function jumpToPage(){
+      const v = parseInt(document.getElementById("pageInput").value,10);
+      if(!isNaN(v)&&v>=1&&v<=totalPages){ currentPage = v-1; renderPage(); }
     }
-    function prevPage() {
-      if (currentPage > 0) { currentPage--; renderPage(); }
+    function toggleFullScreen(){
+      if(!document.fullscreenElement){ document.documentElement.requestFullscreen(); }
+      else{ document.exitFullscreen(); }
     }
-    function firstPage() { currentPage = 0; renderPage(); }
-    function lastPage() { currentPage = images.length - 1; renderPage(); }
-    function jumpToPage() {
-      const val = parseInt(document.getElementById("pageInput").value, 10);
-      if (!isNaN(val) && val >= 1 && val <= totalPages) {
-        currentPage = val - 1;
-        renderPage();
-      }
-    }
-    function toggleFullScreen() {
-      if (!document.fullscreenElement) {
-        document.documentElement.requestFullscreen();
-      } else { document.exitFullscreen(); }
-    }
-    function shareBook() {
-      if (navigator.share) {
-        navigator.share({ title: "PHYS101 Flipbook", url: window.location.href });
+    function shareBook(){
+      if(navigator.share){
+        navigator.share({title:"PHYS101 Flipbook",url:window.location.href}).catch(()=>{});
       } else {
-        navigator.clipboard.writeText(window.location.href);
+        navigator.clipboard?.writeText(window.location.href);
         alert("Link copied to clipboard!");
       }
     }
 
-    // --- Index menu logic ---
-    const indexToggle = document.getElementById("indexToggle");
-    const indexMenu = document.getElementById("indexMenu");
+    // --- Index menu ---
+    function openIndexMenu() {
+      const left = indexToggle.offsetLeft;
+      const btnTop = indexToggle.offsetTop;
+      const btnHeight = indexToggle.offsetHeight;
+      const footerHeight = footer.clientHeight;
 
-    indexToggle.addEventListener("click", () => {
-      indexMenu.style.display =
-        indexMenu.style.display === "flex" ? "none" : "flex";
-    });
-
-    function goToPage(pageNumber) {
-      if (pageNumber >= 0 && pageNumber < images.length) {
-        currentPage = pageNumber;
-        renderPage();
-        indexMenu.style.display = "none";
-      }
+      indexMenu.style.left = `${left}px`;
+      indexMenu.style.bottom = `${footerHeight - btnTop + btnHeight + 8}px`;
+      indexMenu.style.top = "auto";
+      indexMenu.style.display = "flex";
+      indexMenu.setAttribute("aria-hidden","false");
+      indexToggle.setAttribute("aria-expanded","true");
+    }
+    function closeIndexMenu(){
+      indexMenu.style.display="none";
+      indexMenu.setAttribute("aria-hidden","true");
+      indexToggle.setAttribute("aria-expanded","false");
     }
 
-    document.addEventListener("click", (e) => {
-      if (
-        indexMenu.style.display === "flex" &&
-        !indexMenu.contains(e.target) &&
-        e.target !== indexToggle
-      ) {
-        indexMenu.style.display = "none";
+    indexToggle.addEventListener("click", e=>{
+      e.stopPropagation();
+      indexMenu.style.display==="flex"?closeIndexMenu():openIndexMenu();
+    });
+    indexMenu.addEventListener("click", e=>e.stopPropagation());
+    document.addEventListener("click", e=>{
+      if(indexMenu.style.display==="flex" &&
+         !indexMenu.contains(e.target) &&
+         !indexToggle.contains(e.target)){
+        closeIndexMenu();
       }
     });
 
-    // Keyboard navigation
-    document.addEventListener("keydown", e => {
-      if (e.key === "ArrowRight") nextPage();
-      if (e.key === "ArrowLeft") prevPage();
+    function goToPage(page){
+      if(page>=0 && page<images.length){
+        currentPage = page;
+        renderPage();
+        closeIndexMenu();
+      }
+    }
+    window.goToPage = goToPage;
+
+    // --- Swipe navigation for mobile ---
+    let touchStartX = 0;
+    let touchEndX = 0;
+
+    function handleTouchStart(e){
+      touchStartX = e.changedTouches[0].screenX;
+    }
+    function handleTouchEnd(e){
+      touchEndX = e.changedTouches[0].screenX;
+      handleSwipeGesture();
+    }
+    function handleSwipeGesture(){
+      const diff = touchEndX - touchStartX;
+      if(Math.abs(diff) > 40){       // threshold
+        if(diff > 0){ prevPage(); }  // swipe right -> prev
+        else{ nextPage(); }          // swipe left -> next
+      }
+    }
+    flipbook.addEventListener("touchstart", handleTouchStart, {passive:true});
+    flipbook.addEventListener("touchend", handleTouchEnd, {passive:true});
+
+    document.addEventListener("keydown", e=>{
+      if(e.key==="ArrowRight") nextPage();
+      if(e.key==="ArrowLeft") prevPage();
+      if(e.key==="Escape" && indexMenu.style.display==="flex") closeIndexMenu();
     });
 
-    // Init
     renderThumbs();
     renderPage();
   </script>
-
 </body>
 </html>
