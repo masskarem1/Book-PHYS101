@@ -25,7 +25,6 @@
       padding: 8px 0;
     }
 
-    /* === main image sizing (back to full width) === */
     .flipbook-page img {
       width: 100%;
       height: auto;
@@ -98,15 +97,17 @@
       box-sizing: border-box;
       position: relative; /* anchor for menu */
     }
-    #pageCounter {
-      font-size: 1rem;
-      color: #333;
-    }
-    .footer-center,
+
+    .footer-left,
     .footer-right {
       display: flex;
       align-items: center;
       gap: 0.6rem;
+    }
+
+    #pageCounter {
+      font-size: 1rem;
+      color: #333;
     }
 
     #indexToggle,
@@ -126,12 +127,15 @@
       position: absolute;
       display: none;
       flex-direction: column;
-      background: rgba(128,128,128,0.75); /* transparent grey */
+      background: rgba(128,128,128,0.75); /* semi-transparent grey */
       border: 1px solid rgba(0,0,0,0.15);
       border-radius: 6px;
       box-shadow: 0 6px 18px rgba(0,0,0,0.2);
       padding: 0.4rem;
-      min-width: 260px;
+      width: max-content;   /* fit to text width */
+      max-width: 90vw;      /* never exceed 90% of screen width */
+      white-space: nowrap;  /* one line per item */
+      overflow-x: auto;     /* scroll if too wide */
       z-index: 1200;
     }
     #indexMenu button {
@@ -165,12 +169,15 @@
 
   <!-- Footer -->
   <div id="footer">
-    <div id="pageCounter">Page 1 / 294</div>
-
-    <div class="footer-center">
+    <!-- LEFT: Index -->
+    <div class="footer-left">
       <button id="indexToggle" aria-expanded="false">☰ Index</button>
     </div>
 
+    <!-- CENTER: Page counter -->
+    <div id="pageCounter">Page 1 / 294</div>
+
+    <!-- RIGHT: Fullscreen & Share -->
     <div class="footer-right">
       <button id="fullBtn" onclick="toggleFullScreen()">⛶</button>
       <button id="shareBtn" onclick="shareBook()">🔗</button>
@@ -309,9 +316,9 @@
     }
     function handleSwipeGesture(){
       const diff = touchEndX - touchStartX;
-      if(Math.abs(diff) > 40){       // threshold
-        if(diff > 0){ prevPage(); }  // swipe right -> prev
-        else{ nextPage(); }          // swipe left -> next
+      if(Math.abs(diff) > 40){
+        if(diff > 0){ prevPage(); }
+        else{ nextPage(); }
       }
     }
     flipbook.addEventListener("touchstart", handleTouchStart, {passive:true});
