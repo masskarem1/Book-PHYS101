@@ -118,7 +118,7 @@
   loadIDs();
   function checkID() {
     const entered = document.getElementById("idInput").value.trim();
-    if (ALLOWED_IDS.includes(entered)) { document.getElementById("lockScreen").style.display = "none"; } 
+    if (ALLOWED_IDS.includes(entered)) { document.getElementById("lockScreen").style.display = "none"; }
     else { document.getElementById("idError").style.display = "block"; }
   }
 
@@ -207,8 +207,8 @@
   const aiLoadingEl = document.getElementById('aiLoading');
   const aiChapterTitleEl = document.getElementById('aiChapterTitle');
   
-  // Connects to your live, secure Vercel proxy
-  const API_ENDPOINT = 'https://ai-proxy-5mxz86a6i-mohamed-s-projects-795931ab.vercel.app/api/proxy'; 
+  // Connects to your NEW, live, secure Vercel proxy
+  const API_ENDPOINT = 'https://ai-proxy-nmvh2d43q-mohamed-s-projects-795931ab.vercel.app/api/proxy'; 
 
   aiHelperToggle.addEventListener('click', () => {
     const currentChapter = getCurrentChapter();
@@ -232,19 +232,20 @@
 
   async function getAiHelp(type) {
     const chapter = getCurrentChapter().title;
-    let prompt;
+    let aiPrompt; // RENAMED VARIABLE to avoid conflict
 
     switch(type) {
       case 'explain':
-        const concept = prompt("What concept from this chapter would you like explained?", "e.g., 'Pascal's Principle'");
+        // Using window.prompt() to be explicit
+        const concept = window.prompt("What concept from this chapter would you like explained?", "e.g., 'Pascal's Principle'");
         if (!concept) return; // User cancelled prompt
-        prompt = `You are a physics tutor for university students in life sciences. Explain the concept of "${concept}" from the chapter "${chapter}" in a simple and clear way.`;
+        aiPrompt = `You are a physics tutor for university students in life sciences. Explain the concept of "${concept}" from the chapter "${chapter}" in a simple and clear way.`;
         break;
       case 'quiz':
-        prompt = `You are a physics tutor. Based on the chapter "${chapter}", generate 2 multiple-choice quiz questions with 4 options each (A, B, C, D) to test a student's understanding. Provide a brief explanation for the correct answer. Bold the correct answer and its letter.`;
+        aiPrompt = `You are a physics tutor. Based on the chapter "${chapter}", generate 2 multiple-choice quiz questions with 4 options each (A, B, C, D) to test a student's understanding. Provide a brief explanation for the correct answer. Bold the correct answer and its letter.`;
         break;
       case 'relate':
-        prompt = `You are a physics tutor for life science students. For the chapter on "${chapter}", provide two clear examples of how these physics principles apply directly to biology or medicine.`;
+        aiPrompt = `You are a physics tutor for life science students. For the chapter on "${chapter}", provide two clear examples of how these physics principles apply directly to biology or medicine.`;
         break;
       default:
         return;
@@ -254,11 +255,11 @@
     aiResponseEl.innerHTML = '';
     
     try {
-      // This is where you call your secure proxy
+      // Sending our renamed variable to the proxy
       const response = await fetch(API_ENDPOINT, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ prompt })
+        body: JSON.stringify({ prompt: aiPrompt })
       });
 
       if (!response.ok) {
