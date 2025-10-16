@@ -4,173 +4,40 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>PHYS101 Flipbook</title>
+  <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
   <style>
-    body {
-      margin: 0;
-      font-family: sans-serif;
-      background: #f4f4f4;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-    }
-
-    #flipbook {
-      width: 100%;
-      max-width: 1200px;
-      margin: auto;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      background: #fff;
-      padding: 8px 0;
-    }
-
-    .flipbook-page img {
-      width: 100%;
-      height: auto;
-      max-width: 100%;
-      object-fit: contain;
-      display: block;
-      margin: 0 auto;
-    }
-
-    /* === LOCK SCREEN === */
-    #lockScreen {
-      position: fixed;
-      top: 0; left: 0;
-      width: 100%; height: 100%;
-      background: rgba(0,0,0,0.6);
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      z-index: 3000;
-    }
-    .lock-box {
-      background: #fff;
-      padding: 2rem;
-      border-radius: 8px;
-      text-align: center;
-      max-width: 300px;
-      box-shadow: 0 4px 12px rgba(0,0,0,0.25);
-    }
-    .lock-box input {
-      width: 90%;
-      padding: 0.5rem;
-      font-size: 1rem;
-      margin: 0.5rem 0;
-    }
-    .lock-box button {
-      padding: 0.5rem 1rem;
-      background: #007acc;
-      color: #fff;
-      border: none;
-      border-radius: 6px;
-      cursor: pointer;
-    }
+    body { margin: 0; font-family: sans-serif; background: #f4f4f4; display: flex; flex-direction: column; align-items: center; }
+    #flipbook { width: 100%; max-width: 1200px; margin: auto; display: flex; flex-direction: column; align-items: center; background: #fff; padding: 8px 0; }
+    .flipbook-page img { width: 100%; height: auto; max-width: 100%; object-fit: contain; display: block; margin: 0 auto; }
+    #lockScreen { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); display: flex; justify-content: center; align-items: center; z-index: 3000; }
+    .lock-box { background: #fff; padding: 2rem; border-radius: 8px; text-align: center; max-width: 300px; box-shadow: 0 4px 12px rgba(0,0,0,0.25); }
+    .lock-box input { width: 90%; padding: 0.5rem; font-size: 1rem; margin: 0.5rem 0; }
+    .lock-box button { padding: 0.5rem 1rem; background: #007acc; color: #fff; border: none; border-radius: 6px; cursor: pointer; }
     .lock-box button:hover { background:#005fa3; }
-
-    /* === TOOLBAR / FOOTER === */
-    .toolbar {
-      margin: 0.5rem;
-      display: flex;
-      justify-content: center;
-      gap: 0.6rem;
-      flex-wrap: wrap;
-    }
-    button {
-      padding: 0.45rem 0.9rem;
-      border: none;
-      border-radius: 8px;
-      background: #007acc;
-      color: white;
-      font-size: 0.95rem;
-      cursor: pointer;
-      transition: background 0.18s;
-    }
+    .toolbar { margin: 0.5rem; display: flex; justify-content: center; gap: 0.6rem; flex-wrap: wrap; }
+    button { padding: 0.45rem 0.9rem; border: none; border-radius: 8px; background: #007acc; color: white; font-size: 0.95rem; cursor: pointer; transition: background 0.18s; }
     button:hover { background: #005fa3; }
-    #pageInput {
-      width: 70px;
-      padding: 0.3rem;
-      font-size: 1rem;
-      text-align: center;
-    }
-
-    .thumbbar {
-      display: flex;
-      overflow-x: auto;
-      padding: 0.45rem;
-      background: #fff;
-      border-top: 1px solid #ccc;
-      border-bottom: 1px solid #ccc;
-      gap: 6px;
-      width: 100%;
-      max-width: 1200px;
-    }
-    .thumbbar img {
-      height: 80px;
-      cursor: pointer;
-      border: 2px solid transparent;
-      transition: border 0.18s;
-    }
+    #pageInput { width: 70px; padding: 0.3rem; font-size: 1rem; text-align: center; }
+    .thumbbar { display: flex; overflow-x: auto; padding: 0.45rem; background: #fff; border-top: 1px solid #ccc; border-bottom: 1px solid #ccc; gap: 6px; width: 100%; max-width: 1200px; }
+    .thumbbar img { height: 80px; cursor: pointer; border: 2px solid transparent; transition: border 0.18s; }
     .thumbbar img.active { border: 2px solid #007acc; }
-
-    @media (max-width: 768px) {
-      .thumbbar img { height: 60px; }
-    }
-
-    #footer {
-      width: 100%;
-      max-width: 1200px;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      padding: 0.5rem 1rem;
-      box-sizing: border-box;
-      position: relative;
-    }
-    .footer-left, .footer-right {
-      display: flex;
-      align-items: center;
-      gap: 0.6rem;
-    }
+    @media (max-width: 768px) { .thumbbar img { height: 60px; } }
+    #footer { width: 100%; max-width: 1200px; display: flex; align-items: center; justify-content: space-between; padding: 0.5rem 1rem; box-sizing: border-box; position: relative; }
+    .footer-left, .footer-right { display: flex; align-items: center; gap: 0.6rem; }
     #pageCounter { font-size:1rem; color:#333; }
-    #indexToggle, #fullBtn, #shareBtn {
-      padding: 0.4rem 0.8rem;
-      font-size: 0.9rem;
-      border: none;
-      border-radius: 4px;
-      background: #007acc;
-      color: white;
-      cursor: pointer;
-    }
-
-    /* === INDEX MENU === */
-    #indexMenu {
-      position: absolute;
-      display: none;
-      flex-direction: column;
-      background: rgba(128,128,128,0.75);
-      border: 1px solid rgba(0,0,0,0.15);
-      border-radius: 6px;
-      box-shadow: 0 6px 18px rgba(0,0,0,0.2);
-      padding: 0.4rem;
-      width: max-content;
-      max-width: 90vw;
-      white-space: nowrap;
-      overflow-x: auto;
-      z-index: 1200;
-    }
-    #indexMenu button {
-      background: none;
-      border: none;
-      text-align: left;
-      padding: 0.35rem 0.5rem;
-      font-size: 0.95rem;
-      cursor: pointer;
-      width: 100%;
-      color: #000;
-    }
+    #indexToggle, #fullBtn, #shareBtn { padding: 0.4rem 0.8rem; font-size: 0.9rem; border: none; border-radius: 4px; background: #007acc; color: white; cursor: pointer; }
+    #indexMenu { position: absolute; display: none; flex-direction: column; background: rgba(128,128,128,0.75); border: 1px solid rgba(0,0,0,0.15); border-radius: 6px; box-shadow: 0 6px 18px rgba(0,0,0,0.2); padding: 0.4rem; width: max-content; max-width: 90vw; white-space: nowrap; overflow-x: auto; z-index: 1200; }
+    #indexMenu button { background: none; border: none; text-align: left; padding: 0.35rem 0.5rem; font-size: 0.95rem; cursor: pointer; width: 100%; color: #000; }
     #indexMenu button:hover { background: rgba(255,255,255,0.15); }
+    /* === AI HELPER === */
+    #aiHelperToggle { position: fixed; bottom: 20px; right: 20px; width: 50px; height: 50px; border-radius: 50%; font-size: 1.5rem; z-index: 2000; box-shadow: 0 4px 10px rgba(0,0,0,0.2); }
+    #aiHelperModal { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); display: none; justify-content: center; align-items: center; z-index: 2500; }
+    .ai-content { background: #fff; padding: 1.5rem; border-radius: 12px; width: 90%; max-width: 500px; max-height: 90vh; overflow-y: auto; position: relative; box-shadow: 0 5px 15px rgba(0,0,0,0.3); }
+    #aiCloseBtn { position: absolute; top: 10px; right: 10px; background: #eee; color: #333; border-radius: 50%; width: 30px; height: 30px; padding: 0; line-height: 30px; text-align: center; }
+    .ai-buttons { display: flex; gap: 10px; margin: 1rem 0; flex-wrap: wrap; }
+    .ai-response { margin-top: 1rem; padding-top: 1rem; border-top: 1px solid #eee; white-space: pre-wrap; line-height: 1.6; }
+    .ai-response h3 { margin-top: 0; }
+    .ai-response ul { padding-left: 20px; }
   </style>
 </head>
 <body>
@@ -194,22 +61,34 @@
 </div>
 
 <div id="thumbbar" class="thumbbar"></div>
-
 <div id="flipbook"></div>
 
 <div id="footer">
   <div class="footer-left">
     <button id="indexToggle" aria-expanded="false">☰ Index</button>
   </div>
-
   <div id="pageCounter">Page 1 / 294</div>
-
   <div class="footer-right">
     <button id="fullBtn" onclick="toggleFullScreen()">⛶</button>
     <button id="shareBtn" onclick="shareBook()">🔗</button>
   </div>
-
   <div id="indexMenu" role="menu" aria-hidden="true"></div>
+</div>
+
+<button id="aiHelperToggle">🧠</button>
+<div id="aiHelperModal">
+  <div class="ai-content">
+    <button id="aiCloseBtn">×</button>
+    <h2>AI Study Helper</h2>
+    <p>Studying <strong id="aiChapterTitle">Chapter 1</strong>. How can I help?</p>
+    <div class="ai-buttons">
+      <button onclick="getAiHelp('explain')">Explain a Concept</button>
+      <button onclick="getAiHelp('quiz')">Quiz Me</button>
+      <button onclick="getAiHelp('relate')">Relate to Life Sciences</button>
+    </div>
+    <div id="aiResponse" class="ai-response"></div>
+    <div id="aiLoading" style="display: none;">Thinking...</div>
+  </div>
 </div>
 
 <script>
@@ -232,23 +111,15 @@
   let ALLOWED_IDS = [];
   async function loadIDs() {
     try {
-      const res = await fetch("students.json");
-      if (!res.ok) throw new Error("File not found");
-      const data = await res.json();
-      ALLOWED_IDS = data.allowed;
-    } catch (err) {
-      console.error("Could not load student IDs:", err);
-    }
+      const res = await fetch("students.json"); if (!res.ok) throw new Error("File not found");
+      ALLOWED_IDS = (await res.json()).allowed;
+    } catch (err) { console.error("Could not load student IDs:", err); }
   }
   loadIDs();
-
   function checkID() {
     const entered = document.getElementById("idInput").value.trim();
-    if (ALLOWED_IDS.includes(entered)) {
-      document.getElementById("lockScreen").style.display = "none";
-    } else {
-      document.getElementById("idError").style.display = "block";
-    }
+    if (ALLOWED_IDS.includes(entered)) { document.getElementById("lockScreen").style.display = "none"; } 
+    else { document.getElementById("idError").style.display = "block"; }
   }
 
   // ---- Flipbook ----
@@ -256,7 +127,6 @@
   const images = Array.from({ length: totalPages }, (_, i) => `${config.imagePath}${i}.png`);
   const thumbs = Array.from({ length: totalPages }, (_, i) => `${config.thumbPath}${i}.jpg`);
   let currentPage = 0;
-
   const flipbook = document.getElementById("flipbook");
   const thumbbar = document.getElementById("thumbbar");
   const counter = document.getElementById("pageCounter");
@@ -268,59 +138,36 @@
   function renderPage() {
     flipbook.innerHTML = "";
     const img = document.createElement("img");
-    img.src = images[currentPage];
-    img.alt = `Page ${currentPage + 1}`;
+    img.src = images[currentPage]; img.alt = `Page ${currentPage + 1}`;
     img.onerror = () => { img.alt = "Image not available"; img.style.opacity = 0.5; };
-    const wrap = document.createElement("div");
-    wrap.className = "flipbook-page";
-    wrap.appendChild(img);
-    flipbook.appendChild(wrap);
+    const wrap = document.createElement("div"); wrap.className = "flipbook-page";
+    wrap.appendChild(img); flipbook.appendChild(wrap);
     counter.textContent = `Page ${currentPage + 1} / ${totalPages}`;
     highlightThumb();
   }
-
   function renderThumbs() {
     thumbbar.innerHTML = "";
     thumbs.forEach((src, i) => {
-      const t = document.createElement("img");
-      t.src = src;
-      t.alt = `Thumb ${i + 1}`;
-      t.loading = "lazy";
-      t.addEventListener("click", () => { currentPage = i; renderPage(); });
-      t.onerror = () => { t.style.opacity = 0.6; };
-      thumbbar.appendChild(t);
+      const t = document.createElement("img"); t.src = src; t.alt = `Thumb ${i + 1}`;
+      t.loading = "lazy"; t.addEventListener("click", () => { currentPage = i; renderPage(); });
+      t.onerror = () => { t.style.opacity = 0.6; }; thumbbar.appendChild(t);
     });
   }
-
   function highlightThumb() {
     let activeThumb = null;
     thumbbar.querySelectorAll("img").forEach((im, i) => {
-        const isActive = i === currentPage;
-        im.classList.toggle("active", isActive);
-        if (isActive) {
-            activeThumb = im;
-        }
+        const isActive = i === currentPage; im.classList.toggle("active", isActive);
+        if (isActive) { activeThumb = im; }
     });
-    // Scroll the active thumbnail to the center of the thumbbar
-    if (activeThumb) {
-        activeThumb.scrollIntoView({
-            behavior: 'smooth',
-            block: 'nearest',
-            inline: 'center'
-        });
-    }
+    if (activeThumb) { activeThumb.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' }); }
   }
-
   function renderIndex() {
-      indexMenu.innerHTML = ""; // Clear existing
+      indexMenu.innerHTML = "";
       config.chapters.forEach(chapter => {
-          const button = document.createElement("button");
-          button.textContent = chapter.title;
-          button.onclick = () => goToPage(chapter.page);
-          indexMenu.appendChild(button);
+          const button = document.createElement("button"); button.textContent = chapter.title;
+          button.onclick = () => goToPage(chapter.page); indexMenu.appendChild(button);
       });
   }
-
   function nextPage(){ if(currentPage < images.length-1){ currentPage++; renderPage(); } }
   function prevPage(){ if(currentPage > 0){ currentPage--; renderPage(); } }
   function firstPage(){ currentPage = 0; renderPage(); }
@@ -329,80 +176,107 @@
     const v = parseInt(pageInput.value,10);
     if(!isNaN(v)&&v>=1&&v<=totalPages){ currentPage = v-1; renderPage(); }
   }
-  function toggleFullScreen(){
-    if(!document.fullscreenElement){ document.documentElement.requestFullscreen(); }
-    else{ document.exitFullscreen(); }
-  }
-  function shareBook(){
-    if(navigator.share){
-      navigator.share({title:"PHYS101 Flipbook",url:window.location.href}).catch(()=>{});
-    } else {
-      navigator.clipboard?.writeText(window.location.href);
-      alert("Link copied to clipboard!");
-    }
-  }
-
-  // --- Index menu ---
+  function toggleFullScreen(){ if(!document.fullscreenElement){ document.documentElement.requestFullscreen(); } else{ document.exitFullscreen(); } }
+  function shareBook(){ if(navigator.share){ navigator.share({title:"PHYS101 Flipbook",url:window.location.href}).catch(()=>{}); } else { navigator.clipboard?.writeText(window.location.href); alert("Link copied to clipboard!"); } }
   function openIndexMenu() {
-    const left = indexToggle.offsetLeft;
-    const btnTop = indexToggle.offsetTop;
-    const btnHeight = indexToggle.offsetHeight;
-    const footerHeight = footer.clientHeight;
-    indexMenu.style.left = `${left}px`;
-    indexMenu.style.bottom = `${footerHeight - btnTop + btnHeight + 8}px`;
-    indexMenu.style.top = "auto";
-    indexMenu.style.display = "flex";
-    indexMenu.setAttribute("aria-hidden","false");
-    indexToggle.setAttribute("aria-expanded","true");
+    const left = indexToggle.offsetLeft; const btnTop = indexToggle.offsetTop;
+    const btnHeight = indexToggle.offsetHeight; const footerHeight = footer.clientHeight;
+    indexMenu.style.left = `${left}px`; indexMenu.style.bottom = `${footerHeight - btnTop + btnHeight + 8}px`;
+    indexMenu.style.top = "auto"; indexMenu.style.display = "flex";
+    indexMenu.setAttribute("aria-hidden","false"); indexToggle.setAttribute("aria-expanded","true");
   }
-  function closeIndexMenu(){
-    indexMenu.style.display="none";
-    indexMenu.setAttribute("aria-hidden","true");
-    indexToggle.setAttribute("aria-expanded","false");
-  }
-  indexToggle.addEventListener("click", e=>{
-    e.stopPropagation();
-    indexMenu.style.display==="flex"?closeIndexMenu():openIndexMenu();
-  });
+  function closeIndexMenu(){ indexMenu.style.display="none"; indexMenu.setAttribute("aria-hidden","true"); indexToggle.setAttribute("aria-expanded","false"); }
+  indexToggle.addEventListener("click", e=>{ e.stopPropagation(); indexMenu.style.display==="flex"?closeIndexMenu():openIndexMenu(); });
   indexMenu.addEventListener("click", e=>e.stopPropagation());
-  document.addEventListener("click", e=>{
-    if(indexMenu.style.display==="flex" &&
-       !indexMenu.contains(e.target) &&
-       !indexToggle.contains(e.target)){
-      closeIndexMenu();
-    }
-  });
-
-  function goToPage(page){
-    if(page>=0 && page<images.length){
-      currentPage = page;
-      renderPage();
-      closeIndexMenu();
-    }
-  }
+  document.addEventListener("click", e=>{ if(indexMenu.style.display==="flex" && !indexMenu.contains(e.target) && !indexToggle.contains(e.target)){ closeIndexMenu(); } });
+  function goToPage(page){ if(page>=0 && page<images.length){ currentPage = page; renderPage(); closeIndexMenu(); } }
   window.goToPage = goToPage;
-
-  // --- Swipe navigation ---
-  let touchStartX = 0;
-  let touchEndX = 0;
+  let touchStartX = 0, touchEndX = 0;
   function handleTouchStart(e){ touchStartX = e.changedTouches[0].screenX; }
   function handleTouchEnd(e){ touchEndX = e.changedTouches[0].screenX; handleSwipeGesture(); }
-  function handleSwipeGesture(){
-    const diff = touchEndX - touchStartX;
-    if(Math.abs(diff) > 40){
-      if(diff > 0){ prevPage(); }
-      else{ nextPage(); }
-    }
-  }
+  function handleSwipeGesture(){ const diff = touchEndX - touchStartX; if(Math.abs(diff) > 40){ if(diff > 0){ prevPage(); } else{ nextPage(); } } }
   flipbook.addEventListener("touchstart", handleTouchStart, {passive:true});
   flipbook.addEventListener("touchend", handleTouchEnd, {passive:true});
+  document.addEventListener("keydown", e=>{ if(e.key==="ArrowRight") nextPage(); if(e.key==="ArrowLeft") prevPage(); if(e.key==="Escape" && indexMenu.style.display==="flex") closeIndexMenu(); });
 
-  document.addEventListener("keydown", e=>{
-    if(e.key==="ArrowRight") nextPage();
-    if(e.key==="ArrowLeft") prevPage();
-    if(e.key==="Escape" && indexMenu.style.display==="flex") closeIndexMenu();
-  });
+  // ---- AI HELPER LOGIC ----
+  const aiModal = document.getElementById('aiHelperModal');
+  const aiHelperToggle = document.getElementById('aiHelperToggle');
+  const aiCloseBtn = document.getElementById('aiCloseBtn');
+  const aiResponseEl = document.getElementById('aiResponse');
+  const aiLoadingEl = document.getElementById('aiLoading');
+  const aiChapterTitleEl = document.getElementById('aiChapterTitle');
   
+  // Connects to your live, secure Vercel proxy
+  const API_ENDPOINT = 'https://ai-proxy-5mxz86a6i-mohamed-s-projects-795931ab.vercel.app/api/proxy'; 
+
+  aiHelperToggle.addEventListener('click', () => {
+    const currentChapter = getCurrentChapter();
+    aiChapterTitleEl.textContent = currentChapter.title;
+    aiResponseEl.innerHTML = ''; // Clear previous response
+    aiModal.style.display = 'flex';
+  });
+  aiCloseBtn.addEventListener('click', () => aiModal.style.display = 'none');
+  aiModal.addEventListener('click', (e) => { if(e.target === aiModal) { aiModal.style.display = 'none'; } });
+
+  function getCurrentChapter() {
+      let currentChapter = config.chapters[0];
+      for (let i = config.chapters.length - 1; i >= 0; i--) {
+          if (currentPage >= config.chapters[i].page) {
+              currentChapter = config.chapters[i];
+              break;
+          }
+      }
+      return currentChapter;
+  }
+
+  async function getAiHelp(type) {
+    const chapter = getCurrentChapter().title;
+    let prompt;
+
+    switch(type) {
+      case 'explain':
+        const concept = prompt("What concept from this chapter would you like explained?", "e.g., 'Pascal's Principle'");
+        if (!concept) return; // User cancelled prompt
+        prompt = `You are a physics tutor for university students in life sciences. Explain the concept of "${concept}" from the chapter "${chapter}" in a simple and clear way.`;
+        break;
+      case 'quiz':
+        prompt = `You are a physics tutor. Based on the chapter "${chapter}", generate 2 multiple-choice quiz questions with 4 options each (A, B, C, D) to test a student's understanding. Provide a brief explanation for the correct answer. Bold the correct answer and its letter.`;
+        break;
+      case 'relate':
+        prompt = `You are a physics tutor for life science students. For the chapter on "${chapter}", provide two clear examples of how these physics principles apply directly to biology or medicine.`;
+        break;
+      default:
+        return;
+    }
+    
+    aiLoadingEl.style.display = 'block';
+    aiResponseEl.innerHTML = '';
+    
+    try {
+      // This is where you call your secure proxy
+      const response = await fetch(API_ENDPOINT, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ prompt })
+      });
+
+      if (!response.ok) {
+        throw new Error(`API error: ${response.statusText}`);
+      }
+
+      const data = await response.json();
+      // Use the 'marked' library to convert markdown (like **bold**) to HTML
+      aiResponseEl.innerHTML = marked.parse(data.text);
+
+    } catch (error) {
+      console.error("AI Helper Error:", error);
+      aiResponseEl.textContent = "Sorry, I couldn't get a response. Please try again later.";
+    } finally {
+      aiLoadingEl.style.display = 'none';
+    }
+  }
+
   // --- INITIALIZE ---
   pageInput.max = totalPages;
   renderThumbs();
