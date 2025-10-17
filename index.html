@@ -207,12 +207,14 @@
   const aiLoadingEl = document.getElementById('aiLoading');
   const aiChapterTitleEl = document.getElementById('aiChapterTitle');
   
-  // Connects to your NEW, live, secure Vercel proxy
-  const API_ENDPOINT = 'https://ai-proxy-4bjo9wccv-mohamed-s-projects-795931ab.vercel.app/api/proxy';
+  // --- IMPORTANT ---
+  // Paste your actual Gemini API Key here.
+  const GEMINI_API_KEY = 'AIzaSyAvH0LVJu1vow3_VPxiZp8Lpd8OI35_t4s'; 
+
   aiHelperToggle.addEventListener('click', () => {
     const currentChapter = getCurrentChapter();
     aiChapterTitleEl.textContent = currentChapter.title;
-    aiResponseEl.innerHTML = ''; // Clear previous response
+    aiResponseEl.innerHTML = '';
     aiModal.style.display = 'flex';
   });
   aiCloseBtn.addEventListener('click', () => aiModal.style.display = 'none');
@@ -230,14 +232,18 @@
   }
 
   async function getAiHelp(type) {
+    if (!GEMINI_API_KEY || GEMINI_API_KEY === 'AIzaSyAvH0LVJu1vow3_VPxiZp8Lpd8OI35_t4s') {
+        aiResponseEl.textContent = "The AI Helper is not configured. The API key is missing.";
+        return;
+    }
+
     const chapter = getCurrentChapter().title;
-    let aiPrompt; // RENAMED VARIABLE to avoid conflict
+    let aiPrompt;
 
     switch(type) {
       case 'explain':
-        // Using window.prompt() to be explicit
         const concept = window.prompt("What concept from this chapter would you like explained?", "e.g., 'Pascal's Principle'");
-        if (!concept) return; // User cancelled prompt
+        if (!concept) return;
         aiPrompt = `You are a physics tutor for university students in life sciences. Explain the concept of "${concept}" from the chapter "${chapter}" in a simple and clear way.`;
         break;
       case 'quiz':
@@ -253,12 +259,16 @@
     aiLoadingEl.style.display = 'block';
     aiResponseEl.innerHTML = '';
     
+    // This is the new part: we talk directly to the Google API
+    const API_URL = `https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent?key=${GEMINI_API_KEY}`;
+    
     try {
-      // Sending our renamed variable to the proxy
-      const response = await fetch(API_ENDPOINT, {
+      const response = await fetch(API_URL, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ prompt: aiPrompt })
+        body: JSON.stringify({
+          contents: [{ parts: [{ text: aiPrompt }] }]
+        })
       });
 
       if (!response.ok) {
@@ -266,12 +276,12 @@
       }
 
       const data = await response.json();
-      // Use the 'marked' library to convert markdown (like **bold**) to HTML
-      aiResponseEl.innerHTML = marked.parse(data.text);
+      const text = data.candidates[0]?.content?.parts[0]?.text || "No response text found.";
+      aiResponseEl.innerHTML = marked.parse(text);
 
     } catch (error) {
       console.error("AI Helper Error:", error);
-      aiResponseEl.textContent = "Sorry, I couldn't get a response. Please try again later.";
+      aiResponseEl.textContent = "Sorry, I couldn't get a response. Please check the API key and your internet connection.";
     } finally {
       aiLoadingEl.style.display = 'none';
     }
