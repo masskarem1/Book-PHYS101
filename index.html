@@ -4,14 +4,11 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>PHYS101 Flipbook</title>
-  <!-- Added a placeholder for the favicon to prevent 404 errors -->
   <link rel="icon" href="data:;base64,iVBORw0KGgo=">
-  <!-- Library to render AI's markdown response (bold, lists, etc.) -->
   <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
   <style>
     body { margin: 0; font-family: sans-serif; background: #f4f4f4; display: flex; flex-direction: column; align-items: center; }
     #flipbook { width: 100%; max-width: 1200px; margin: auto; display: flex; flex-direction: column; align-items: center; background: #fff; padding: 8px 0; }
-    /* Give the page image a class so we can select it easily */
     .page-image { width: 100%; height: auto; max-width: 100%; object-fit: contain; display: block; margin: 0 auto; }
     #lockScreen { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); display: flex; justify-content: center; align-items: center; z-index: 3000; }
     .lock-box { background: #fff; padding: 2rem; border-radius: 8px; text-align: center; max-width: 300px; box-shadow: 0 4px 12px rgba(0,0,0,0.25); }
@@ -33,11 +30,10 @@
     #indexMenu { position: absolute; display: none; flex-direction: column; background: rgba(128,128,128,0.75); border: 1px solid rgba(0,0,0,0.15); border-radius: 6px; box-shadow: 0 6px 18px rgba(0,0,0,0.2); padding: 0.4rem; width: max-content; max-width: 90vw; white-space: nowrap; overflow-x: auto; z-index: 1200; }
     #indexMenu button { background: none; border: none; text-align: left; padding: 0.35rem 0.5rem; font-size: 0.95rem; cursor: pointer; width: 100%; color: #000; }
     #indexMenu button:hover { background: rgba(255,255,255,0.15); }
-    /* === AI HELPER === */
     #aiHelperToggle { position: fixed; bottom: 20px; right: 20px; width: 50px; height: 50px; border-radius: 50%; font-size: 1.5rem; z-index: 2000; box-shadow: 0 4px 10px rgba(0,0,0,0.2); }
     #aiHelperModal { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); display: none; justify-content: center; align-items: center; z-index: 2500; }
     .ai-content { background: #fff; padding: 1.5rem; border-radius: 12px; width: 90%; max-width: 500px; max-height: 90vh; overflow-y: auto; position: relative; box-shadow: 0 5px 15px rgba(0,0,0,0.3); }
-    #aiCloseBtn { position: absolute; top: 10px; right: 10px; background: #eee; color: #333; border-radius: 50%; width: 30px; height: 30px; padding: 0; line-height: 30px; text-align: center; }
+    #aiCloseBtn { position: absolute; top: 10px; right: 10px; background: #eee; color: #333; border-radius: 50%; width: 30px; height: 30px; padding: 0; line-height: 30px; text-align: center; cursor: pointer; }
     .ai-buttons { display: flex; gap: 10px; margin: 1rem 0; flex-wrap: wrap; justify-content: center; }
     .ai-response { margin-top: 1rem; padding-top: 1rem; border-top: 1px solid #eee; white-space: pre-wrap; line-height: 1.6; }
     .ai-response h3 { margin-top: 0; }
@@ -46,7 +42,6 @@
 </head>
 <body>
 
-<!-- Lock screen -->
 <div id="lockScreen">
   <div class="lock-box">
     <h2>Enter your Student ID</h2>
@@ -56,7 +51,6 @@
   </div>
 </div>
 
-<!-- Top toolbar -->
 <div class="toolbar">
   <button onclick="firstPage()">⏮ First</button>
   <button onclick="prevPage()">⬅ Prev</button>
@@ -69,7 +63,6 @@
 <div id="thumbbar" class="thumbbar"></div>
 <div id="flipbook"></div>
 
-<!-- Footer -->
 <div id="footer">
   <div class="footer-left">
     <button id="indexToggle" aria-expanded="false">☰ Index</button>
@@ -82,7 +75,6 @@
   <div id="indexMenu" role="menu" aria-hidden="true"></div>
 </div>
 
-<!-- AI Study Helper -->
 <button id="aiHelperToggle">🧠</button>
 <div id="aiHelperModal">
   <div class="ai-content">
@@ -101,9 +93,7 @@
 </div>
 
 <script>
-  // ---- CONFIGURATION ----
   const config = {
-      // Corrected total pages to prevent 404 errors on images
       totalPages: 292,
       imagePath: './images/Book_PHYS101_',
       thumbPath: './thumbs/Book_PHYS101_',
@@ -117,22 +107,25 @@
       ]
   };
 
-  // ---- Student IDs ----
   let ALLOWED_IDS = [];
   async function loadIDs() {
     try {
-      const res = await fetch("./students.json"); if (!res.ok) throw new Error("File not found");
+      const res = await fetch("./students.json");
+      if (!res.ok) throw new Error("File not found");
       ALLOWED_IDS = (await res.json()).allowed;
     } catch (err) { console.error("Could not load student IDs:", err); }
   }
   loadIDs();
+  
   function checkID() {
     const entered = document.getElementById("idInput").value.trim();
-    if (ALLOWED_IDS.includes(entered)) { document.getElementById("lockScreen").style.display = "none"; }
-    else { document.getElementById("idError").style.display = "block"; }
+    if (ALLOWED_IDS.includes(entered)) {
+      document.getElementById("lockScreen").style.display = "none";
+    } else {
+      document.getElementById("idError").style.display = "block";
+    }
   }
 
-  // ---- Flipbook ----
   const totalPages = config.totalPages;
   const images = Array.from({ length: totalPages }, (_, i) => `${config.imagePath}${i}.png`);
   const thumbs = Array.from({ length: totalPages }, (_, i) => `${config.thumbPath}${i}.jpg`);
@@ -148,39 +141,54 @@
   function renderPage() {
     flipbook.innerHTML = "";
     const img = document.createElement("img");
-    img.className = "page-image"; // Add class to image
-    img.src = images[currentPage]; img.alt = `Page ${currentPage + 1}`;
-    // IMPORTANT: Add crossorigin attribute for fetching local images
+    img.className = "page-image";
+    img.src = images[currentPage];
+    img.alt = `Page ${currentPage + 1}`;
     img.crossOrigin = "anonymous";
     img.onerror = () => { img.alt = "Image not available"; img.style.opacity = 0.5; };
-    const wrap = document.createElement("div"); wrap.className = "flipbook-page";
-    wrap.appendChild(img); flipbook.appendChild(wrap);
+    const wrap = document.createElement("div");
+    wrap.className = "flipbook-page";
+    wrap.appendChild(img);
+    flipbook.appendChild(wrap);
     counter.textContent = `Page ${currentPage + 1} / ${totalPages}`;
     highlightThumb();
   }
+
   function renderThumbs() {
     thumbbar.innerHTML = "";
     thumbs.forEach((src, i) => {
-      const t = document.createElement("img"); t.src = src; t.alt = `Thumb ${i + 1}`;
-      t.loading = "lazy"; t.addEventListener("click", () => { currentPage = i; renderPage(); });
-      t.onerror = () => { t.style.opacity = 0.6; }; thumbbar.appendChild(t);
+      const t = document.createElement("img");
+      t.src = src;
+      t.alt = `Thumb ${i + 1}`;
+      t.loading = "lazy";
+      t.addEventListener("click", () => { currentPage = i; renderPage(); });
+      t.onerror = () => { t.style.opacity = 0.6; };
+      thumbbar.appendChild(t);
     });
   }
+
   function highlightThumb() {
     let activeThumb = null;
     thumbbar.querySelectorAll("img").forEach((im, i) => {
-        const isActive = i === currentPage; im.classList.toggle("active", isActive);
+        const isActive = i === currentPage;
+        im.classList.toggle("active", isActive);
         if (isActive) { activeThumb = im; }
     });
-    if (activeThumb) { activeThumb.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' }); }
+    if (activeThumb) {
+      activeThumb.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
+    }
   }
+
   function renderIndex() {
       indexMenu.innerHTML = "";
       config.chapters.forEach(chapter => {
-          const button = document.createElement("button"); button.textContent = chapter.title;
-          button.onclick = () => goToPage(chapter.page); indexMenu.appendChild(button);
+          const button = document.createElement("button");
+          button.textContent = chapter.title;
+          button.onclick = () => goToPage(chapter.page);
+          indexMenu.appendChild(button);
       });
   }
+
   function nextPage(){ if(currentPage < images.length-1){ currentPage++; renderPage(); } }
   function prevPage(){ if(currentPage > 0){ currentPage--; renderPage(); } }
   function firstPage(){ currentPage = 0; renderPage(); }
@@ -189,30 +197,72 @@
     const v = parseInt(pageInput.value,10);
     if(!isNaN(v)&&v>=1&&v<=totalPages){ currentPage = v-1; renderPage(); }
   }
-  function toggleFullScreen(){ if(!document.fullscreenElement){ document.documentElement.requestFullscreen(); } else{ document.exitFullscreen(); } }
-  function shareBook(){ if(navigator.share){ navigator.share({title:"PHYS101 Flipbook",url:window.location.href}).catch(()=>{}); } else { navigator.clipboard?.writeText(window.location.href); alert("Link copied to clipboard!"); } }
-  function openIndexMenu() {
-    const left = indexToggle.offsetLeft; const btnTop = indexToggle.offsetTop;
-    const btnHeight = indexToggle.offsetHeight; const footerHeight = footer.clientHeight;
-    indexMenu.style.left = `${left}px`; indexMenu.style.bottom = `${footerHeight - btnTop + btnHeight + 8}px`;
-    indexMenu.style.top = "auto"; indexMenu.style.display = "flex";
-    indexMenu.setAttribute("aria-hidden","false"); indexToggle.setAttribute("aria-expanded","true");
+  function toggleFullScreen(){
+    if(!document.fullscreenElement){ document.documentElement.requestFullscreen(); }
+    else{ document.exitFullscreen(); }
   }
-  function closeIndexMenu(){ indexMenu.style.display="none"; indexMenu.setAttribute("aria-hidden","true"); indexToggle.setAttribute("aria-expanded","false"); }
-  indexToggle.addEventListener("click", e=>{ e.stopPropagation(); indexMenu.style.display==="flex"?closeIndexMenu():openIndexMenu(); });
+  function shareBook(){
+    if(navigator.share){
+      navigator.share({title:"PHYS101 Flipbook",url:window.location.href}).catch(()=>{});
+    } else {
+      navigator.clipboard?.writeText(window.location.href);
+      alert("Link copied to clipboard!");
+    }
+  }
+  function openIndexMenu() {
+    const left = indexToggle.offsetLeft;
+    const btnTop = indexToggle.offsetTop;
+    const btnHeight = indexToggle.offsetHeight;
+    const footerHeight = footer.clientHeight;
+    indexMenu.style.left = `${left}px`;
+    indexMenu.style.bottom = `${footerHeight - btnTop + btnHeight + 8}px`;
+    indexMenu.style.top = "auto";
+    indexMenu.style.display = "flex";
+    indexMenu.setAttribute("aria-hidden","false");
+    indexToggle.setAttribute("aria-expanded","true");
+  }
+  function closeIndexMenu(){
+    indexMenu.style.display="none";
+    indexMenu.setAttribute("aria-hidden","true");
+    indexToggle.setAttribute("aria-expanded","false");
+  }
+  indexToggle.addEventListener("click", e=>{
+    e.stopPropagation();
+    indexMenu.style.display==="flex"?closeIndexMenu():openIndexMenu();
+  });
   indexMenu.addEventListener("click", e=>e.stopPropagation());
-  document.addEventListener("click", e=>{ if(indexMenu.style.display==="flex" && !indexMenu.contains(e.target) && !indexToggle.contains(e.target)){ closeIndexMenu(); } });
-  function goToPage(page){ if(page>=0 && page<images.length){ currentPage = page; renderPage(); closeIndexMenu(); } }
+  document.addEventListener("click", e=>{
+    if(indexMenu.style.display==="flex" && !indexMenu.contains(e.target) && !indexToggle.contains(e.target)){
+      closeIndexMenu();
+    }
+  });
+  function goToPage(page){
+    if(page>=0 && page<images.length){
+      currentPage = page;
+      renderPage();
+      closeIndexMenu();
+    }
+  }
   window.goToPage = goToPage;
+
   let touchStartX = 0, touchEndX = 0;
   function handleTouchStart(e){ touchStartX = e.changedTouches[0].screenX; }
   function handleTouchEnd(e){ touchEndX = e.changedTouches[0].screenX; handleSwipeGesture(); }
-  function handleSwipeGesture(){ const diff = touchEndX - touchStartX; if(Math.abs(diff) > 40){ if(diff > 0){ prevPage(); } else{ nextPage(); } } }
+  function handleSwipeGesture(){
+    const diff = touchEndX - touchStartX;
+    if(Math.abs(diff) > 40){
+      if(diff > 0){ prevPage(); } else{ nextPage(); }
+    }
+  }
   flipbook.addEventListener("touchstart", handleTouchStart, {passive:true});
   flipbook.addEventListener("touchend", handleTouchEnd, {passive:true});
-  document.addEventListener("keydown", e=>{ if(e.key==="ArrowRight") nextPage(); if(e.key==="ArrowLeft") prevPage(); if(e.key==="Escape" && indexMenu.style.display==="flex") closeIndexMenu(); });
+  document.addEventListener("keydown", e=>{
+    if(e.key==="ArrowRight") nextPage();
+    if(e.key==="ArrowLeft") prevPage();
+    if(e.key==="Escape" && indexMenu.style.display==="flex") closeIndexMenu();
+  });
 
-  // ---- AI HELPER LOGIC ----
+  // AI HELPER LOGIC
   const aiModal = document.getElementById('aiHelperModal');
   const aiHelperToggle = document.getElementById('aiHelperToggle');
   const aiCloseBtn = document.getElementById('aiCloseBtn');
@@ -220,16 +270,15 @@
   const aiLoadingEl = document.getElementById('aiLoading');
   const aiChapterTitleEl = document.getElementById('aiChapterTitle');
   
-  const GEMINI_API_KEY = 'AQ.Ab8RN6Ka9wI94FtHEAp37Z_rVjUSxWuJPxdCinr-K0w_CG6EwA'; 
+  const GEMINI_API_KEY = 'AIzaSyAntGKIXHhHIWkYT7R6rPlpBk0tZuLtlD8';
 
-  // New function to convert image URL to Base64
   async function getImageAsBase64(url) {
       try {
           const response = await fetch(url);
           const blob = await response.blob();
           return new Promise((resolve, reject) => {
               const reader = new FileReader();
-              reader.onloadend = () => resolve(reader.result.split(',')[1]); // Get only the data part
+              reader.onloadend = () => resolve(reader.result.split(',')[1]);
               reader.onerror = reject;
               reader.readAsDataURL(blob);
           });
@@ -245,8 +294,11 @@
     aiResponseEl.innerHTML = '';
     aiModal.style.display = 'flex';
   });
+
   aiCloseBtn.addEventListener('click', () => aiModal.style.display = 'none');
-  aiModal.addEventListener('click', (e) => { if(e.target === aiModal) { aiModal.style.display = 'none'; } });
+  aiModal.addEventListener('click', (e) => {
+    if(e.target === aiModal) { aiModal.style.display = 'none'; }
+  });
 
   function getCurrentChapter() {
       let currentChapter = config.chapters[0];
@@ -290,8 +342,12 @@
             contents: [{
                 parts: [
                     { text: "Analyze the content of this textbook page. Summarize the key concepts, explain any important formulas or diagrams, and provide a key takeaway for a life science student." },
-                    // Corrected the key from inlineData to inline_data
-                    { inline_data: { mime_type: "image/png", data: imageData } }
+                    {
+                        inline_data: {
+                            mime_type: "image/png",
+                            data: imageData
+                        }
+                    }
                 ]
             }]
         };
@@ -319,8 +375,7 @@
         };
     }
     
-    // Corrected the model name in the URL to use the latest version
-    const API_URL = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-latest:generateContent?key=${GEMINI_API_KEY}`;
+    const API_URL = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${GEMINI_API_KEY}`;
     
     try {
       const response = await fetch(API_URL, {
@@ -331,22 +386,21 @@
 
       if (!response.ok) {
         const errorData = await response.json();
-        throw new Error(`API error: ${errorData.error.message}`);
+        throw new Error(`API error: ${errorData.error?.message || response.statusText}`);
       }
 
       const data = await response.json();
-      const text = data.candidates[0]?.content?.parts[0]?.text || "No response text found.";
+      const text = data.candidates?.[0]?.content?.parts?.[0]?.text || "No response text found.";
       aiResponseEl.innerHTML = marked.parse(text);
 
     } catch (error) {
       console.error("AI Helper Error:", error);
-      aiResponseEl.textContent = "Sorry, I couldn't get a response. Please check your API key and internet connection.";
+      aiResponseEl.textContent = `Sorry, I couldn't get a response: ${error.message}`;
     } finally {
       aiLoadingEl.style.display = 'none';
     }
   }
 
-  // --- INITIALIZE ---
   pageInput.max = totalPages;
   renderThumbs();
   renderIndex();
@@ -354,4 +408,3 @@
 </script>
 </body>
 </html>
-
