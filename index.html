@@ -6,6 +6,7 @@
   <title>PHYS101 Flipbook</title>
   <link rel="icon" href="data:;base64,iVBORw0KGgo=">
   <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+  <!-- KaTeX for mathematical equations -->
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css">
   <script src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js"></script>
@@ -20,8 +21,7 @@
     .lock-box button:hover { background:#005fa3; }
     .toolbar { margin: 0.5rem; display: flex; justify-content: center; gap: 0.6rem; flex-wrap: wrap; }
     button { padding: 0.45rem 0.9rem; border: none; border-radius: 8px; background: #007acc; color: white; font-size: 0.95rem; cursor: pointer; transition: background 0.18s; }
-    button:hover:not(:disabled) { background: #005fa3; }
-    button:disabled { background: #ccc; cursor: not-allowed; }
+    button:hover { background: #005fa3; }
     #pageInput { width: 70px; padding: 0.3rem; font-size: 1rem; text-align: center; }
     .thumbbar { display: flex; overflow-x: auto; padding: 0.45rem; background: #fff; border-top: 1px solid #ccc; border-bottom: 1px solid #ccc; gap: 6px; width: 100%; max-width: 1200px; }
     .thumbbar img { height: 80px; cursor: pointer; border: 2px solid transparent; transition: border 0.18s; }
@@ -31,8 +31,8 @@
     .footer-left, .footer-right { display: flex; align-items: center; gap: 0.6rem; }
     #pageCounter { font-size:1rem; color:#333; }
     #indexToggle, #fullBtn, #shareBtn { padding: 0.4rem 0.8rem; font-size: 0.9rem; border: none; border-radius: 4px; background: #007acc; color: white; cursor: pointer; }
-    #indexMenu { position: absolute; display: none; flex-direction: column; background: rgba(80,80,80,0.75); backdrop-filter: blur(5px); border: 1px solid rgba(0,0,0,0.15); border-radius: 6px; box-shadow: 0 6px 18px rgba(0,0,0,0.2); padding: 0.4rem; width: max-content; max-width: 90vw; white-space: nowrap; overflow-x: auto; z-index: 1200; }
-    #indexMenu button { background: none; border: none; text-align: left; padding: 0.35rem 0.5rem; font-size: 0.95rem; cursor: pointer; width: 100%; color: #fff; }
+    #indexMenu { position: absolute; display: none; flex-direction: column; background: rgba(128,128,128,0.75); border: 1px solid rgba(0,0,0,0.15); border-radius: 6px; box-shadow: 0 6px 18px rgba(0,0,0,0.2); padding: 0.4rem; width: max-content; max-width: 90vw; white-space: nowrap; overflow-x: auto; z-index: 1200; }
+    #indexMenu button { background: none; border: none; text-align: left; padding: 0.35rem 0.5rem; font-size: 0.95rem; cursor: pointer; width: 100%; color: #000; }
     #indexMenu button:hover { background: rgba(255,255,255,0.15); }
     
     /* AI Helper Styles */
@@ -44,7 +44,7 @@
     
     .modal { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); display: none; justify-content: center; align-items: center; z-index: 2500; }
     .modal-content { background: #fff; padding: 1.5rem; border-radius: 12px; width: 90%; max-width: 600px; max-height: 90vh; overflow-y: auto; position: relative; box-shadow: 0 5px 15px rgba(0,0,0,0.3); }
-    .modal-close { position: absolute; top: 10px; right: 10px; background: #eee; color: #333; border-radius: 50%; width: 30px; height: 30px; padding: 0; line-height: 30px; text-align: center; cursor: pointer; border: none; }
+    .modal-close { position: absolute; top: 10px; right: 10px; background: #eee; color: #333; border-radius: 50%; width: 30px; height: 30px; padding: 0; line-height: 30px; text-align: center; cursor: pointer; }
     .modal-buttons { display: flex; gap: 10px; margin: 1rem 0; flex-wrap: wrap; justify-content: center; }
     .modal-response { margin-top: 1rem; padding-top: 1rem; border-top: 1px solid #eee; white-space: pre-wrap; line-height: 1.6; }
     .modal-response h3 { margin-top: 0; }
@@ -58,12 +58,13 @@
     .notebook-section.active { display: block; }
     .chat-container { display: flex; flex-direction: column; gap: 1rem; max-height: 400px; overflow-y: auto; padding: 1rem; background: #f9f9f9; border-radius: 8px; }
     .chat-message { padding: 0.75rem; border-radius: 8px; max-width: 85%; }
-    .chat-message.user { background: #e3f2fd; margin-left: auto; text-align: left; }
-    .chat-message.assistant { background: #fff; border: 1px solid #e0e0e0; text-align: left; }
+    .chat-message.user { background: #e3f2fd; margin-left: auto; text-align: right; }
+    .chat-message.assistant { background: #fff; border: 1px solid #e0e0e0; }
     .chat-input-container { display: flex; gap: 0.5rem; margin-top: 1rem; }
     .chat-input { flex: 1; padding: 0.75rem; border: 1px solid #ddd; border-radius: 8px; font-size: 0.95rem; }
     .chat-send { padding: 0.75rem 1.5rem; }
-    .summary-box, .study-guide-item { background: #f0f7ff; padding: 1rem; border-radius: 8px; border-left: 4px solid #007acc; margin: 1rem 0; }
+    .summary-box { background: #f0f7ff; padding: 1rem; border-radius: 8px; border-left: 4px solid #007acc; margin: 1rem 0; }
+    .study-guide-item { background: #fff; padding: 1rem; margin: 0.5rem 0; border-radius: 8px; border: 1px solid #e0e0e0; }
     .translate-options { display: flex; gap: 0.5rem; margin: 1rem 0; flex-wrap: wrap; }
     .translate-btn { flex: 1; min-width: 120px; }
     .translation-result { background: #f9f9f9; padding: 1rem; border-radius: 8px; margin-top: 1rem; border: 2px solid #34a853; direction: rtl; text-align: right; font-size: 1.1rem; line-height: 1.8; }
@@ -83,7 +84,7 @@
 <div class="toolbar">
   <button onclick="firstPage()">⏮ First</button>
   <button onclick="prevPage()">⬅ Prev</button>
-  <input id="pageInput" type="number" min="1" placeholder="Page #" onchange="jumpToPage()" />
+  <input id="pageInput" type="number" min="1" placeholder="Page #" />
   <button onclick="jumpToPage()">Go</button>
   <button onclick="nextPage()">Next ➡</button>
   <button onclick="lastPage()">⏭ Last</button>
@@ -104,65 +105,28 @@
   <div id="indexMenu" role="menu" aria-hidden="true"></div>
 </div>
 
+<!-- AI Study Helper -->
 <button id="aiHelperToggle">🧠</button>
 <div id="aiHelperModal" class="modal">
   <div class="modal-content">
     <button class="modal-close" onclick="closeAiHelper()">×</button>
     <h2>AI Study Helper</h2>
     <p>Get help with <strong id="aiChapterTitle">Chapter 1</strong>.</p>
-    <div id="aiHelperButtons" class="modal-buttons">
+    <div class="modal-buttons">
       <button onclick="getAiHelp('explain')">Explain a Concept</button>
       <button onclick="getAiHelp('quiz')">Quiz Me on Chapter</button>
       <button onclick="getAiHelp('relate')">Relate to Life Sciences</button>
       <button onclick="getAiHelp('analyze_page')">Analyze This Page</button>
     </div>
     <div id="aiResponse" class="modal-response"></div>
-    <div id="aiLoading" style="display: none; text-align:center; padding: 1rem;">Thinking...</div>
+    <div id="aiLoading" style="display: none;">Thinking...</div>
   </div>
 </div>
 
+<!-- NotebookLM-Style Assistant -->
 <button id="notebookToggle">📚</button>
-<div id="notebookModal" class="modal">
-  <div class="modal-content">
-    <button class="modal-close" onclick="closeNotebook()">×</button>
-    <h2>📚 Study Notebook</h2>
-    <p>Your AI-powered study companion for <strong id="notebookChapterTitle">Chapter 1</strong></p>
-    
-    <div class="notebook-tabs">
-      <button class="notebook-tab active" onclick="switchNotebookTab(event, 'chat')">💬 Chat</button>
-      <button class="notebook-tab" onclick="switchNotebookTab(event, 'summary')">📝 Summary</button>
-      <button class="notebook-tab" onclick="switchNotebookTab(event, 'guide')">📖 Study Guide</button>
-    </div>
-    
-    <div id="chatSection" class="notebook-section active">
-      <div id="chatContainer" class="chat-container">
-        <div class="chat-message assistant">
-          Hi! I'm your study assistant. Ask me anything about this chapter!
-        </div>
-      </div>
-      <div class="chat-input-container">
-        <input id="chatInput" class="chat-input" placeholder="Ask a question..." onkeypress="if(event.key==='Enter') sendChatMessage()" />
-        <button id="chatSendBtn" class="chat-send" onclick="sendChatMessage()">Send</button>
-      </div>
-    </div>
-    
-    <div id="summarySection" class="notebook-section">
-      <button id="summaryGenBtn" onclick="notebookGenerate('summary', 'summaryResult', 'summaryGenBtn')" style="width: 100%; margin-bottom: 1rem;">Generate Chapter Summary</button>
-      <div id="summaryResult"></div>
-    </div>
-    
-    <div id="guideSection" class="notebook-section">
-      <button id="guideGenBtn" onclick="notebookGenerate('guide', 'guideResult', 'guideGenBtn')" style="width: 100%; margin-bottom: 1rem;">Generate Study Guide</button>
-      <div id="guideResult"></div>
-    </div>
-    
-    <div id="notebookLoading" style="display: none; text-align: center; padding: 1rem;">
-      <div>Thinking...</div>
-    </div>
-  </div>
-</div>
 
-
+<!-- Arabic Translation -->
 <button id="translateToggle">🌐</button>
 <div id="translateModal" class="modal">
   <div class="modal-content">
@@ -170,7 +134,7 @@
     <h2>🌐 Arabic Translation | الترجمة العربية</h2>
     <p>Translate content from <strong id="translateChapterTitle">Chapter 1</strong> to Arabic</p>
     
-    <div id="translateButtons" class="translate-options">
+    <div class="translate-options">
       <button class="translate-btn" onclick="translateContent('page')">Translate Current Page</button>
       <button class="translate-btn" onclick="translateContent('concept')">Translate a Concept</button>
       <button class="translate-btn" onclick="translateContent('summary')">Translate Chapter Summary</button>
@@ -183,13 +147,55 @@
   </div>
 </div>
 
+<div id="notebookModal" class="modal">
+  <div class="modal-content">
+    <button class="modal-close" onclick="closeNotebook()">×</button>
+    <h2>📚 Study Notebook</h2>
+    <p>Your AI-powered study companion for <strong id="notebookChapterTitle">Chapter 1</strong></p>
+    
+    <div class="notebook-tabs">
+      <button class="notebook-tab active" onclick="switchNotebookTab('chat')">💬 Chat</button>
+      <button class="notebook-tab" onclick="switchNotebookTab('summary')">📝 Summary</button>
+      <button class="notebook-tab" onclick="switchNotebookTab('guide')">📖 Study Guide</button>
+    </div>
+    
+    <div id="chatSection" class="notebook-section active">
+      <div id="chatContainer" class="chat-container">
+        <div class="chat-message assistant">
+          Hi! I'm your study assistant. Ask me anything about this chapter!
+        </div>
+      </div>
+      <div class="chat-input-container">
+        <input id="chatInput" class="chat-input" placeholder="Ask a question about this chapter..." onkeypress="if(event.key==='Enter') sendChatMessage()" />
+        <button class="chat-send" onclick="sendChatMessage()">Send</button>
+      </div>
+    </div>
+    
+    <div id="summarySection" class="notebook-section">
+      <div id="summaryContent">
+        <button onclick="generateSummary()" style="width: 100%; margin-bottom: 1rem;">Generate Chapter Summary</button>
+        <div id="summaryResult"></div>
+      </div>
+    </div>
+    
+    <div id="guideSection" class="notebook-section">
+      <div id="guideContent">
+        <button onclick="generateStudyGuide()" style="width: 100%; margin-bottom: 1rem;">Generate Study Guide</button>
+        <div id="guideResult"></div>
+      </div>
+    </div>
+    
+    <div id="notebookLoading" style="display: none; text-align: center; padding: 1rem;">
+      <div>Thinking...</div>
+    </div>
+  </div>
+</div>
 
 <script>
   const config = {
       totalPages: 292,
-      // Using absolute paths from a cloud storage bucket is more reliable
-      imagePath: 'https://storage.googleapis.com/phys101-book-images/Book_PHYS101_',
-      thumbPath: 'https://storage.googleapis.com/phys101-book-thumbs/Book_PHYS101_',
+      imagePath: './images/Book_PHYS101_',
+      thumbPath: './thumbs/Book_PHYS101_',
       chapters: [
           { title: "CHAPTER 1 – Physics and Measurements", page: 8 },
           { title: "CHAPTER 2 – Solids and Elasticity", page: 40 },
@@ -200,15 +206,16 @@
       ]
   };
 
-  // --- IMPORTANT SECURITY NOTE ---
-  // The API key is exposed here for demonstration purposes only.
-  // In a real-world application, this key MUST be kept on a secure server.
-  const GEMINI_API_KEY = 'AIzaSyAntGKIXHhHIWkYT7R6rPlpBk0tZuLtlD8'; // ⚠️ Replace with your actual key
-
-  let ALLOWED_IDS = ["12345", "54321"]; // Example IDs. In a real app, this would be loaded securely.
+  let ALLOWED_IDS = [];
+  async function loadIDs() {
+    try {
+      const res = await fetch("./students.json");
+      if (!res.ok) throw new Error("File not found");
+      ALLOWED_IDS = (await res.json()).allowed;
+    } catch (err) { console.error("Could not load student IDs:", err); }
+  }
+  loadIDs();
   
-  // For demo, we hide the lock screen. Remove this line for production.
-  document.getElementById("lockScreen").style.display = "none";
   function checkID() {
     const entered = document.getElementById("idInput").value.trim();
     if (ALLOWED_IDS.includes(entered)) {
@@ -218,8 +225,9 @@
     }
   }
 
-  // --- PAGE NAVIGATION & SETUP ---
   const totalPages = config.totalPages;
+  const images = Array.from({ length: totalPages }, (_, i) => `${config.imagePath}${i}.png`);
+  const thumbs = Array.from({ length: totalPages }, (_, i) => `${config.thumbPath}${i}.jpg`);
   let currentPage = 0;
   const flipbook = document.getElementById("flipbook");
   const thumbbar = document.getElementById("thumbbar");
@@ -230,105 +238,141 @@
   const indexMenu = document.getElementById("indexMenu");
 
   function renderPage() {
-    flipbook.innerHTML = `<img class="page-image" src="${config.imagePath}${currentPage}.png" alt="Page ${currentPage + 1}" crossorigin="anonymous" onerror="this.alt='Image not available'; this.style.opacity=0.5;">`;
+    flipbook.innerHTML = "";
+    const img = document.createElement("img");
+    img.className = "page-image";
+    img.src = images[currentPage];
+    img.alt = `Page ${currentPage + 1}`;
+    img.crossOrigin = "anonymous";
+    img.onerror = () => { img.alt = "Image not available"; img.style.opacity = 0.5; };
+    const wrap = document.createElement("div");
+    wrap.className = "flipbook-page";
+    wrap.appendChild(img);
+    flipbook.appendChild(wrap);
     counter.textContent = `Page ${currentPage + 1} / ${totalPages}`;
-    pageInput.value = currentPage + 1;
     highlightThumb();
   }
 
   function renderThumbs() {
-    thumbbar.innerHTML = Array.from({ length: totalPages }, (_, i) => 
-        `<img src="${config.thumbPath}${i}.jpg" alt="Thumb ${i + 1}" loading="lazy" onclick="goToPage(${i})" onerror="this.style.display='none';">`
-    ).join('');
+    thumbbar.innerHTML = "";
+    thumbs.forEach((src, i) => {
+      const t = document.createElement("img");
+      t.src = src;
+      t.alt = `Thumb ${i + 1}`;
+      t.loading = "lazy";
+      t.addEventListener("click", () => { currentPage = i; renderPage(); });
+      t.onerror = () => { t.style.opacity = 0.6; };
+      thumbbar.appendChild(t);
+    });
   }
 
   function highlightThumb() {
-    thumbbar.querySelectorAll("img.active").forEach(im => im.classList.remove("active"));
-    const activeThumb = thumbbar.querySelector(`img[alt="Thumb ${currentPage + 1}"]`);
+    let activeThumb = null;
+    thumbbar.querySelectorAll("img").forEach((im, i) => {
+        const isActive = i === currentPage;
+        im.classList.toggle("active", isActive);
+        if (isActive) { activeThumb = im; }
+    });
     if (activeThumb) {
-      activeThumb.classList.add("active");
       activeThumb.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
     }
   }
 
   function renderIndex() {
-      indexMenu.innerHTML = config.chapters.map(chapter => 
-          `<button onclick="goToPage(${chapter.page})">${chapter.title}</button>`
-      ).join('');
+      indexMenu.innerHTML = "";
+      config.chapters.forEach(chapter => {
+          const button = document.createElement("button");
+          button.textContent = chapter.title;
+          button.onclick = () => goToPage(chapter.page);
+          indexMenu.appendChild(button);
+      });
   }
 
-  function goToPage(pageNumber) {
-    if (pageNumber >= 0 && pageNumber < totalPages) {
-      currentPage = pageNumber;
-      renderPage();
-      closeIndexMenu();
-    }
-  }
-
-  function nextPage(){ if(currentPage < totalPages-1){ goToPage(currentPage + 1); } }
-  function prevPage(){ if(currentPage > 0){ goToPage(currentPage - 1); } }
-  function firstPage(){ goToPage(0); }
-  function lastPage(){ goToPage(totalPages-1); }
+  function nextPage(){ if(currentPage < images.length-1){ currentPage++; renderPage(); } }
+  function prevPage(){ if(currentPage > 0){ currentPage--; renderPage(); } }
+  function firstPage(){ currentPage = 0; renderPage(); }
+  function lastPage(){ currentPage = images.length-1; renderPage(); }
   function jumpToPage(){
     const v = parseInt(pageInput.value,10);
-    if(!isNaN(v)&&v>=1&&v<=totalPages){ goToPage(v-1); }
+    if(!isNaN(v)&&v>=1&&v<=totalPages){ currentPage = v-1; renderPage(); }
   }
   function toggleFullScreen(){
     if(!document.fullscreenElement){ document.documentElement.requestFullscreen(); }
-    else{ if(document.exitFullscreen) document.exitFullscreen(); }
+    else{ document.exitFullscreen(); }
   }
   function shareBook(){
-    const url = `${window.location.href.split('?')[0]}?page=${currentPage + 1}`;
     if(navigator.share){
-      navigator.share({title:"PHYS101 Flipbook", url:url}).catch(console.error);
+      navigator.share({title:"PHYS101 Flipbook",url:window.location.href}).catch(()=>{});
     } else {
-      navigator.clipboard.writeText(url).then(() => alert("Link to current page copied to clipboard!"));
+      navigator.clipboard?.writeText(window.location.href);
+      alert("Link copied to clipboard!");
     }
   }
-  
   function openIndexMenu() {
-    indexMenu.style.left = `${indexToggle.offsetLeft}px`;
-    indexMenu.style.bottom = `${footer.clientHeight}px`;
+    const left = indexToggle.offsetLeft;
+    const btnTop = indexToggle.offsetTop;
+    const btnHeight = indexToggle.offsetHeight;
+    const footerHeight = footer.clientHeight;
+    indexMenu.style.left = `${left}px`;
+    indexMenu.style.bottom = `${footerHeight - btnTop + btnHeight + 8}px`;
+    indexMenu.style.top = "auto";
     indexMenu.style.display = "flex";
+    indexMenu.setAttribute("aria-hidden","false");
     indexToggle.setAttribute("aria-expanded","true");
   }
   function closeIndexMenu(){
     indexMenu.style.display="none";
+    indexMenu.setAttribute("aria-hidden","true");
     indexToggle.setAttribute("aria-expanded","false");
   }
-  indexToggle.addEventListener("click", e => {
+  indexToggle.addEventListener("click", e=>{
     e.stopPropagation();
-    indexMenu.style.display === "flex" ? closeIndexMenu() : openIndexMenu();
+    indexMenu.style.display==="flex"?closeIndexMenu():openIndexMenu();
   });
-  document.addEventListener("click", () => closeIndexMenu());
-
-  document.addEventListener("keydown", e => {
-    if (e.target.tagName === 'INPUT') return;
-    if(e.key==="ArrowRight") nextPage();
-    if(e.key==="ArrowLeft") prevPage();
+  indexMenu.addEventListener("click", e=>e.stopPropagation());
+  document.addEventListener("click", e=>{
+    if(indexMenu.style.display==="flex" && !indexMenu.contains(e.target) && !indexToggle.contains(e.target)){
+      closeIndexMenu();
+    }
   });
-  
-  function checkUrlForPage() {
-    const params = new URLSearchParams(window.location.search);
-    const page = parseInt(params.get('page'), 10);
-    if (!isNaN(page) && page >= 1 && page <= totalPages) {
-      goToPage(page - 1);
-    } else {
-      renderPage(); // Initial render
+  function goToPage(page){
+    if(page>=0 && page<images.length){
+      currentPage = page;
+      renderPage();
+      closeIndexMenu();
     }
   }
+  window.goToPage = goToPage;
 
-  // --- AI & MODAL CORE LOGIC ---
-  const allModals = document.querySelectorAll('.modal');
-  
-  function getCurrentChapter() {
-      return config.chapters.slice().reverse().find(ch => currentPage >= ch.page) || config.chapters[0];
+  let touchStartX = 0, touchEndX = 0;
+  function handleTouchStart(e){ touchStartX = e.changedTouches[0].screenX; }
+  function handleTouchEnd(e){ touchEndX = e.changedTouches[0].screenX; handleSwipeGesture(); }
+  function handleSwipeGesture(){
+    const diff = touchEndX - touchStartX;
+    if(Math.abs(diff) > 40){
+      if(diff > 0){ prevPage(); } else{ nextPage(); }
+    }
   }
+  flipbook.addEventListener("touchstart", handleTouchStart, {passive:true});
+  flipbook.addEventListener("touchend", handleTouchEnd, {passive:true});
+  document.addEventListener("keydown", e=>{
+    if(e.key==="ArrowRight") nextPage();
+    if(e.key==="ArrowLeft") prevPage();
+    if(e.key==="Escape" && indexMenu.style.display==="flex") closeIndexMenu();
+  });
+
+  // AI HELPER LOGIC
+  const aiModal = document.getElementById('aiHelperModal');
+  const aiHelperToggle = document.getElementById('aiHelperToggle');
+  const aiResponseEl = document.getElementById('aiResponse');
+  const aiLoadingEl = document.getElementById('aiLoading');
+  const aiChapterTitleEl = document.getElementById('aiChapterTitle');
   
+  const GEMINI_API_KEY = 'AIzaSyAntGKIXHhHIWkYT7R6rPlpBk0tZuLtlD8';
+
   async function getImageAsBase64(url) {
       try {
           const response = await fetch(url);
-          if (!response.ok) throw new Error('Network response was not ok');
           const blob = await response.blob();
           return new Promise((resolve, reject) => {
               const reader = new FileReader();
@@ -341,9 +385,35 @@
           return null;
       }
   }
-  
+
+  aiHelperToggle.addEventListener('click', () => {
+    const currentChapter = getCurrentChapter();
+    aiChapterTitleEl.textContent = currentChapter.title;
+    aiResponseEl.innerHTML = '';
+    aiModal.style.display = 'flex';
+  });
+
+  function closeAiHelper() {
+    aiModal.style.display = 'none';
+  }
+
+  aiModal.addEventListener('click', (e) => {
+    if(e.target === aiModal) { closeAiHelper(); }
+  });
+
+  function getCurrentChapter() {
+      let currentChapter = config.chapters[0];
+      for (let i = config.chapters.length - 1; i >= 0; i--) {
+          if (currentPage >= config.chapters[i].page) {
+              currentChapter = config.chapters[i];
+              break;
+          }
+      }
+      return currentChapter;
+  }
+
   async function callGeminiAPI(requestBody) {
-    const API_URL = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${GEMINI_API_KEY}`;
+    const API_URL = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${GEMINI_API_KEY}`;
     
     const response = await fetch(API_URL, {
       method: 'POST',
@@ -352,283 +422,1821 @@
     });
 
     if (!response.ok) {
-        const errorData = await response.json();
-        const errorMessage = errorData.error?.message || `HTTP error! status: ${response.status}`;
-        if (response.status === 400) {
-            throw new Error(`Invalid request. Please check your API key and permissions. Details: ${errorMessage}`);
-        }
-        throw new Error(errorMessage);
+      const errorData = await response.json();
+      throw new Error(`API error: ${errorData.error?.message || response.statusText}`);
     }
 
     const data = await response.json();
-    if (!data.candidates || data.candidates.length === 0) {
-        throw new Error("API returned no content. This may be due to safety settings.");
-    }
-    return data.candidates[0].content.parts[0].text;
+    return data.candidates?.[0]?.content?.parts?.[0]?.text || "No response text found.";
   }
 
   function renderMathInElement(element) {
     if (window.renderMathInElement) {
       renderMathInElement(element, {
         delimiters: [
-          {left: '$$', right: '$$', display: true}, {left: '$', right: '$', display: false},
-          {left: '\\[', right: '\\]', display: true}, {left: '\\(', right: '\\)', display: false}
-        ],
-        throwOnError: false
-      });
-    }
-  }
-  
-  function parseAndRenderMarkdown(text, targetElement) {
-      targetElement.innerHTML = marked.parse(text || "No response generated.");
-      renderMathInElement(targetElement);
-  }
+          {left: '$', right: '$', display: true},
+          {left: '
 
-  // --- AI Helper Modal ---
-  const aiModal = document.getElementById('aiHelperModal');
-  document.getElementById('aiHelperToggle').addEventListener('click', () => {
-    document.getElementById('aiChapterTitle').textContent = getCurrentChapter().title;
-    document.getElementById('aiResponse').innerHTML = '';
-    aiModal.style.display = 'flex';
-  });
-  function closeAiHelper() { aiModal.style.display = 'none'; }
-  aiModal.addEventListener('click', (e) => { if(e.target === aiModal) closeAiHelper(); });
-  
   async function getAiHelp(type) {
-    if (!GEMINI_API_KEY || GEMINI_API_KEY === 'YOUR_API_KEY_HERE') {
-        document.getElementById('aiResponse').innerHTML = '<p style="color:red; font-weight:bold;">Please add your actual Gemini API key in the script.</p>';
+    if (!GEMINI_API_KEY || GEMINI_API_KEY === 'AIzaSyB9k3RN6Ka9wI94FtHEAp37Z_rVjUSxWuJ') {
+        aiResponseEl.textContent = "Please add your actual Gemini API key.";
         return;
     }
-    
-    const loadingEl = document.getElementById('aiLoading');
-    const responseEl = document.getElementById('aiResponse');
-    const buttons = document.querySelectorAll('#aiHelperButtons button');
-    
-    loadingEl.style.display = 'block';
-    responseEl.innerHTML = '';
-    buttons.forEach(b => b.disabled = true);
 
+    aiLoadingEl.style.display = 'block';
+    aiResponseEl.innerHTML = '';
+
+    let requestBody;
     const chapter = getCurrentChapter().title;
-    const basePrompt = `You are a physics tutor for university students in life sciences. Use LaTeX notation for all mathematical equations: use $...$ for inline math and $$...$$ for display equations. Example: $\\rho = \\frac{m}{V}$ or $$P = \\frac{F}{A}$$`;
 
-    try {
-        let requestBody;
-        if (type === 'analyze_page') {
-            const pageImageElement = document.querySelector('.page-image');
-            const imageData = await getImageAsBase64(pageImageElement.src);
-            if (!imageData) throw new Error("Could not process the page image.");
-
-            requestBody = { contents: [{ parts: [
-                { text: `${basePrompt}\n\nAnalyze this textbook page. Summarize key concepts, explain formulas, and provide a key takeaway for a life science student.` },
-                { inline_data: { mime_type: "image/png", data: imageData } }
-            ]}]};
-        } else {
-            let userPrompt;
-            switch(type) {
-              case 'explain':
-                const concept = window.prompt("What concept from this chapter would you like explained?", "e.g., Pascal's Principle");
-                if (!concept) throw new Error("No concept provided.");
-                userPrompt = `Explain the concept of "${concept}" from the chapter "${chapter}" in a simple way.`;
-                break;
-              case 'quiz':
-                userPrompt = `Based on the chapter "${chapter}", generate 2 multiple-choice quiz questions. Bold the correct answer and provide a brief explanation.`;
-                break;
-              case 'relate':
-                userPrompt = `For the chapter on "${chapter}", provide two clear examples of how these principles apply to biology or medicine.`;
-                break;
-              default: throw new Error("Invalid help type.");
-            }
-            requestBody = { contents: [{ parts: [{ text: `${basePrompt}\n\n${userPrompt}` }] }] };
+            if (type === 'analyze_page') {
+        const pageImageElement = document.querySelector('.page-image');
+        if (!pageImageElement) {
+            aiResponseEl.textContent = "Could not find the page image to analyze.";
+            aiLoadingEl.style.display = 'none';
+            return;
         }
         
-        const text = await callGeminiAPI(requestBody);
-        parseAndRenderMarkdown(text, responseEl);
-
-    } catch (error) {
-        if (error.message !== "No concept provided.") {
-            responseEl.textContent = `Sorry, an error occurred: ${error.message}`;
+        const imageData = await getImageAsBase64(pageImageElement.src);
+        if (!imageData) {
+            aiResponseEl.textContent = "Sorry, I couldn't process the page image.";
+            aiLoadingEl.style.display = 'none';
+            return;
         }
+
+        requestBody = {
+            contents: [{
+                parts: [
+                    { text: "Analyze the content of this textbook page. Summarize the key concepts, explain any important formulas or diagrams, and provide a key takeaway for a life science student. IMPORTANT: For all mathematical equations, use LaTeX notation with $ for inline math and $ for display math. For example: $\\rho = \\frac{m}{V}$ for inline or $P = \\frac{F}{A}$ for display equations." },
+                    {
+                        inline_data: {
+                            mime_type: "image/png",
+                            data: imageData
+                        }
+                    }
+                ]
+            }]
+        };
+
+    } else {
+        let aiPrompt;
+        switch(type) {
+          case 'explain':
+            const concept = window.prompt("What concept from this chapter would you like explained?", "e.g., 'Pascal's Principle'");
+            if (!concept) { aiLoadingEl.style.display = 'none'; return; }
+            aiPrompt = `You are a physics tutor for university students in life sciences. Explain the concept of "${concept}" from the chapter "${chapter}" in a simple and clear way. Use LaTeX notation for all mathematical equations: use $...$ for inline math and $...$ for display equations. For example: $\\rho = \\frac{m}{V}$ or $P = \\frac{F}{A}$`;
+            break;
+          case 'quiz':
+            aiPrompt = `You are a physics tutor. Based on the chapter "${chapter}", generate 2 multiple-choice quiz questions with 4 options each to test a student's understanding. Provide a brief explanation for the correct answer. Bold the correct answer and its letter. Use LaTeX notation for all equations: $...$ for inline math, $...$ for display equations.`;
+            break;
+          case 'relate':
+            aiPrompt = `You are a physics tutor for life science students. For the chapter on "${chapter}", provide two clear examples of how these physics principles apply directly to biology or medicine. Use LaTeX for any equations: $...$ for inline, $...$ for display.`;
+            break;
+          default:
+            aiLoadingEl.style.display = 'none';
+            return;
+        }
+        requestBody = {
+            contents: [{ parts: [{ text: aiPrompt }] }]
+        };
+    }
+    
+    try {
+      const text = await callGeminiAPI(requestBody);
+      parseAndRenderMarkdown(text, aiResponseEl);
+    } catch (error) {
+      console.error("AI Helper Error:", error);
+      aiResponseEl.textContent = `Sorry, I couldn't get a response: ${error.message}`;
     } finally {
-        loadingEl.style.display = 'none';
-        buttons.forEach(b => b.disabled = false);
+      aiLoadingEl.style.display = 'none';
     }
   }
 
-  // --- Notebook Modal ---
+  // NOTEBOOKLM-STYLE FEATURES
   const notebookModal = document.getElementById('notebookModal');
+  const notebookToggle = document.getElementById('notebookToggle');
+  const notebookChapterTitleEl = document.getElementById('notebookChapterTitle');
+  const chatContainer = document.getElementById('chatContainer');
+  const chatInput = document.getElementById('chatInput');
+  const notebookLoading = document.getElementById('notebookLoading');
+  
+  // ARABIC TRANSLATION FEATURES
+  const translateModal = document.getElementById('translateModal');
+  const translateToggle = document.getElementById('translateToggle');
+  const translateChapterTitleEl = document.getElementById('translateChapterTitle');
+  const translateResult = document.getElementById('translateResult');
+  const translateLoading = document.getElementById('translateLoading');
+  
   let conversationHistory = [];
-  document.getElementById('notebookToggle').addEventListener('click', () => {
-    document.getElementById('notebookChapterTitle').textContent = getCurrentChapter().title;
-    conversationHistory = []; // Reset history when opening
-    addChatMessage('assistant', "Hi! I'm your study assistant. Ask me anything about this chapter!", true);
+
+  notebookToggle.addEventListener('click', () => {
+    const currentChapter = getCurrentChapter();
+    notebookChapterTitleEl.textContent = currentChapter.title;
     notebookModal.style.display = 'flex';
   });
-  function closeNotebook() { notebookModal.style.display = 'none'; }
-  notebookModal.addEventListener('click', (e) => { if(e.target === notebookModal) closeNotebook(); });
-  
-  function switchNotebookTab(event, tab) {
+
+  function closeNotebook() {
+    notebookModal.style.display = 'none';
+  }
+
+  notebookModal.addEventListener('click', (e) => {
+    if(e.target === notebookModal) { closeNotebook(); }
+  });
+
+  // Arabic Translation Functions
+  translateToggle.addEventListener('click', () => {
+    const currentChapter = getCurrentChapter();
+    translateChapterTitleEl.textContent = currentChapter.title;
+    translateResult.innerHTML = '';
+    translateModal.style.display = 'flex';
+  });
+
+  function closeTranslate() {
+    translateModal.style.display = 'none';
+  }
+
+  translateModal.addEventListener('click', (e) => {
+    if(e.target === translateModal) { closeTranslate(); }
+  });
+
+  async function translateContent(type) {
+    if (!GEMINI_API_KEY || GEMINI_API_KEY === 'AIzaSyB9k3RN6Ka9wI94FtHEAp37Z_rVjUSxWuJ') {
+        translateResult.innerHTML = '<p style="color: red;">Please add your actual Gemini API key.</p>';
+        return;
+    }
+
+    translateLoading.style.display = 'block';
+    translateResult.innerHTML = '';
+    
+    const chapter = getCurrentChapter().title;
+    let requestBody;
+
+    if (type === 'page') {
+        const pageImageElement = document.querySelector('.page-image');
+        if (!pageImageElement) {
+            translateResult.innerHTML = '<p>Could not find the page image.</p>';
+            translateLoading.style.display = 'none';
+            return;
+        }
+        
+        const imageData = await getImageAsBase64(pageImageElement.src);
+        if (!imageData) {
+            translateResult.innerHTML = '<p>Sorry, could not process the image.</p>';
+            translateLoading.style.display = 'none';
+            return;
+        }
+
+        requestBody = {
+            contents: [{
+                parts: [
+                    { text: "قم بتحليل محتوى هذه الصفحة من كتاب الفيزياء وترجم المفاهيم الرئيسية والمعادلات والشروحات إلى اللغة العربية. قدم ترجمة واضحة ودقيقة علمياً مع شرح المصطلحات الفيزيائية." },
+                    {
+                        inline_data: {
+                            mime_type: "image/png",
+                            data: imageData
+                        }
+                    }
+                ]
+            }]
+        };
+
+    } else if (type === 'concept') {
+        const concept = window.prompt("أدخل المفهوم الذي تريد ترجمته | Enter the concept to translate:", "e.g., Pascal's Principle");
+        if (!concept) { 
+            translateLoading.style.display = 'none'; 
+            return; 
+        }
+        
+        const prompt = `قم بشرح وترجمة المفهوم الفيزيائي "${concept}" من "${chapter}" إلى اللغة العربية. قدم:
+        1. الترجمة الدقيقة للمصطلح
+        2. شرح المفهوم بالعربية
+        3. المعادلات المتعلقة (إن وجدت) مع الشرح بالعربية
+        4. مثال تطبيقي بسيط
+        
+        استخدم لغة عربية علمية واضحة ودقيقة.`;
+        
+        requestBody = {
+            contents: [{ parts: [{ text: prompt }] }]
+        };
+
+    } else if (type === 'summary') {
+        const prompt = `قم بإنشاء ملخص شامل باللغة العربية لـ "${chapter}" من كتاب الفيزياء. يجب أن يتضمن:
+        1. المفاهيم والمبادئ الأساسية
+        2. المعادلات الرئيسية مع شرحها
+        3. التطبيقات المهمة
+        4. المفاهيم الخاطئة الشائعة
+        
+        استخدم لغة عربية علمية واضحة وسلسة مناسبة لطلاب العلوم الحياتية.`;
+        
+        requestBody = {
+            contents: [{ parts: [{ text: prompt }] }]
+        };
+    }
+    
+    try {
+      const response = await callGeminiAPI(requestBody);
+      translateResult.innerHTML = `
+        <div class="translation-result">
+          ${marked.parse(response)}
+        </div>
+      `;
+    } catch (error) {
+      console.error("Translation Error:", error);
+      translateResult.innerHTML = `<p style="color: red;">خطأ في الترجمة | Error: ${error.message}</p>`;
+    } finally {
+      translateLoading.style.display = 'none';
+    }
+  }
+
+  function switchNotebookTab(tab) {
     document.querySelectorAll('.notebook-tab').forEach(t => t.classList.remove('active'));
     document.querySelectorAll('.notebook-section').forEach(s => s.classList.remove('active'));
+    
     event.target.classList.add('active');
     document.getElementById(tab + 'Section').classList.add('active');
   }
 
   async function sendChatMessage() {
-      const input = document.getElementById('chatInput');
-      const sendBtn = document.getElementById('chatSendBtn');
-      const message = input.value.trim();
-      if (!message || sendBtn.disabled) return;
-      
-      if (!GEMINI_API_KEY || GEMINI_API_KEY === 'YOUR_API_KEY_HERE') {
-          addChatMessage('assistant', 'Please add your actual Gemini API key in the script.');
-          return;
-      }
-
-      addChatMessage('user', message);
-      input.value = '';
-      input.disabled = true;
-      sendBtn.disabled = true;
-
-      const chapter = getCurrentChapter().title;
-      conversationHistory.push({ role: "user", parts: [{text: message}] });
-      
-      const systemPrompt = { role: "user", parts: [{text: `You are a study assistant for a physics textbook. The student is reading "${chapter}". Answer questions suitable for life science students. IMPORTANT: Use LaTeX notation for all mathematical equations: $...$ for inline and $$...$$ for display.`}] };
-      
-      try {
-        const response = await callGeminiAPI({ contents: [systemPrompt, ...conversationHistory] });
-        conversationHistory.push({ role: "model", parts: [{text: response}] });
-        addChatMessage('assistant', response);
-      } catch (error) {
-        addChatMessage('assistant', `Sorry, an error occurred: ${error.message}`);
-      } finally {
-        input.disabled = false;
-        sendBtn.disabled = false;
-        input.focus();
-      }
-  }
-
-  function addChatMessage(sender, text, isFirstMessage = false) {
-      const container = document.getElementById('chatContainer');
-      if (isFirstMessage) container.innerHTML = '';
-      const messageDiv = document.createElement('div');
-      messageDiv.className = `chat-message ${sender}`;
-      parseAndRenderMarkdown(text, messageDiv);
-      container.appendChild(messageDiv);
-      container.scrollTop = container.scrollHeight;
-  }
-  
-  async function notebookGenerate(type, resultElId, btnId) {
-    if (!GEMINI_API_KEY || GEMINI_API_KEY === 'YOUR_API_KEY_HERE') {
-        document.getElementById(resultElId).textContent = 'Please add your actual Gemini API key.';
+    const message = chatInput.value.trim();
+    if (!message) return;
+    
+    if (!GEMINI_API_KEY || GEMINI_API_KEY === 'AIzaSyB9k3RN6Ka9wI94FtHEAp37Z_rVjUSxWuJ') {
+        addChatMessage('assistant', 'Please add your actual Gemini API key.');
         return;
     }
+
+    addChatMessage('user', message);
+    chatInput.value = '';
     
-    const loadingEl = document.getElementById('notebookLoading');
-    const resultEl = document.getElementById(resultElId);
-    const btn = document.getElementById(btnId);
-
-    loadingEl.style.display = 'block';
-    resultEl.innerHTML = '';
-    btn.disabled = true;
-
+    notebookLoading.style.display = 'block';
+    
     const chapter = getCurrentChapter().title;
-    let prompt;
-
-    if(type === 'summary') {
-        prompt = `Create a comprehensive summary of "${chapter}" from a physics textbook for life science students. Include main concepts, key formulas, and important applications. Format it clearly. IMPORTANT: Use LaTeX notation for all equations: $...$ for inline, $$...$$ for display.`;
-    } else if (type === 'guide') {
-        prompt = `Create a study guide for "${chapter}". Include: Learning objectives, key terms, important equations, 3 practice problems (easy, medium, hard), and study tips. IMPORTANT: Use LaTeX notation for all equations: $...$ for inline, $$...$$ for display.`;
-    }
-
+    conversationHistory.push({
+      role: "user",
+      parts: [{text: message}]
+    });
+    
+    const systemPrompt = {
+      role: "user",
+      parts: [{text: `You are a helpful study assistant for a physics textbook. The student is currently reading "${chapter}". Answer their questions clearly and concisely. If they ask about concepts from this chapter, explain them in simple terms suitable for life science students. IMPORTANT: Use LaTeX notation for all mathematical equations: $...$ for inline math and $...$ for display equations. Example: $\\rho = \\frac{m}{V}$ or $P = \\frac{F}{A}$`}]
+    };
+    
     try {
-        const response = await callGeminiAPI({ contents: [{ parts: [{ text: prompt }] }] });
-        const contentDiv = document.createElement('div');
-        contentDiv.className = type === 'summary' ? 'summary-box' : 'study-guide-item';
-        parseAndRenderMarkdown(response, contentDiv);
-        resultEl.appendChild(contentDiv);
+      const requestBody = {
+        contents: [systemPrompt, ...conversationHistory]
+      };
+      
+      const response = await callGeminiAPI(requestBody);
+      
+      conversationHistory.push({
+        role: "model",
+        parts: [{text: response}]
+      });
+      
+      addChatMessage('assistant', response);
     } catch (error) {
-        resultEl.textContent = `Error: ${error.message}`;
+      console.error("Chat Error:", error);
+      addChatMessage('assistant', `Sorry, I encountered an error: ${error.message}`);
     } finally {
-        loadingEl.style.display = 'none';
-        btn.disabled = false;
+      notebookLoading.style.display = 'none';
     }
   }
 
-  // --- Translation Modal ---
-  const translateModal = document.getElementById('translateModal');
-  document.getElementById('translateToggle').addEventListener('click', () => {
-      document.getElementById('translateChapterTitle').textContent = getCurrentChapter().title;
-      document.getElementById('translateResult').innerHTML = '';
-      translateModal.style.display = 'flex';
-  });
-  function closeTranslate() { translateModal.style.display = 'none'; }
-  translateModal.addEventListener('click', (e) => { if (e.target === translateModal) closeTranslate(); });
+  function addChatMessage(sender, text) {
+    const messageDiv = document.createElement('div');
+    messageDiv.className = `chat-message ${sender}`;
+    messageDiv.innerHTML = marked.parse(text);
+    renderMathInElement(messageDiv);
+    chatContainer.appendChild(messageDiv);
+    chatContainer.scrollTop = chatContainer.scrollHeight;
+  }
 
-  async function translateContent(type) {
-    if (!GEMINI_API_KEY || GEMINI_API_KEY === 'YOUR_API_KEY_HERE') {
-        document.getElementById('translateResult').innerHTML = '<p style="color: red;">Please add your actual Gemini API key.</p>';
+  async function generateSummary() {
+    if (!GEMINI_API_KEY || GEMINI_API_KEY === 'AIzaSyB9k3RN6Ka9wI94FtHEAp37Z_rVjUSxWuJ') {
+        document.getElementById('summaryResult').textContent = 'Please add your actual Gemini API key.';
         return;
     }
-    
-    const loadingEl = document.getElementById('translateLoading');
-    const resultEl = document.getElementById('translateResult');
-    const buttons = document.querySelectorAll('#translateButtons button');
 
-    loadingEl.style.display = 'block';
-    resultEl.innerHTML = '';
-    buttons.forEach(b => b.disabled = true);
+    notebookLoading.style.display = 'block';
+    document.getElementById('summaryResult').innerHTML = '';
     
     const chapter = getCurrentChapter().title;
+    const prompt = `Create a comprehensive summary of "${chapter}" from a physics textbook for life science students. Include:
+    1. Main concepts and principles
+    2. Key formulas and their meanings
+    3. Important applications
+    4. Common misconceptions to avoid
+    
+    Format it clearly with sections. IMPORTANT: Use LaTeX notation for all equations: $...$ for inline math, $...$ for display equations. Example: $P = \\frac{F}{A}<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>PHYS101 Flipbook</title>
+  <link rel="icon" href="data:;base64,iVBORw0KGgo=">
+  <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+  <!-- KaTeX for mathematical equations -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css">
+  <script src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js"></script>
+  <style>
+    body { margin: 0; font-family: sans-serif; background: #f4f4f4; display: flex; flex-direction: column; align-items: center; }
+    #flipbook { width: 100%; max-width: 1200px; margin: auto; display: flex; flex-direction: column; align-items: center; background: #fff; padding: 8px 0; }
+    .page-image { width: 100%; height: auto; max-width: 100%; object-fit: contain; display: block; margin: 0 auto; }
+    #lockScreen { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); display: flex; justify-content: center; align-items: center; z-index: 3000; }
+    .lock-box { background: #fff; padding: 2rem; border-radius: 8px; text-align: center; max-width: 300px; box-shadow: 0 4px 12px rgba(0,0,0,0.25); }
+    .lock-box input { width: 90%; padding: 0.5rem; font-size: 1rem; margin: 0.5rem 0; }
+    .lock-box button { padding: 0.5rem 1rem; background: #007acc; color: #fff; border: none; border-radius: 6px; cursor: pointer; }
+    .lock-box button:hover { background:#005fa3; }
+    .toolbar { margin: 0.5rem; display: flex; justify-content: center; gap: 0.6rem; flex-wrap: wrap; }
+    button { padding: 0.45rem 0.9rem; border: none; border-radius: 8px; background: #007acc; color: white; font-size: 0.95rem; cursor: pointer; transition: background 0.18s; }
+    button:hover { background: #005fa3; }
+    #pageInput { width: 70px; padding: 0.3rem; font-size: 1rem; text-align: center; }
+    .thumbbar { display: flex; overflow-x: auto; padding: 0.45rem; background: #fff; border-top: 1px solid #ccc; border-bottom: 1px solid #ccc; gap: 6px; width: 100%; max-width: 1200px; }
+    .thumbbar img { height: 80px; cursor: pointer; border: 2px solid transparent; transition: border 0.18s; }
+    .thumbbar img.active { border: 2px solid #007acc; }
+    @media (max-width: 768px) { .thumbbar img { height: 60px; } }
+    #footer { width: 100%; max-width: 1200px; display: flex; align-items: center; justify-content: space-between; padding: 0.5rem 1rem; box-sizing: border-box; position: relative; }
+    .footer-left, .footer-right { display: flex; align-items: center; gap: 0.6rem; }
+    #pageCounter { font-size:1rem; color:#333; }
+    #indexToggle, #fullBtn, #shareBtn { padding: 0.4rem 0.8rem; font-size: 0.9rem; border: none; border-radius: 4px; background: #007acc; color: white; cursor: pointer; }
+    #indexMenu { position: absolute; display: none; flex-direction: column; background: rgba(128,128,128,0.75); border: 1px solid rgba(0,0,0,0.15); border-radius: 6px; box-shadow: 0 6px 18px rgba(0,0,0,0.2); padding: 0.4rem; width: max-content; max-width: 90vw; white-space: nowrap; overflow-x: auto; z-index: 1200; }
+    #indexMenu button { background: none; border: none; text-align: left; padding: 0.35rem 0.5rem; font-size: 0.95rem; cursor: pointer; width: 100%; color: #000; }
+    #indexMenu button:hover { background: rgba(255,255,255,0.15); }
+    
+    /* AI Helper Styles */
+    #aiHelperToggle { position: fixed; bottom: 20px; right: 20px; width: 50px; height: 50px; border-radius: 50%; font-size: 1.5rem; z-index: 2000; box-shadow: 0 4px 10px rgba(0,0,0,0.2); }
+    #notebookToggle { position: fixed; bottom: 80px; right: 20px; width: 50px; height: 50px; border-radius: 50%; font-size: 1.5rem; z-index: 2000; box-shadow: 0 4px 10px rgba(0,0,0,0.2); background: #ea4335; }
+    #notebookToggle:hover { background: #d33426; }
+    #translateToggle { position: fixed; bottom: 140px; right: 20px; width: 50px; height: 50px; border-radius: 50%; font-size: 1.5rem; z-index: 2000; box-shadow: 0 4px 10px rgba(0,0,0,0.2); background: #34a853; }
+    #translateToggle:hover { background: #2d8e47; }
+    
+    .modal { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); display: none; justify-content: center; align-items: center; z-index: 2500; }
+    .modal-content { background: #fff; padding: 1.5rem; border-radius: 12px; width: 90%; max-width: 600px; max-height: 90vh; overflow-y: auto; position: relative; box-shadow: 0 5px 15px rgba(0,0,0,0.3); }
+    .modal-close { position: absolute; top: 10px; right: 10px; background: #eee; color: #333; border-radius: 50%; width: 30px; height: 30px; padding: 0; line-height: 30px; text-align: center; cursor: pointer; }
+    .modal-buttons { display: flex; gap: 10px; margin: 1rem 0; flex-wrap: wrap; justify-content: center; }
+    .modal-response { margin-top: 1rem; padding-top: 1rem; border-top: 1px solid #eee; white-space: pre-wrap; line-height: 1.6; }
+    .modal-response h3 { margin-top: 0; }
+    .modal-response ul { padding-left: 20px; }
+    
+    /* NotebookLM Styles */
+    .notebook-tabs { display: flex; gap: 0.5rem; margin-bottom: 1rem; border-bottom: 2px solid #e0e0e0; }
+    .notebook-tab { padding: 0.5rem 1rem; background: none; border: none; cursor: pointer; color: #666; font-weight: 500; border-bottom: 3px solid transparent; }
+    .notebook-tab.active { color: #ea4335; border-bottom-color: #ea4335; }
+    .notebook-section { display: none; }
+    .notebook-section.active { display: block; }
+    .chat-container { display: flex; flex-direction: column; gap: 1rem; max-height: 400px; overflow-y: auto; padding: 1rem; background: #f9f9f9; border-radius: 8px; }
+    .chat-message { padding: 0.75rem; border-radius: 8px; max-width: 85%; }
+    .chat-message.user { background: #e3f2fd; margin-left: auto; text-align: right; }
+    .chat-message.assistant { background: #fff; border: 1px solid #e0e0e0; }
+    .chat-input-container { display: flex; gap: 0.5rem; margin-top: 1rem; }
+    .chat-input { flex: 1; padding: 0.75rem; border: 1px solid #ddd; border-radius: 8px; font-size: 0.95rem; }
+    .chat-send { padding: 0.75rem 1.5rem; }
+    .summary-box { background: #f0f7ff; padding: 1rem; border-radius: 8px; border-left: 4px solid #007acc; margin: 1rem 0; }
+    .study-guide-item { background: #fff; padding: 1rem; margin: 0.5rem 0; border-radius: 8px; border: 1px solid #e0e0e0; }
+    .translate-options { display: flex; gap: 0.5rem; margin: 1rem 0; flex-wrap: wrap; }
+    .translate-btn { flex: 1; min-width: 120px; }
+    .translation-result { background: #f9f9f9; padding: 1rem; border-radius: 8px; margin-top: 1rem; border: 2px solid #34a853; direction: rtl; text-align: right; font-size: 1.1rem; line-height: 1.8; }
+  </style>
+</head>
+<body>
 
+<div id="lockScreen">
+  <div class="lock-box">
+    <h2>Enter your Student ID</h2>
+    <input id="idInput" type="text" maxlength="12" placeholder="Student ID" />
+    <button onclick="checkID()">Unlock</button>
+    <p id="idError" style="color:red;display:none;">Invalid ID</p>
+  </div>
+</div>
+
+<div class="toolbar">
+  <button onclick="firstPage()">⏮ First</button>
+  <button onclick="prevPage()">⬅ Prev</button>
+  <input id="pageInput" type="number" min="1" placeholder="Page #" />
+  <button onclick="jumpToPage()">Go</button>
+  <button onclick="nextPage()">Next ➡</button>
+  <button onclick="lastPage()">⏭ Last</button>
+</div>
+
+<div id="thumbbar" class="thumbbar"></div>
+<div id="flipbook"></div>
+
+<div id="footer">
+  <div class="footer-left">
+    <button id="indexToggle" aria-expanded="false">☰ Index</button>
+  </div>
+  <div id="pageCounter">Page 1 / 292</div>
+  <div class="footer-right">
+    <button id="fullBtn" onclick="toggleFullScreen()">⛶</button>
+    <button id="shareBtn" onclick="shareBook()">🔗</button>
+  </div>
+  <div id="indexMenu" role="menu" aria-hidden="true"></div>
+</div>
+
+<!-- AI Study Helper -->
+<button id="aiHelperToggle">🧠</button>
+<div id="aiHelperModal" class="modal">
+  <div class="modal-content">
+    <button class="modal-close" onclick="closeAiHelper()">×</button>
+    <h2>AI Study Helper</h2>
+    <p>Get help with <strong id="aiChapterTitle">Chapter 1</strong>.</p>
+    <div class="modal-buttons">
+      <button onclick="getAiHelp('explain')">Explain a Concept</button>
+      <button onclick="getAiHelp('quiz')">Quiz Me on Chapter</button>
+      <button onclick="getAiHelp('relate')">Relate to Life Sciences</button>
+      <button onclick="getAiHelp('analyze_page')">Analyze This Page</button>
+    </div>
+    <div id="aiResponse" class="modal-response"></div>
+    <div id="aiLoading" style="display: none;">Thinking...</div>
+  </div>
+</div>
+
+<!-- NotebookLM-Style Assistant -->
+<button id="notebookToggle">📚</button>
+
+<!-- Arabic Translation -->
+<button id="translateToggle">🌐</button>
+<div id="translateModal" class="modal">
+  <div class="modal-content">
+    <button class="modal-close" onclick="closeTranslate()">×</button>
+    <h2>🌐 Arabic Translation | الترجمة العربية</h2>
+    <p>Translate content from <strong id="translateChapterTitle">Chapter 1</strong> to Arabic</p>
+    
+    <div class="translate-options">
+      <button class="translate-btn" onclick="translateContent('page')">Translate Current Page</button>
+      <button class="translate-btn" onclick="translateContent('concept')">Translate a Concept</button>
+      <button class="translate-btn" onclick="translateContent('summary')">Translate Chapter Summary</button>
+    </div>
+    
+    <div id="translateResult"></div>
+    <div id="translateLoading" style="display: none; text-align: center; padding: 1rem;">
+      <div>جاري الترجمة... Translating...</div>
+    </div>
+  </div>
+</div>
+
+<div id="notebookModal" class="modal">
+  <div class="modal-content">
+    <button class="modal-close" onclick="closeNotebook()">×</button>
+    <h2>📚 Study Notebook</h2>
+    <p>Your AI-powered study companion for <strong id="notebookChapterTitle">Chapter 1</strong></p>
+    
+    <div class="notebook-tabs">
+      <button class="notebook-tab active" onclick="switchNotebookTab('chat')">💬 Chat</button>
+      <button class="notebook-tab" onclick="switchNotebookTab('summary')">📝 Summary</button>
+      <button class="notebook-tab" onclick="switchNotebookTab('guide')">📖 Study Guide</button>
+    </div>
+    
+    <div id="chatSection" class="notebook-section active">
+      <div id="chatContainer" class="chat-container">
+        <div class="chat-message assistant">
+          Hi! I'm your study assistant. Ask me anything about this chapter!
+        </div>
+      </div>
+      <div class="chat-input-container">
+        <input id="chatInput" class="chat-input" placeholder="Ask a question about this chapter..." onkeypress="if(event.key==='Enter') sendChatMessage()" />
+        <button class="chat-send" onclick="sendChatMessage()">Send</button>
+      </div>
+    </div>
+    
+    <div id="summarySection" class="notebook-section">
+      <div id="summaryContent">
+        <button onclick="generateSummary()" style="width: 100%; margin-bottom: 1rem;">Generate Chapter Summary</button>
+        <div id="summaryResult"></div>
+      </div>
+    </div>
+    
+    <div id="guideSection" class="notebook-section">
+      <div id="guideContent">
+        <button onclick="generateStudyGuide()" style="width: 100%; margin-bottom: 1rem;">Generate Study Guide</button>
+        <div id="guideResult"></div>
+      </div>
+    </div>
+    
+    <div id="notebookLoading" style="display: none; text-align: center; padding: 1rem;">
+      <div>Thinking...</div>
+    </div>
+  </div>
+</div>
+
+<script>
+  const config = {
+      totalPages: 292,
+      imagePath: './images/Book_PHYS101_',
+      thumbPath: './thumbs/Book_PHYS101_',
+      chapters: [
+          { title: "CHAPTER 1 – Physics and Measurements", page: 8 },
+          { title: "CHAPTER 2 – Solids and Elasticity", page: 40 },
+          { title: "CHAPTER 3 – Fluids", page: 62 },
+          { title: "CHAPTER 4 – Thermal Physics", page: 134 },
+          { title: "CHAPTER 5 – Waves and Sound", page: 216 },
+          { title: "APPENDIX", page: 278 }
+      ]
+  };
+
+  let ALLOWED_IDS = [];
+  async function loadIDs() {
     try {
-        let requestBody;
-        if (type === 'page') {
-            const pageImageElement = document.querySelector('.page-image');
-            const imageData = await getImageAsBase64(pageImageElement.src);
-            if (!imageData) throw new Error("Could not process the page image.");
+      const res = await fetch("./students.json");
+      if (!res.ok) throw new Error("File not found");
+      ALLOWED_IDS = (await res.json()).allowed;
+    } catch (err) { console.error("Could not load student IDs:", err); }
+  }
+  loadIDs();
+  
+  function checkID() {
+    const entered = document.getElementById("idInput").value.trim();
+    if (ALLOWED_IDS.includes(entered)) {
+      document.getElementById("lockScreen").style.display = "none";
+    } else {
+      document.getElementById("idError").style.display = "block";
+    }
+  }
 
-            requestBody = { contents: [{ parts: [
-                { text: "Analyze the content of this physics textbook page and translate the key concepts, equations, and explanations into clear, scientifically accurate Arabic." },
-                { inline_data: { mime_type: "image/png", data: imageData } }
-            ]}]};
-        } else {
-            let userPrompt;
-            switch(type) {
-                case 'concept':
-                    const concept = window.prompt("Enter the concept to translate:", "e.g., Pascal's Principle");
-                    if (!concept) throw new Error("No concept provided.");
-                    userPrompt = `Translate the physics term "${concept}" into Arabic and provide a clear explanation of the concept in Arabic.`;
-                    break;
-                case 'summary':
-                    userPrompt = `Create a comprehensive chapter summary of "${chapter}" in clear, scientifically accurate Arabic.`;
-                    break;
-                default: throw new Error("Invalid translation type.");
-            }
-            requestBody = { contents: [{ parts: [{ text: userPrompt }] }] };
+  const totalPages = config.totalPages;
+  const images = Array.from({ length: totalPages }, (_, i) => `${config.imagePath}${i}.png`);
+  const thumbs = Array.from({ length: totalPages }, (_, i) => `${config.thumbPath}${i}.jpg`);
+  let currentPage = 0;
+  const flipbook = document.getElementById("flipbook");
+  const thumbbar = document.getElementById("thumbbar");
+  const counter = document.getElementById("pageCounter");
+  const pageInput = document.getElementById("pageInput");
+  const footer = document.getElementById("footer");
+  const indexToggle = document.getElementById("indexToggle");
+  const indexMenu = document.getElementById("indexMenu");
+
+  function renderPage() {
+    flipbook.innerHTML = "";
+    const img = document.createElement("img");
+    img.className = "page-image";
+    img.src = images[currentPage];
+    img.alt = `Page ${currentPage + 1}`;
+    img.crossOrigin = "anonymous";
+    img.onerror = () => { img.alt = "Image not available"; img.style.opacity = 0.5; };
+    const wrap = document.createElement("div");
+    wrap.className = "flipbook-page";
+    wrap.appendChild(img);
+    flipbook.appendChild(wrap);
+    counter.textContent = `Page ${currentPage + 1} / ${totalPages}`;
+    highlightThumb();
+  }
+
+  function renderThumbs() {
+    thumbbar.innerHTML = "";
+    thumbs.forEach((src, i) => {
+      const t = document.createElement("img");
+      t.src = src;
+      t.alt = `Thumb ${i + 1}`;
+      t.loading = "lazy";
+      t.addEventListener("click", () => { currentPage = i; renderPage(); });
+      t.onerror = () => { t.style.opacity = 0.6; };
+      thumbbar.appendChild(t);
+    });
+  }
+
+  function highlightThumb() {
+    let activeThumb = null;
+    thumbbar.querySelectorAll("img").forEach((im, i) => {
+        const isActive = i === currentPage;
+        im.classList.toggle("active", isActive);
+        if (isActive) { activeThumb = im; }
+    });
+    if (activeThumb) {
+      activeThumb.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
+    }
+  }
+
+  function renderIndex() {
+      indexMenu.innerHTML = "";
+      config.chapters.forEach(chapter => {
+          const button = document.createElement("button");
+          button.textContent = chapter.title;
+          button.onclick = () => goToPage(chapter.page);
+          indexMenu.appendChild(button);
+      });
+  }
+
+  function nextPage(){ if(currentPage < images.length-1){ currentPage++; renderPage(); } }
+  function prevPage(){ if(currentPage > 0){ currentPage--; renderPage(); } }
+  function firstPage(){ currentPage = 0; renderPage(); }
+  function lastPage(){ currentPage = images.length-1; renderPage(); }
+  function jumpToPage(){
+    const v = parseInt(pageInput.value,10);
+    if(!isNaN(v)&&v>=1&&v<=totalPages){ currentPage = v-1; renderPage(); }
+  }
+  function toggleFullScreen(){
+    if(!document.fullscreenElement){ document.documentElement.requestFullscreen(); }
+    else{ document.exitFullscreen(); }
+  }
+  function shareBook(){
+    if(navigator.share){
+      navigator.share({title:"PHYS101 Flipbook",url:window.location.href}).catch(()=>{});
+    } else {
+      navigator.clipboard?.writeText(window.location.href);
+      alert("Link copied to clipboard!");
+    }
+  }
+  function openIndexMenu() {
+    const left = indexToggle.offsetLeft;
+    const btnTop = indexToggle.offsetTop;
+    const btnHeight = indexToggle.offsetHeight;
+    const footerHeight = footer.clientHeight;
+    indexMenu.style.left = `${left}px`;
+    indexMenu.style.bottom = `${footerHeight - btnTop + btnHeight + 8}px`;
+    indexMenu.style.top = "auto";
+    indexMenu.style.display = "flex";
+    indexMenu.setAttribute("aria-hidden","false");
+    indexToggle.setAttribute("aria-expanded","true");
+  }
+  function closeIndexMenu(){
+    indexMenu.style.display="none";
+    indexMenu.setAttribute("aria-hidden","true");
+    indexToggle.setAttribute("aria-expanded","false");
+  }
+  indexToggle.addEventListener("click", e=>{
+    e.stopPropagation();
+    indexMenu.style.display==="flex"?closeIndexMenu():openIndexMenu();
+  });
+  indexMenu.addEventListener("click", e=>e.stopPropagation());
+  document.addEventListener("click", e=>{
+    if(indexMenu.style.display==="flex" && !indexMenu.contains(e.target) && !indexToggle.contains(e.target)){
+      closeIndexMenu();
+    }
+  });
+  function goToPage(page){
+    if(page>=0 && page<images.length){
+      currentPage = page;
+      renderPage();
+      closeIndexMenu();
+    }
+  }
+  window.goToPage = goToPage;
+
+  let touchStartX = 0, touchEndX = 0;
+  function handleTouchStart(e){ touchStartX = e.changedTouches[0].screenX; }
+  function handleTouchEnd(e){ touchEndX = e.changedTouches[0].screenX; handleSwipeGesture(); }
+  function handleSwipeGesture(){
+    const diff = touchEndX - touchStartX;
+    if(Math.abs(diff) > 40){
+      if(diff > 0){ prevPage(); } else{ nextPage(); }
+    }
+  }
+  flipbook.addEventListener("touchstart", handleTouchStart, {passive:true});
+  flipbook.addEventListener("touchend", handleTouchEnd, {passive:true});
+  document.addEventListener("keydown", e=>{
+    if(e.key==="ArrowRight") nextPage();
+    if(e.key==="ArrowLeft") prevPage();
+    if(e.key==="Escape" && indexMenu.style.display==="flex") closeIndexMenu();
+  });
+
+  // AI HELPER LOGIC
+  const aiModal = document.getElementById('aiHelperModal');
+  const aiHelperToggle = document.getElementById('aiHelperToggle');
+  const aiResponseEl = document.getElementById('aiResponse');
+  const aiLoadingEl = document.getElementById('aiLoading');
+  const aiChapterTitleEl = document.getElementById('aiChapterTitle');
+  
+  const GEMINI_API_KEY = 'AIzaSyB9k3RN6Ka9wI94FtHEAp37Z_rVjUSxWuJ';
+
+  async function getImageAsBase64(url) {
+      try {
+          const response = await fetch(url);
+          const blob = await response.blob();
+          return new Promise((resolve, reject) => {
+              const reader = new FileReader();
+              reader.onloadend = () => resolve(reader.result.split(',')[1]);
+              reader.onerror = reject;
+              reader.readAsDataURL(blob);
+          });
+      } catch (error) {
+          console.error("Error fetching or converting image:", error);
+          return null;
+      }
+  }
+
+  aiHelperToggle.addEventListener('click', () => {
+    const currentChapter = getCurrentChapter();
+    aiChapterTitleEl.textContent = currentChapter.title;
+    aiResponseEl.innerHTML = '';
+    aiModal.style.display = 'flex';
+  });
+
+  function closeAiHelper() {
+    aiModal.style.display = 'none';
+  }
+
+  aiModal.addEventListener('click', (e) => {
+    if(e.target === aiModal) { closeAiHelper(); }
+  });
+
+  function getCurrentChapter() {
+      let currentChapter = config.chapters[0];
+      for (let i = config.chapters.length - 1; i >= 0; i--) {
+          if (currentPage >= config.chapters[i].page) {
+              currentChapter = config.chapters[i];
+              break;
+          }
+      }
+      return currentChapter;
+  }
+
+  async function callGeminiAPI(requestBody) {
+    const API_URL = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${GEMINI_API_KEY}`;
+    
+    const response = await fetch(API_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(requestBody)
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(`API error: ${errorData.error?.message || response.statusText}`);
+    }
+
+    const data = await response.json();
+    return data.candidates?.[0]?.content?.parts?.[0]?.text || "No response text found.";
+  }
+
+  function renderMathInElement(element) {
+    if (window.renderMathInElement) {
+      renderMathInElement(element, {
+        delimiters: [
+          {left: '$', right: '$', display: true},
+          {left: '
+
+  async function getAiHelp(type) {
+    if (!GEMINI_API_KEY || GEMINI_API_KEY === 'AIzaSyB9k3RN6Ka9wI94FtHEAp37Z_rVjUSxWuJ') {
+        aiResponseEl.textContent = "Please add your actual Gemini API key.";
+        return;
+    }
+
+    aiLoadingEl.style.display = 'block';
+    aiResponseEl.innerHTML = '';
+
+    let requestBody;
+    const chapter = getCurrentChapter().title;
+
+            if (type === 'analyze_page') {
+        const pageImageElement = document.querySelector('.page-image');
+        if (!pageImageElement) {
+            aiResponseEl.textContent = "Could not find the page image to analyze.";
+            aiLoadingEl.style.display = 'none';
+            return;
         }
         
-        const response = await callGeminiAPI(requestBody);
-        resultEl.innerHTML = `<div class="translation-result">${marked.parse(response)}</div>`;
-
-    } catch (error) {
-        if (error.message !== "No concept provided.") {
-            resultEl.innerHTML = `<p style="color: red;">Translation Error: ${error.message}</p>`;
+        const imageData = await getImageAsBase64(pageImageElement.src);
+        if (!imageData) {
+            aiResponseEl.textContent = "Sorry, I couldn't process the page image.";
+            aiLoadingEl.style.display = 'none';
+            return;
         }
+
+        requestBody = {
+            contents: [{
+                parts: [
+                    { text: "Analyze the content of this textbook page. Summarize the key concepts, explain any important formulas or diagrams, and provide a key takeaway for a life science student. IMPORTANT: For all mathematical equations, use LaTeX notation with $ for inline math and $ for display math. For example: $\\rho = \\frac{m}{V}$ for inline or $P = \\frac{F}{A}$ for display equations." },
+                    {
+                        inline_data: {
+                            mime_type: "image/png",
+                            data: imageData
+                        }
+                    }
+                ]
+            }]
+        };
+
+    } else {
+        let aiPrompt;
+        switch(type) {
+          case 'explain':
+            const concept = window.prompt("What concept from this chapter would you like explained?", "e.g., 'Pascal's Principle'");
+            if (!concept) { aiLoadingEl.style.display = 'none'; return; }
+            aiPrompt = `You are a physics tutor for university students in life sciences. Explain the concept of "${concept}" from the chapter "${chapter}" in a simple and clear way. Use LaTeX notation for all mathematical equations: use $...$ for inline math and $...$ for display equations. For example: $\\rho = \\frac{m}{V}$ or $P = \\frac{F}{A}$`;
+            break;
+          case 'quiz':
+            aiPrompt = `You are a physics tutor. Based on the chapter "${chapter}", generate 2 multiple-choice quiz questions with 4 options each to test a student's understanding. Provide a brief explanation for the correct answer. Bold the correct answer and its letter. Use LaTeX notation for all equations: $...$ for inline math, $...$ for display equations.`;
+            break;
+          case 'relate':
+            aiPrompt = `You are a physics tutor for life science students. For the chapter on "${chapter}", provide two clear examples of how these physics principles apply directly to biology or medicine. Use LaTeX for any equations: $...$ for inline, $...$ for display.`;
+            break;
+          default:
+            aiLoadingEl.style.display = 'none';
+            return;
+        }
+        requestBody = {
+            contents: [{ parts: [{ text: aiPrompt }] }]
+        };
+    }
+    
+    try {
+      const text = await callGeminiAPI(requestBody);
+      parseAndRenderMarkdown(text, aiResponseEl);
+    } catch (error) {
+      console.error("AI Helper Error:", error);
+      aiResponseEl.textContent = `Sorry, I couldn't get a response: ${error.message}`;
     } finally {
-        loadingEl.style.display = 'none';
-        buttons.forEach(b => b.disabled = false);
+      aiLoadingEl.style.display = 'none';
     }
   }
 
+  // NOTEBOOKLM-STYLE FEATURES
+  const notebookModal = document.getElementById('notebookModal');
+  const notebookToggle = document.getElementById('notebookToggle');
+  const notebookChapterTitleEl = document.getElementById('notebookChapterTitle');
+  const chatContainer = document.getElementById('chatContainer');
+  const chatInput = document.getElementById('chatInput');
+  const notebookLoading = document.getElementById('notebookLoading');
+  
+  // ARABIC TRANSLATION FEATURES
+  const translateModal = document.getElementById('translateModal');
+  const translateToggle = document.getElementById('translateToggle');
+  const translateChapterTitleEl = document.getElementById('translateChapterTitle');
+  const translateResult = document.getElementById('translateResult');
+  const translateLoading = document.getElementById('translateLoading');
+  
+  let conversationHistory = [];
 
-  // --- INITIALIZE APP ---
-  document.addEventListener("DOMContentLoaded", () => {
-    pageInput.max = totalPages;
-    renderThumbs();
-    renderIndex();
-    checkUrlForPage(); // Load page from URL or default to first page
+  notebookToggle.addEventListener('click', () => {
+    const currentChapter = getCurrentChapter();
+    notebookChapterTitleEl.textContent = currentChapter.title;
+    notebookModal.style.display = 'flex';
   });
 
+  function closeNotebook() {
+    notebookModal.style.display = 'none';
+  }
+
+  notebookModal.addEventListener('click', (e) => {
+    if(e.target === notebookModal) { closeNotebook(); }
+  });
+
+  // Arabic Translation Functions
+  translateToggle.addEventListener('click', () => {
+    const currentChapter = getCurrentChapter();
+    translateChapterTitleEl.textContent = currentChapter.title;
+    translateResult.innerHTML = '';
+    translateModal.style.display = 'flex';
+  });
+
+  function closeTranslate() {
+    translateModal.style.display = 'none';
+  }
+
+  translateModal.addEventListener('click', (e) => {
+    if(e.target === translateModal) { closeTranslate(); }
+  });
+
+  async function translateContent(type) {
+    if (!GEMINI_API_KEY || GEMINI_API_KEY === 'AIzaSyB9k3RN6Ka9wI94FtHEAp37Z_rVjUSxWuJ') {
+        translateResult.innerHTML = '<p style="color: red;">Please add your actual Gemini API key.</p>';
+        return;
+    }
+
+    translateLoading.style.display = 'block';
+    translateResult.innerHTML = '';
+    
+    const chapter = getCurrentChapter().title;
+    let requestBody;
+
+    if (type === 'page') {
+        const pageImageElement = document.querySelector('.page-image');
+        if (!pageImageElement) {
+            translateResult.innerHTML = '<p>Could not find the page image.</p>';
+            translateLoading.style.display = 'none';
+            return;
+        }
+        
+        const imageData = await getImageAsBase64(pageImageElement.src);
+        if (!imageData) {
+            translateResult.innerHTML = '<p>Sorry, could not process the image.</p>';
+            translateLoading.style.display = 'none';
+            return;
+        }
+
+        requestBody = {
+            contents: [{
+                parts: [
+                    { text: "قم بتحليل محتوى هذه الصفحة من كتاب الفيزياء وترجم المفاهيم الرئيسية والمعادلات والشروحات إلى اللغة العربية. قدم ترجمة واضحة ودقيقة علمياً مع شرح المصطلحات الفيزيائية." },
+                    {
+                        inline_data: {
+                            mime_type: "image/png",
+                            data: imageData
+                        }
+                    }
+                ]
+            }]
+        };
+
+    } else if (type === 'concept') {
+        const concept = window.prompt("أدخل المفهوم الذي تريد ترجمته | Enter the concept to translate:", "e.g., Pascal's Principle");
+        if (!concept) { 
+            translateLoading.style.display = 'none'; 
+            return; 
+        }
+        
+        const prompt = `قم بشرح وترجمة المفهوم الفيزيائي "${concept}" من "${chapter}" إلى اللغة العربية. قدم:
+        1. الترجمة الدقيقة للمصطلح
+        2. شرح المفهوم بالعربية
+        3. المعادلات المتعلقة (إن وجدت) مع الشرح بالعربية
+        4. مثال تطبيقي بسيط
+        
+        استخدم لغة عربية علمية واضحة ودقيقة.`;
+        
+        requestBody = {
+            contents: [{ parts: [{ text: prompt }] }]
+        };
+
+    } else if (type === 'summary') {
+        const prompt = `قم بإنشاء ملخص شامل باللغة العربية لـ "${chapter}" من كتاب الفيزياء. يجب أن يتضمن:
+        1. المفاهيم والمبادئ الأساسية
+        2. المعادلات الرئيسية مع شرحها
+        3. التطبيقات المهمة
+        4. المفاهيم الخاطئة الشائعة
+        
+        استخدم لغة عربية علمية واضحة وسلسة مناسبة لطلاب العلوم الحياتية.`;
+        
+        requestBody = {
+            contents: [{ parts: [{ text: prompt }] }]
+        };
+    }
+    
+    try {
+      const response = await callGeminiAPI(requestBody);
+      translateResult.innerHTML = `
+        <div class="translation-result">
+          ${marked.parse(response)}
+        </div>
+      `;
+    } catch (error) {
+      console.error("Translation Error:", error);
+      translateResult.innerHTML = `<p style="color: red;">خطأ في الترجمة | Error: ${error.message}</p>`;
+    } finally {
+      translateLoading.style.display = 'none';
+    }
+  }
+
+  function switchNotebookTab(tab) {
+    document.querySelectorAll('.notebook-tab').forEach(t => t.classList.remove('active'));
+    document.querySelectorAll('.notebook-section').forEach(s => s.classList.remove('active'));
+    
+    event.target.classList.add('active');
+    document.getElementById(tab + 'Section').classList.add('active');
+  }
+
+  async function sendChatMessage() {
+    const message = chatInput.value.trim();
+    if (!message) return;
+    
+    if (!GEMINI_API_KEY || GEMINI_API_KEY === 'AIzaSyB9k3RN6Ka9wI94FtHEAp37Z_rVjUSxWuJ') {
+        addChatMessage('assistant', 'Please add your actual Gemini API key.');
+        return;
+    }
+
+    addChatMessage('user', message);
+    chatInput.value = '';
+    
+    notebookLoading.style.display = 'block';
+    
+    const chapter = getCurrentChapter().title;
+    conversationHistory.push({
+      role: "user",
+      parts: [{text: message}]
+    });
+    
+    const systemPrompt = {
+      role: "user",
+      parts: [{text: `You are a helpful study assistant for a physics textbook. The student is currently reading "${chapter}". Answer their questions clearly and concisely. If they ask about concepts from this chapter, explain them in simple terms suitable for life science students. IMPORTANT: Use LaTeX notation for all mathematical equations: $...$ for inline math and $...$ for display equations. Example: $\\rho = \\frac{m}{V}$ or $P = \\frac{F}{A}$`}]
+    };
+    
+    try {
+      const requestBody = {
+        contents: [systemPrompt, ...conversationHistory]
+      };
+      
+      const response = await callGeminiAPI(requestBody);
+      
+      conversationHistory.push({
+        role: "model",
+        parts: [{text: response}]
+      });
+      
+      addChatMessage('assistant', response);
+    } catch (error) {
+      console.error("Chat Error:", error);
+      addChatMessage('assistant', `Sorry, I encountered an error: ${error.message}`);
+    } finally {
+      notebookLoading.style.display = 'none';
+    }
+  }
+
+  function addChatMessage(sender, text) {
+    const messageDiv = document.createElement('div');
+    messageDiv.className = `chat-message ${sender}`;
+    messageDiv.innerHTML = marked.parse(text);
+    renderMathInElement(messageDiv);
+    chatContainer.appendChild(messageDiv);
+    chatContainer.scrollTop = chatContainer.scrollHeight;
+  }
+
+  async function generateSummary() {
+    if (!GEMINI_API_KEY || GEMINI_API_KEY === 'AIzaSyB9k3RN6Ka9wI94FtHEAp37Z_rVjUSxWuJ') {
+        document.getElementById('summaryResult').textContent = 'Please add your actual Gemini API key.';
+        return;
+    }
+
+    notebookLoading.style.display = 'block';
+    document.getElementById('summaryResult').innerHTML = '';
+    
+;
+    
+    try {
+      const requestBody = {
+        contents: [{ parts: [{ text: prompt }] }]
+      };
+      
+      const response = await callGeminiAPI(requestBody);
+      const summaryDiv = document.createElement('div');
+      summaryDiv.className = 'summary-box';
+      summaryDiv.innerHTML = marked.parse(response);
+      renderMathInElement(summaryDiv);
+      document.getElementById('summaryResult').innerHTML = '';
+      document.getElementById('summaryResult').appendChild(summaryDiv);
+    } catch (error) {
+      console.error("Summary Error:", error);
+      document.getElementById('summaryResult').textContent = `Error: ${error.message}`;
+    } finally {
+      notebookLoading.style.display = 'none';
+    }
+  }
+
+  async function generateStudyGuide() {
+    if (!GEMINI_API_KEY || GEMINI_API_KEY === 'AIzaSyB9k3RN6Ka9wI94FtHEAp37Z_rVjUSxWuJ') {
+        document.getElementById('guideResult').textContent = 'Please add your actual Gemini API key.';
+        return;
+    }
+
+    notebookLoading.style.display = 'block';
+    document.getElementById('guideResult').innerHTML = '';
+    
+    const chapter = getCurrentChapter().title;
+    const prompt = `Create a study guide for "${chapter}" from a physics textbook. Include:
+    1. Learning objectives (what students should master)
+    2. Key terms and definitions
+    3. Important equations with explanations
+    4. 5 practice problems with difficulty levels (easy, medium, hard)
+    5. Study tips specific to this chapter
+    
+    Make it practical and student-friendly. IMPORTANT: Use LaTeX notation for all equations: $...$ for inline, $...$ for display. Example: $\\rho = \\frac{m}{V}$`;
+    
+    try {
+      const requestBody = {
+        contents: [{ parts: [{ text: prompt }] }]
+      };
+      
+      const response = await callGeminiAPI(requestBody);
+      document.getElementById('guideResult').innerHTML = `
+        <div class="study-guide-item">
+          ${marked.parse(response)}
+        </div>
+      `;
+    } catch (error) {
+      console.error("Study Guide Error:", error);
+      document.getElementById('guideResult').textContent = `Error: ${error.message}`;
+    } finally {
+      notebookLoading.style.display = 'none';
+    }
+  }
+
+  pageInput.max = totalPages;
+  renderThumbs();
+  renderIndex();
+  renderPage();
+</script>
+</body>
+</html>, right: '
+
+  async function getAiHelp(type) {
+    if (!GEMINI_API_KEY || GEMINI_API_KEY === 'AIzaSyB9k3RN6Ka9wI94FtHEAp37Z_rVjUSxWuJ') {
+        aiResponseEl.textContent = "Please add your actual Gemini API key.";
+        return;
+    }
+
+    aiLoadingEl.style.display = 'block';
+    aiResponseEl.innerHTML = '';
+
+    let requestBody;
+    const chapter = getCurrentChapter().title;
+
+    if (type === 'analyze_page') {
+        const pageImageElement = document.querySelector('.page-image');
+        if (!pageImageElement) {
+            aiResponseEl.textContent = "Could not find the page image to analyze.";
+            aiLoadingEl.style.display = 'none';
+            return;
+        }
+        
+        const imageData = await getImageAsBase64(pageImageElement.src);
+        if (!imageData) {
+            aiResponseEl.textContent = "Sorry, I couldn't process the page image.";
+            aiLoadingEl.style.display = 'none';
+            return;
+        }
+
+        requestBody = {
+            contents: [{
+                parts: [
+                    { text: "Analyze the content of this textbook page. Summarize the key concepts, explain any important formulas or diagrams, and provide a key takeaway for a life science student." },
+                    {
+                        inline_data: {
+                            mime_type: "image/png",
+                            data: imageData
+                        }
+                    }
+                ]
+            }]
+        };
+
+    } else {
+        let aiPrompt;
+        switch(type) {
+          case 'explain':
+            const concept = window.prompt("What concept from this chapter would you like explained?", "e.g., 'Pascal's Principle'");
+            if (!concept) { aiLoadingEl.style.display = 'none'; return; }
+            aiPrompt = `You are a physics tutor for university students in life sciences. Explain the concept of "${concept}" from the chapter "${chapter}" in a simple and clear way.`;
+            break;
+          case 'quiz':
+            aiPrompt = `You are a physics tutor. Based on the chapter "${chapter}", generate 2 multiple-choice quiz questions with 4 options each to test a student's understanding. Provide a brief explanation for the correct answer. Bold the correct answer and its letter.`;
+            break;
+          case 'relate':
+            aiPrompt = `You are a physics tutor for life science students. For the chapter on "${chapter}", provide two clear examples of how these physics principles apply directly to biology or medicine.`;
+            break;
+          default:
+            aiLoadingEl.style.display = 'none';
+            return;
+        }
+        requestBody = {
+            contents: [{ parts: [{ text: aiPrompt }] }]
+        };
+    }
+    
+    try {
+      const text = await callGeminiAPI(requestBody);
+      aiResponseEl.innerHTML = marked.parse(text);
+    } catch (error) {
+      console.error("AI Helper Error:", error);
+      aiResponseEl.textContent = `Sorry, I couldn't get a response: ${error.message}`;
+    } finally {
+      aiLoadingEl.style.display = 'none';
+    }
+  }
+
+  // NOTEBOOKLM-STYLE FEATURES
+  const notebookModal = document.getElementById('notebookModal');
+  const notebookToggle = document.getElementById('notebookToggle');
+  const notebookChapterTitleEl = document.getElementById('notebookChapterTitle');
+  const chatContainer = document.getElementById('chatContainer');
+  const chatInput = document.getElementById('chatInput');
+  const notebookLoading = document.getElementById('notebookLoading');
+  
+  // ARABIC TRANSLATION FEATURES
+  const translateModal = document.getElementById('translateModal');
+  const translateToggle = document.getElementById('translateToggle');
+  const translateChapterTitleEl = document.getElementById('translateChapterTitle');
+  const translateResult = document.getElementById('translateResult');
+  const translateLoading = document.getElementById('translateLoading');
+  
+  let conversationHistory = [];
+
+  notebookToggle.addEventListener('click', () => {
+    const currentChapter = getCurrentChapter();
+    notebookChapterTitleEl.textContent = currentChapter.title;
+    notebookModal.style.display = 'flex';
+  });
+
+  function closeNotebook() {
+    notebookModal.style.display = 'none';
+  }
+
+  notebookModal.addEventListener('click', (e) => {
+    if(e.target === notebookModal) { closeNotebook(); }
+  });
+
+  // Arabic Translation Functions
+  translateToggle.addEventListener('click', () => {
+    const currentChapter = getCurrentChapter();
+    translateChapterTitleEl.textContent = currentChapter.title;
+    translateResult.innerHTML = '';
+    translateModal.style.display = 'flex';
+  });
+
+  function closeTranslate() {
+    translateModal.style.display = 'none';
+  }
+
+  translateModal.addEventListener('click', (e) => {
+    if(e.target === translateModal) { closeTranslate(); }
+  });
+
+  async function translateContent(type) {
+    if (!GEMINI_API_KEY || GEMINI_API_KEY === 'AIzaSyB9k3RN6Ka9wI94FtHEAp37Z_rVjUSxWuJ') {
+        translateResult.innerHTML = '<p style="color: red;">Please add your actual Gemini API key.</p>';
+        return;
+    }
+
+    translateLoading.style.display = 'block';
+    translateResult.innerHTML = '';
+    
+    const chapter = getCurrentChapter().title;
+    let requestBody;
+
+    if (type === 'page') {
+        const pageImageElement = document.querySelector('.page-image');
+        if (!pageImageElement) {
+            translateResult.innerHTML = '<p>Could not find the page image.</p>';
+            translateLoading.style.display = 'none';
+            return;
+        }
+        
+        const imageData = await getImageAsBase64(pageImageElement.src);
+        if (!imageData) {
+            translateResult.innerHTML = '<p>Sorry, could not process the image.</p>';
+            translateLoading.style.display = 'none';
+            return;
+        }
+
+        requestBody = {
+            contents: [{
+                parts: [
+                    { text: "قم بتحليل محتوى هذه الصفحة من كتاب الفيزياء وترجم المفاهيم الرئيسية والمعادلات والشروحات إلى اللغة العربية. قدم ترجمة واضحة ودقيقة علمياً مع شرح المصطلحات الفيزيائية." },
+                    {
+                        inline_data: {
+                            mime_type: "image/png",
+                            data: imageData
+                        }
+                    }
+                ]
+            }]
+        };
+
+    } else if (type === 'concept') {
+        const concept = window.prompt("أدخل المفهوم الذي تريد ترجمته | Enter the concept to translate:", "e.g., Pascal's Principle");
+        if (!concept) { 
+            translateLoading.style.display = 'none'; 
+            return; 
+        }
+        
+        const prompt = `قم بشرح وترجمة المفهوم الفيزيائي "${concept}" من "${chapter}" إلى اللغة العربية. قدم:
+        1. الترجمة الدقيقة للمصطلح
+        2. شرح المفهوم بالعربية
+        3. المعادلات المتعلقة (إن وجدت) مع الشرح بالعربية
+        4. مثال تطبيقي بسيط
+        
+        استخدم لغة عربية علمية واضحة ودقيقة.`;
+        
+        requestBody = {
+            contents: [{ parts: [{ text: prompt }] }]
+        };
+
+    } else if (type === 'summary') {
+        const prompt = `قم بإنشاء ملخص شامل باللغة العربية لـ "${chapter}" من كتاب الفيزياء. يجب أن يتضمن:
+        1. المفاهيم والمبادئ الأساسية
+        2. المعادلات الرئيسية مع شرحها
+        3. التطبيقات المهمة
+        4. المفاهيم الخاطئة الشائعة
+        
+        استخدم لغة عربية علمية واضحة وسلسة مناسبة لطلاب العلوم الحياتية.`;
+        
+        requestBody = {
+            contents: [{ parts: [{ text: prompt }] }]
+        };
+    }
+    
+    try {
+      const response = await callGeminiAPI(requestBody);
+      translateResult.innerHTML = `
+        <div class="translation-result">
+          ${marked.parse(response)}
+        </div>
+      `;
+    } catch (error) {
+      console.error("Translation Error:", error);
+      translateResult.innerHTML = `<p style="color: red;">خطأ في الترجمة | Error: ${error.message}</p>`;
+    } finally {
+      translateLoading.style.display = 'none';
+    }
+  }
+
+  function switchNotebookTab(tab) {
+    document.querySelectorAll('.notebook-tab').forEach(t => t.classList.remove('active'));
+    document.querySelectorAll('.notebook-section').forEach(s => s.classList.remove('active'));
+    
+    event.target.classList.add('active');
+    document.getElementById(tab + 'Section').classList.add('active');
+  }
+
+  async function sendChatMessage() {
+    const message = chatInput.value.trim();
+    if (!message) return;
+    
+    if (!GEMINI_API_KEY || GEMINI_API_KEY === 'AIzaSyB9k3RN6Ka9wI94FtHEAp37Z_rVjUSxWuJ') {
+        addChatMessage('assistant', 'Please add your actual Gemini API key.');
+        return;
+    }
+
+    addChatMessage('user', message);
+    chatInput.value = '';
+    
+    notebookLoading.style.display = 'block';
+    
+    const chapter = getCurrentChapter().title;
+    conversationHistory.push({
+      role: "user",
+      parts: [{text: message}]
+    });
+    
+    const systemPrompt = {
+      role: "user",
+      parts: [{text: `You are a helpful study assistant for a physics textbook. The student is currently reading "${chapter}". Answer their questions clearly and concisely. If they ask about concepts from this chapter, explain them in simple terms suitable for life science students.`}]
+    };
+    
+    try {
+      const requestBody = {
+        contents: [systemPrompt, ...conversationHistory]
+      };
+      
+      const response = await callGeminiAPI(requestBody);
+      
+      conversationHistory.push({
+        role: "model",
+        parts: [{text: response}]
+      });
+      
+      addChatMessage('assistant', response);
+    } catch (error) {
+      console.error("Chat Error:", error);
+      addChatMessage('assistant', `Sorry, I encountered an error: ${error.message}`);
+    } finally {
+      notebookLoading.style.display = 'none';
+    }
+  }
+
+  function addChatMessage(sender, text) {
+    const messageDiv = document.createElement('div');
+    messageDiv.className = `chat-message ${sender}`;
+    messageDiv.innerHTML = marked.parse(text);
+    chatContainer.appendChild(messageDiv);
+    chatContainer.scrollTop = chatContainer.scrollHeight;
+  }
+
+  async function generateSummary() {
+    if (!GEMINI_API_KEY || GEMINI_API_KEY === 'AIzaSyB9k3RN6Ka9wI94FtHEAp37Z_rVjUSxWuJ') {
+        document.getElementById('summaryResult').textContent = 'Please add your actual Gemini API key.';
+        return;
+    }
+
+    notebookLoading.style.display = 'block';
+    document.getElementById('summaryResult').innerHTML = '';
+    
+    const chapter = getCurrentChapter().title;
+    const prompt = `Create a comprehensive summary of "${chapter}" from a physics textbook for life science students. Include:
+    1. Main concepts and principles
+    2. Key formulas and their meanings
+    3. Important applications
+    4. Common misconceptions to avoid
+    
+    Format it clearly with sections.`;
+    
+    try {
+      const requestBody = {
+        contents: [{ parts: [{ text: prompt }] }]
+      };
+      
+      const response = await callGeminiAPI(requestBody);
+      document.getElementById('summaryResult').innerHTML = `
+        <div class="summary-box">
+          ${marked.parse(response)}
+        </div>
+      `;
+    } catch (error) {
+      console.error("Summary Error:", error);
+      document.getElementById('summaryResult').textContent = `Error: ${error.message}`;
+    } finally {
+      notebookLoading.style.display = 'none';
+    }
+  }
+
+  async function generateStudyGuide() {
+    if (!GEMINI_API_KEY || GEMINI_API_KEY === 'AIzaSyB9k3RN6Ka9wI94FtHEAp37Z_rVjUSxWuJ') {
+        document.getElementById('guideResult').textContent = 'Please add your actual Gemini API key.';
+        return;
+    }
+
+    notebookLoading.style.display = 'block';
+    document.getElementById('guideResult').innerHTML = '';
+    
+    const chapter = getCurrentChapter().title;
+    const prompt = `Create a study guide for "${chapter}" from a physics textbook. Include:
+    1. Learning objectives (what students should master)
+    2. Key terms and definitions
+    3. Important equations with explanations
+    4. 5 practice problems with difficulty levels (easy, medium, hard)
+    5. Study tips specific to this chapter
+    
+    Make it practical and student-friendly.`;
+    
+    try {
+      const requestBody = {
+        contents: [{ parts: [{ text: prompt }] }]
+      };
+      
+      const response = await callGeminiAPI(requestBody);
+      document.getElementById('guideResult').innerHTML = `
+        <div class="study-guide-item">
+          ${marked.parse(response)}
+        </div>
+      `;
+    } catch (error) {
+      console.error("Study Guide Error:", error);
+      document.getElementById('guideResult').textContent = `Error: ${error.message}`;
+    } finally {
+      notebookLoading.style.display = 'none';
+    }
+  }
+
+  pageInput.max = totalPages;
+  renderThumbs();
+  renderIndex();
+  renderPage();
+</script>
+</body>
+</html>, display: false},
+          {left: '\\[', right: '\\]', display: true},
+          {left: '\\(', right: '\\)', display: false}
+        ],
+        throwOnError: false
+      });
+    }
+  }
+
+  function parseAndRenderMarkdown(text, targetElement) {
+    targetElement.innerHTML = marked.parse(text);
+    renderMathInElement(targetElement);
+  }
+
+  async function getAiHelp(type) {
+    if (!GEMINI_API_KEY || GEMINI_API_KEY === 'AIzaSyB9k3RN6Ka9wI94FtHEAp37Z_rVjUSxWuJ') {
+        aiResponseEl.textContent = "Please add your actual Gemini API key.";
+        return;
+    }
+
+    aiLoadingEl.style.display = 'block';
+    aiResponseEl.innerHTML = '';
+
+    let requestBody;
+    const chapter = getCurrentChapter().title;
+
+    if (type === 'analyze_page') {
+        const pageImageElement = document.querySelector('.page-image');
+        if (!pageImageElement) {
+            aiResponseEl.textContent = "Could not find the page image to analyze.";
+            aiLoadingEl.style.display = 'none';
+            return;
+        }
+        
+        const imageData = await getImageAsBase64(pageImageElement.src);
+        if (!imageData) {
+            aiResponseEl.textContent = "Sorry, I couldn't process the page image.";
+            aiLoadingEl.style.display = 'none';
+            return;
+        }
+
+        requestBody = {
+            contents: [{
+                parts: [
+                    { text: "Analyze the content of this textbook page. Summarize the key concepts, explain any important formulas or diagrams, and provide a key takeaway for a life science student." },
+                    {
+                        inline_data: {
+                            mime_type: "image/png",
+                            data: imageData
+                        }
+                    }
+                ]
+            }]
+        };
+
+    } else {
+        let aiPrompt;
+        switch(type) {
+          case 'explain':
+            const concept = window.prompt("What concept from this chapter would you like explained?", "e.g., 'Pascal's Principle'");
+            if (!concept) { aiLoadingEl.style.display = 'none'; return; }
+            aiPrompt = `You are a physics tutor for university students in life sciences. Explain the concept of "${concept}" from the chapter "${chapter}" in a simple and clear way.`;
+            break;
+          case 'quiz':
+            aiPrompt = `You are a physics tutor. Based on the chapter "${chapter}", generate 2 multiple-choice quiz questions with 4 options each to test a student's understanding. Provide a brief explanation for the correct answer. Bold the correct answer and its letter.`;
+            break;
+          case 'relate':
+            aiPrompt = `You are a physics tutor for life science students. For the chapter on "${chapter}", provide two clear examples of how these physics principles apply directly to biology or medicine.`;
+            break;
+          default:
+            aiLoadingEl.style.display = 'none';
+            return;
+        }
+        requestBody = {
+            contents: [{ parts: [{ text: aiPrompt }] }]
+        };
+    }
+    
+    try {
+      const text = await callGeminiAPI(requestBody);
+      aiResponseEl.innerHTML = marked.parse(text);
+    } catch (error) {
+      console.error("AI Helper Error:", error);
+      aiResponseEl.textContent = `Sorry, I couldn't get a response: ${error.message}`;
+    } finally {
+      aiLoadingEl.style.display = 'none';
+    }
+  }
+
+  // NOTEBOOKLM-STYLE FEATURES
+  const notebookModal = document.getElementById('notebookModal');
+  const notebookToggle = document.getElementById('notebookToggle');
+  const notebookChapterTitleEl = document.getElementById('notebookChapterTitle');
+  const chatContainer = document.getElementById('chatContainer');
+  const chatInput = document.getElementById('chatInput');
+  const notebookLoading = document.getElementById('notebookLoading');
+  
+  // ARABIC TRANSLATION FEATURES
+  const translateModal = document.getElementById('translateModal');
+  const translateToggle = document.getElementById('translateToggle');
+  const translateChapterTitleEl = document.getElementById('translateChapterTitle');
+  const translateResult = document.getElementById('translateResult');
+  const translateLoading = document.getElementById('translateLoading');
+  
+  let conversationHistory = [];
+
+  notebookToggle.addEventListener('click', () => {
+    const currentChapter = getCurrentChapter();
+    notebookChapterTitleEl.textContent = currentChapter.title;
+    notebookModal.style.display = 'flex';
+  });
+
+  function closeNotebook() {
+    notebookModal.style.display = 'none';
+  }
+
+  notebookModal.addEventListener('click', (e) => {
+    if(e.target === notebookModal) { closeNotebook(); }
+  });
+
+  // Arabic Translation Functions
+  translateToggle.addEventListener('click', () => {
+    const currentChapter = getCurrentChapter();
+    translateChapterTitleEl.textContent = currentChapter.title;
+    translateResult.innerHTML = '';
+    translateModal.style.display = 'flex';
+  });
+
+  function closeTranslate() {
+    translateModal.style.display = 'none';
+  }
+
+  translateModal.addEventListener('click', (e) => {
+    if(e.target === translateModal) { closeTranslate(); }
+  });
+
+  async function translateContent(type) {
+    if (!GEMINI_API_KEY || GEMINI_API_KEY === 'AIzaSyB9k3RN6Ka9wI94FtHEAp37Z_rVjUSxWuJ') {
+        translateResult.innerHTML = '<p style="color: red;">Please add your actual Gemini API key.</p>';
+        return;
+    }
+
+    translateLoading.style.display = 'block';
+    translateResult.innerHTML = '';
+    
+    const chapter = getCurrentChapter().title;
+    let requestBody;
+
+    if (type === 'page') {
+        const pageImageElement = document.querySelector('.page-image');
+        if (!pageImageElement) {
+            translateResult.innerHTML = '<p>Could not find the page image.</p>';
+            translateLoading.style.display = 'none';
+            return;
+        }
+        
+        const imageData = await getImageAsBase64(pageImageElement.src);
+        if (!imageData) {
+            translateResult.innerHTML = '<p>Sorry, could not process the image.</p>';
+            translateLoading.style.display = 'none';
+            return;
+        }
+
+        requestBody = {
+            contents: [{
+                parts: [
+                    { text: "قم بتحليل محتوى هذه الصفحة من كتاب الفيزياء وترجم المفاهيم الرئيسية والمعادلات والشروحات إلى اللغة العربية. قدم ترجمة واضحة ودقيقة علمياً مع شرح المصطلحات الفيزيائية." },
+                    {
+                        inline_data: {
+                            mime_type: "image/png",
+                            data: imageData
+                        }
+                    }
+                ]
+            }]
+        };
+
+    } else if (type === 'concept') {
+        const concept = window.prompt("أدخل المفهوم الذي تريد ترجمته | Enter the concept to translate:", "e.g., Pascal's Principle");
+        if (!concept) { 
+            translateLoading.style.display = 'none'; 
+            return; 
+        }
+        
+        const prompt = `قم بشرح وترجمة المفهوم الفيزيائي "${concept}" من "${chapter}" إلى اللغة العربية. قدم:
+        1. الترجمة الدقيقة للمصطلح
+        2. شرح المفهوم بالعربية
+        3. المعادلات المتعلقة (إن وجدت) مع الشرح بالعربية
+        4. مثال تطبيقي بسيط
+        
+        استخدم لغة عربية علمية واضحة ودقيقة.`;
+        
+        requestBody = {
+            contents: [{ parts: [{ text: prompt }] }]
+        };
+
+    } else if (type === 'summary') {
+        const prompt = `قم بإنشاء ملخص شامل باللغة العربية لـ "${chapter}" من كتاب الفيزياء. يجب أن يتضمن:
+        1. المفاهيم والمبادئ الأساسية
+        2. المعادلات الرئيسية مع شرحها
+        3. التطبيقات المهمة
+        4. المفاهيم الخاطئة الشائعة
+        
+        استخدم لغة عربية علمية واضحة وسلسة مناسبة لطلاب العلوم الحياتية.`;
+        
+        requestBody = {
+            contents: [{ parts: [{ text: prompt }] }]
+        };
+    }
+    
+    try {
+      const response = await callGeminiAPI(requestBody);
+      translateResult.innerHTML = `
+        <div class="translation-result">
+          ${marked.parse(response)}
+        </div>
+      `;
+    } catch (error) {
+      console.error("Translation Error:", error);
+      translateResult.innerHTML = `<p style="color: red;">خطأ في الترجمة | Error: ${error.message}</p>`;
+    } finally {
+      translateLoading.style.display = 'none';
+    }
+  }
+
+  function switchNotebookTab(tab) {
+    document.querySelectorAll('.notebook-tab').forEach(t => t.classList.remove('active'));
+    document.querySelectorAll('.notebook-section').forEach(s => s.classList.remove('active'));
+    
+    event.target.classList.add('active');
+    document.getElementById(tab + 'Section').classList.add('active');
+  }
+
+  async function sendChatMessage() {
+    const message = chatInput.value.trim();
+    if (!message) return;
+    
+    if (!GEMINI_API_KEY || GEMINI_API_KEY === 'AIzaSyB9k3RN6Ka9wI94FtHEAp37Z_rVjUSxWuJ') {
+        addChatMessage('assistant', 'Please add your actual Gemini API key.');
+        return;
+    }
+
+    addChatMessage('user', message);
+    chatInput.value = '';
+    
+    notebookLoading.style.display = 'block';
+    
+    const chapter = getCurrentChapter().title;
+    conversationHistory.push({
+      role: "user",
+      parts: [{text: message}]
+    });
+    
+    const systemPrompt = {
+      role: "user",
+      parts: [{text: `You are a helpful study assistant for a physics textbook. The student is currently reading "${chapter}". Answer their questions clearly and concisely. If they ask about concepts from this chapter, explain them in simple terms suitable for life science students.`}]
+    };
+    
+    try {
+      const requestBody = {
+        contents: [systemPrompt, ...conversationHistory]
+      };
+      
+      const response = await callGeminiAPI(requestBody);
+      
+      conversationHistory.push({
+        role: "model",
+        parts: [{text: response}]
+      });
+      
+      addChatMessage('assistant', response);
+    } catch (error) {
+      console.error("Chat Error:", error);
+      addChatMessage('assistant', `Sorry, I encountered an error: ${error.message}`);
+    } finally {
+      notebookLoading.style.display = 'none';
+    }
+  }
+
+  function addChatMessage(sender, text) {
+    const messageDiv = document.createElement('div');
+    messageDiv.className = `chat-message ${sender}`;
+    messageDiv.innerHTML = marked.parse(text);
+    chatContainer.appendChild(messageDiv);
+    chatContainer.scrollTop = chatContainer.scrollHeight;
+  }
+
+  async function generateSummary() {
+    if (!GEMINI_API_KEY || GEMINI_API_KEY === 'AIzaSyB9k3RN6Ka9wI94FtHEAp37Z_rVjUSxWuJ') {
+        document.getElementById('summaryResult').textContent = 'Please add your actual Gemini API key.';
+        return;
+    }
+
+    notebookLoading.style.display = 'block';
+    document.getElementById('summaryResult').innerHTML = '';
+    
+    const chapter = getCurrentChapter().title;
+    const prompt = `Create a comprehensive summary of "${chapter}" from a physics textbook for life science students. Include:
+    1. Main concepts and principles
+    2. Key formulas and their meanings
+    3. Important applications
+    4. Common misconceptions to avoid
+    
+    Format it clearly with sections.`;
+    
+    try {
+      const requestBody = {
+        contents: [{ parts: [{ text: prompt }] }]
+      };
+      
+      const response = await callGeminiAPI(requestBody);
+      document.getElementById('summaryResult').innerHTML = `
+        <div class="summary-box">
+          ${marked.parse(response)}
+        </div>
+      `;
+    } catch (error) {
+      console.error("Summary Error:", error);
+      document.getElementById('summaryResult').textContent = `Error: ${error.message}`;
+    } finally {
+      notebookLoading.style.display = 'none';
+    }
+  }
+
+  async function generateStudyGuide() {
+    if (!GEMINI_API_KEY || GEMINI_API_KEY === 'AIzaSyB9k3RN6Ka9wI94FtHEAp37Z_rVjUSxWuJ') {
+        document.getElementById('guideResult').textContent = 'Please add your actual Gemini API key.';
+        return;
+    }
+
+    notebookLoading.style.display = 'block';
+    document.getElementById('guideResult').innerHTML = '';
+    
+    const chapter = getCurrentChapter().title;
+    const prompt = `Create a study guide for "${chapter}" from a physics textbook. Include:
+    1. Learning objectives (what students should master)
+    2. Key terms and definitions
+    3. Important equations with explanations
+    4. 5 practice problems with difficulty levels (easy, medium, hard)
+    5. Study tips specific to this chapter
+    
+    Make it practical and student-friendly.`;
+    
+    try {
+      const requestBody = {
+        contents: [{ parts: [{ text: prompt }] }]
+      };
+      
+      const response = await callGeminiAPI(requestBody);
+      document.getElementById('guideResult').innerHTML = `
+        <div class="study-guide-item">
+          ${marked.parse(response)}
+        </div>
+      `;
+    } catch (error) {
+      console.error("Study Guide Error:", error);
+      document.getElementById('guideResult').textContent = `Error: ${error.message}`;
+    } finally {
+      notebookLoading.style.display = 'none';
+    }
+  }
+
+  pageInput.max = totalPages;
+  renderThumbs();
+  renderIndex();
+  renderPage();
 </script>
 </body>
 </html>
