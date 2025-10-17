@@ -4,6 +4,7 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>PHYS101 Flipbook</title>
+  <!-- Library to render AI's markdown response (bold, lists, etc.) -->
   <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
   <style>
     body { margin: 0; font-family: sans-serif; background: #f4f4f4; display: flex; flex-direction: column; align-items: center; }
@@ -42,6 +43,7 @@
 </head>
 <body>
 
+<!-- Lock screen -->
 <div id="lockScreen">
   <div class="lock-box">
     <h2>Enter your Student ID</h2>
@@ -51,6 +53,7 @@
   </div>
 </div>
 
+<!-- Top toolbar -->
 <div class="toolbar">
   <button onclick="firstPage()">⏮ First</button>
   <button onclick="prevPage()">⬅ Prev</button>
@@ -63,6 +66,7 @@
 <div id="thumbbar" class="thumbbar"></div>
 <div id="flipbook"></div>
 
+<!-- Footer -->
 <div id="footer">
   <div class="footer-left">
     <button id="indexToggle" aria-expanded="false">☰ Index</button>
@@ -75,6 +79,7 @@
   <div id="indexMenu" role="menu" aria-hidden="true"></div>
 </div>
 
+<!-- AI Study Helper -->
 <button id="aiHelperToggle">🧠</button>
 <div id="aiHelperModal">
   <div class="ai-content">
@@ -208,7 +213,7 @@
   const aiChapterTitleEl = document.getElementById('aiChapterTitle');
   
   // --- IMPORTANT ---
-  // Paste your actual Gemini API Key here.
+  // Replace '123456789' with your actual, secret Gemini API Key.
   const GEMINI_API_KEY = 'AIzaSyAvH0LVJu1vow3_VPxiZp8Lpd8OI35_t4s'; 
 
   aiHelperToggle.addEventListener('click', () => {
@@ -232,8 +237,9 @@
   }
 
   async function getAiHelp(type) {
-    if (!GEMINI_API_KEY || GEMINI_API_KEY === 'AIzaSyAvH0LVJu1vow3_VPxiZp8Lpd8OI35_t4s') {
-        aiResponseEl.textContent = "The AI Helper is not configured. The API key is missing.";
+    // This is the corrected check. It looks for a generic placeholder.
+    if (!GEMINI_API_KEY || GEMINI_API_KEY === 'PASTE_YOUR_API_KEY_HERE') {
+        aiResponseEl.textContent = "The AI Helper is not configured. Please add your API key.";
         return;
     }
 
@@ -259,7 +265,6 @@
     aiLoadingEl.style.display = 'block';
     aiResponseEl.innerHTML = '';
     
-    // This is the new part: we talk directly to the Google API
     const API_URL = `https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent?key=${GEMINI_API_KEY}`;
     
     try {
