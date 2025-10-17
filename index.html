@@ -213,7 +213,7 @@
   const aiChapterTitleEl = document.getElementById('aiChapterTitle');
   
   // --- IMPORTANT ---
-  // Replace '123456789' with your actual, secret Gemini API Key.
+  // Replace 'PASTE_YOUR_API_KEY_HERE' with your actual, secret Gemini API Key.
   const GEMINI_API_KEY = 'AIzaSyAvH0LVJu1vow3_VPxiZp8Lpd8OI35_t4s'; 
 
   aiHelperToggle.addEventListener('click', () => {
@@ -265,7 +265,8 @@
     aiLoadingEl.style.display = 'block';
     aiResponseEl.innerHTML = '';
     
-    const API_URL = `https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent?key=${GEMINI_API_KEY}`;
+    // THIS IS THE CORRECTED LINE with the new model name
+    const API_URL = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-latest:generateContent?key=${GEMINI_API_KEY}`;
     
     try {
       const response = await fetch(API_URL, {
@@ -300,3 +301,4 @@
 </script>
 </body>
 </html>
+
