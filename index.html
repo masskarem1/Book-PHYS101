@@ -9,7 +9,8 @@
   <style>
     body { margin: 0; font-family: sans-serif; background: #f4f4f4; display: flex; flex-direction: column; align-items: center; }
     #flipbook { width: 100%; max-width: 1200px; margin: auto; display: flex; flex-direction: column; align-items: center; background: #fff; padding: 8px 0; }
-    .flipbook-page img { width: 100%; height: auto; max-width: 100%; object-fit: contain; display: block; margin: 0 auto; }
+    /* Give the page image a class so we can select it easily */
+    .page-image { width: 100%; height: auto; max-width: 100%; object-fit: contain; display: block; margin: 0 auto; }
     #lockScreen { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); display: flex; justify-content: center; align-items: center; z-index: 3000; }
     .lock-box { background: #fff; padding: 2rem; border-radius: 8px; text-align: center; max-width: 300px; box-shadow: 0 4px 12px rgba(0,0,0,0.25); }
     .lock-box input { width: 90%; padding: 0.5rem; font-size: 1rem; margin: 0.5rem 0; }
@@ -35,7 +36,7 @@
     #aiHelperModal { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); display: none; justify-content: center; align-items: center; z-index: 2500; }
     .ai-content { background: #fff; padding: 1.5rem; border-radius: 12px; width: 90%; max-width: 500px; max-height: 90vh; overflow-y: auto; position: relative; box-shadow: 0 5px 15px rgba(0,0,0,0.3); }
     #aiCloseBtn { position: absolute; top: 10px; right: 10px; background: #eee; color: #333; border-radius: 50%; width: 30px; height: 30px; padding: 0; line-height: 30px; text-align: center; }
-    .ai-buttons { display: flex; gap: 10px; margin: 1rem 0; flex-wrap: wrap; }
+    .ai-buttons { display: flex; gap: 10px; margin: 1rem 0; flex-wrap: wrap; justify-content: center; }
     .ai-response { margin-top: 1rem; padding-top: 1rem; border-top: 1px solid #eee; white-space: pre-wrap; line-height: 1.6; }
     .ai-response h3 { margin-top: 0; }
     .ai-response ul { padding-left: 20px; }
@@ -85,11 +86,12 @@
   <div class="ai-content">
     <button id="aiCloseBtn">×</button>
     <h2>AI Study Helper</h2>
-    <p>Studying <strong id="aiChapterTitle">Chapter 1</strong>. How can I help?</p>
+    <p>Get help with <strong id="aiChapterTitle">Chapter 1</strong>.</p>
     <div class="ai-buttons">
       <button onclick="getAiHelp('explain')">Explain a Concept</button>
-      <button onclick="getAiHelp('quiz')">Quiz Me</button>
+      <button onclick="getAiHelp('quiz')">Quiz Me on Chapter</button>
       <button onclick="getAiHelp('relate')">Relate to Life Sciences</button>
+      <button onclick="getAiHelp('analyze_page')">Analyze This Page</button>
     </div>
     <div id="aiResponse" class="ai-response"></div>
     <div id="aiLoading" style="display: none;">Thinking...</div>
@@ -143,7 +145,10 @@
   function renderPage() {
     flipbook.innerHTML = "";
     const img = document.createElement("img");
+    img.className = "page-image"; // Add class to image
     img.src = images[currentPage]; img.alt = `Page ${currentPage + 1}`;
+    // IMPORTANT: Add crossorigin attribute for fetching local images
+    img.crossOrigin = "anonymous";
     img.onerror = () => { img.alt = "Image not available"; img.style.opacity = 0.5; };
     const wrap = document.createElement("div"); wrap.className = "flipbook-page";
     wrap.appendChild(img); flipbook.appendChild(wrap);
@@ -212,9 +217,24 @@
   const aiLoadingEl = document.getElementById('aiLoading');
   const aiChapterTitleEl = document.getElementById('aiChapterTitle');
   
-  // --- IMPORTANT ---
-  // Replace 'PASTE_YOUR_API_KEY_HERE' with your actual, secret Gemini API Key.
   const GEMINI_API_KEY = 'AIzaSyAvH0LVJu1vow3_VPxiZp8Lpd8OI35_t4s'; 
+
+  // New function to convert image URL to Base64
+  async function getImageAsBase64(url) {
+      try {
+          const response = await fetch(url);
+          const blob = await response.blob();
+          return new Promise((resolve, reject) => {
+              const reader = new FileReader();
+              reader.onloadend = () => resolve(reader.result.split(',')[1]); // Get only the data part
+              reader.onerror = reject;
+              reader.readAsDataURL(blob);
+          });
+      } catch (error) {
+          console.error("Error fetching or converting image:", error);
+          return null;
+      }
+  }
 
   aiHelperToggle.addEventListener('click', () => {
     const currentChapter = getCurrentChapter();
@@ -237,48 +257,76 @@
   }
 
   async function getAiHelp(type) {
-    // This is the corrected check. It looks for a generic placeholder.
-    if (!GEMINI_API_KEY || GEMINI_API_KEY === 'PASTE_YOUR_API_KEY_HERE') {
+    if (!GEMINI_API_KEY || GEMINI_API_KEY === 'AIzaSyAvH0LVJu1vow3_VPxiZp8Lpd8OI35_t4s') {
         aiResponseEl.textContent = "The AI Helper is not configured. Please add your API key.";
         return;
     }
 
-    const chapter = getCurrentChapter().title;
-    let aiPrompt;
-
-    switch(type) {
-      case 'explain':
-        const concept = window.prompt("What concept from this chapter would you like explained?", "e.g., 'Pascal's Principle'");
-        if (!concept) return;
-        aiPrompt = `You are a physics tutor for university students in life sciences. Explain the concept of "${concept}" from the chapter "${chapter}" in a simple and clear way.`;
-        break;
-      case 'quiz':
-        aiPrompt = `You are a physics tutor. Based on the chapter "${chapter}", generate 2 multiple-choice quiz questions with 4 options each (A, B, C, D) to test a student's understanding. Provide a brief explanation for the correct answer. Bold the correct answer and its letter.`;
-        break;
-      case 'relate':
-        aiPrompt = `You are a physics tutor for life science students. For the chapter on "${chapter}", provide two clear examples of how these physics principles apply directly to biology or medicine.`;
-        break;
-      default:
-        return;
-    }
-    
     aiLoadingEl.style.display = 'block';
     aiResponseEl.innerHTML = '';
+
+    let requestBody;
+    const chapter = getCurrentChapter().title;
+
+    if (type === 'analyze_page') {
+        const pageImageElement = document.querySelector('.page-image');
+        if (!pageImageElement) {
+            aiResponseEl.textContent = "Could not find the page image to analyze.";
+            aiLoadingEl.style.display = 'none';
+            return;
+        }
+        
+        const imageData = await getImageAsBase64(pageImageElement.src);
+        if (!imageData) {
+            aiResponseEl.textContent = "Sorry, I couldn't process the page image.";
+            aiLoadingEl.style.display = 'none';
+            return;
+        }
+
+        requestBody = {
+            contents: [{
+                parts: [
+                    { text: "Analyze the content of this textbook page. Summarize the key concepts, explain any important formulas or diagrams, and provide a key takeaway for a life science student." },
+                    { inline_data: { mime_type: "image/png", data: imageData } }
+                ]
+            }]
+        };
+
+    } else {
+        let aiPrompt;
+        switch(type) {
+          case 'explain':
+            const concept = window.prompt("What concept from this chapter would you like explained?", "e.g., 'Pascal's Principle'");
+            if (!concept) { aiLoadingEl.style.display = 'none'; return; }
+            aiPrompt = `You are a physics tutor for university students in life sciences. Explain the concept of "${concept}" from the chapter "${chapter}" in a simple and clear way.`;
+            break;
+          case 'quiz':
+            aiPrompt = `You are a physics tutor. Based on the chapter "${chapter}", generate 2 multiple-choice quiz questions with 4 options each to test a student's understanding. Provide a brief explanation for the correct answer. Bold the correct answer and its letter.`;
+            break;
+          case 'relate':
+            aiPrompt = `You are a physics tutor for life science students. For the chapter on "${chapter}", provide two clear examples of how these physics principles apply directly to biology or medicine.`;
+            break;
+          default:
+            aiLoadingEl.style.display = 'none';
+            return;
+        }
+        requestBody = {
+            contents: [{ parts: [{ text: aiPrompt }] }]
+        };
+    }
     
-    // THIS IS THE CORRECTED LINE with the new model name
     const API_URL = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-latest:generateContent?key=${GEMINI_API_KEY}`;
     
     try {
       const response = await fetch(API_URL, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          contents: [{ parts: [{ text: aiPrompt }] }]
-        })
+        body: JSON.stringify(requestBody)
       });
 
       if (!response.ok) {
-        throw new Error(`API error: ${response.statusText}`);
+        const errorData = await response.json();
+        throw new Error(`API error: ${errorData.error.message}`);
       }
 
       const data = await response.json();
@@ -287,7 +335,7 @@
 
     } catch (error) {
       console.error("AI Helper Error:", error);
-      aiResponseEl.textContent = "Sorry, I couldn't get a response. Please check the API key and your internet connection.";
+      aiResponseEl.textContent = "Sorry, I couldn't get a response. Please check your API key and internet connection.";
     } finally {
       aiLoadingEl.style.display = 'none';
     }
