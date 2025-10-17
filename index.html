@@ -102,8 +102,8 @@
   // ---- CONFIGURATION ----
   const config = {
       totalPages: 294,
-      imagePath: 'images/Book_PHYS101_',
-      thumbPath: 'thumbs/Book_PHYS101_',
+      imagePath: './images/Book_PHYS101_',
+      thumbPath: './thumbs/Book_PHYS101_',
       chapters: [
           { title: "CHAPTER 1 – Physics and Measurements", page: 8 },
           { title: "CHAPTER 2 – Solids and Elasticity", page: 40 },
@@ -118,7 +118,7 @@
   let ALLOWED_IDS = [];
   async function loadIDs() {
     try {
-      const res = await fetch("students.json"); if (!res.ok) throw new Error("File not found");
+      const res = await fetch("./students.json"); if (!res.ok) throw new Error("File not found");
       ALLOWED_IDS = (await res.json()).allowed;
     } catch (err) { console.error("Could not load student IDs:", err); }
   }
@@ -287,7 +287,7 @@
             contents: [{
                 parts: [
                     { text: "Analyze the content of this textbook page. Summarize the key concepts, explain any important formulas or diagrams, and provide a key takeaway for a life science student." },
-                    { inline_data: { mime_type: "image/png", data: imageData } }
+                    { inlineData: { mimeType: "image/png", data: imageData } }
                 ]
             }]
         };
@@ -315,7 +315,8 @@
         };
     }
     
-    const API_URL = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-latest:generateContent?key=${GEMINI_API_KEY}`;
+    // Corrected the model name in the URL
+    const API_URL = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${GEMINI_API_KEY}`;
     
     try {
       const response = await fetch(API_URL, {
