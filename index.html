@@ -1,234 +1,262 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>PHYS101 Flipbook</title>
-  <link rel="icon" href="data:;base64,iVBORw0KGgo=">
-  <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
-  <!-- MathJax -->
-  <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js" async></script>
-  <style>
-    body { margin: 0; font-family: sans-serif; background: #f4f4f4; display: flex; flex-direction: column; align-items: center; }
-    #flipbook { width: 100%; max-width: 1200px; margin: auto; display: flex; flex-direction: column; align-items: center; background: #fff; padding: 8px 0; position: relative; }
-    .page-image { width: 100%; height: auto; max-width: 100%; object-fit: contain; display: block; margin: 0 auto; }
-    #ocrOverlay { position:absolute; top:0; left:0; width:100%; height:100%; pointer-events:none; z-index:1500; }
-    #lockScreen { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); display: flex; justify-content: center; align-items: center; z-index: 3000; }
-    .lock-box { background: #fff; padding: 2rem; border-radius: 8px; text-align: center; max-width: 300px; box-shadow: 0 4px 12px rgba(0,0,0,0.25); }
-    .lock-box input { width: 90%; padding: 0.5rem; font-size: 1rem; margin: 0.5rem 0; }
-    .lock-box button { padding: 0.5rem 1rem; background: #007acc; color: #fff; border: none; border-radius: 6px; cursor: pointer; }
-    .lock-box button:hover { background:#005fa3; }
-    .toolbar { margin: 0.5rem; display: flex; justify-content: center; gap: 0.6rem; flex-wrap: wrap; }
-    button { padding: 0.45rem 0.9rem; border: none; border-radius: 8px; background: #007acc; color: white; font-size: 0.95rem; cursor: pointer; transition: background 0.18s; }
-    button:hover { background: #005fa3; }
-    #pageInput { width: 70px; padding: 0.3rem; font-size: 1rem; text-align: center; }
-    .thumbbar { display: flex; overflow-x: auto; padding: 0.45rem; background: #fff; border-top: 1px solid #ccc; border-bottom: 1px solid #ccc; gap: 6px; width: 100%; max-width: 1200px; }
-    .thumbbar img { height: 80px; cursor: pointer; border: 2px solid transparent; transition: border 0.18s; }
-    .thumbbar img.active { border: 2px solid #007acc; }
-    @media (max-width: 768px) { .thumbbar img { height: 60px; } }
-    #footer { width: 100%; max-width: 1200px; display: flex; align-items: center; justify-content: space-between; padding: 0.5rem 1rem; box-sizing: border-box; position: relative; }
-    .footer-left, .footer-right { display: flex; align-items: center; gap: 0.6rem; }
-    #pageCounter { font-size:1rem; color:#333; }
-    #indexToggle, #fullBtn, #shareBtn { padding: 0.4rem 0.8rem; font-size: 0.9rem; border: none; border-radius: 4px; background: #007acc; color: white; cursor: pointer; }
-    #indexMenu { position: absolute; display: none; flex-direction: column; background: rgba(128,128,128,0.75); border: 1px solid rgba(0,0,0,0.15); border-radius: 6px; box-shadow: 0 6px 18px rgba(0,0,0,0.2); padding: 0.4rem; width: max-content; max-width: 90vw; white-space: nowrap; overflow-x: auto; z-index: 1200; }
-    #indexMenu button { background: none; border: none; text-align: left; padding: 0.35rem 0.5rem; font-size: 0.95rem; cursor: pointer; width: 100%; color: #000; }
-    #indexMenu button:hover { background: rgba(255,255,255,0.15); }
-    #aiHelperToggle, #translateBtn { position: fixed; bottom: 20px; border-radius: 50%; width: 50px; height: 50px; font-size: 1.5rem; z-index: 2000; box-shadow: 0 4px 10px rgba(0,0,0,0.2); }
-    #aiHelperToggle { right: 20px; background:#007acc; color:#fff; }
-    #translateBtn { right: 80px; background:#28a745; color:#fff; }
-    #aiHelperModal { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); display: none; justify-content: center; align-items: center; z-index: 2500; }
-    .ai-content { background: #fff; padding: 1.5rem; border-radius: 12px; width: 90%; max-width: 500px; max-height: 90vh; overflow-y: auto; position: relative; box-shadow: 0 5px 15px rgba(0,0,0,0.3); }
-    #aiCloseBtn { position: absolute; top: 10px; right: 10px; background: #eee; color: #333; border-radius: 50%; width: 30px; height: 30px; padding: 0; line-height: 30px; text-align: center; cursor: pointer; }
-    .ai-buttons { display: flex; gap: 10px; margin: 1rem 0; flex-wrap: wrap; justify-content: center; }
-    .ai-response { margin-top: 1rem; padding-top: 1rem; border-top: 1px solid #eee; white-space: pre-wrap; line-height: 1.6; }
-    .ai-response h3 { margin-top: 0; }
-    .ai-response ul { padding-left: 20px; }
-  </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PHYS101 Interactive Flipbook</title>
+
+<!-- Styles -->
+<style>
+  body {
+    font-family: "Arial", sans-serif;
+    background: #f0f0f0;
+    margin: 0;
+    padding: 0;
+    text-align: center;
+  }
+
+  #flipbook {
+    width: 90%;
+    height: 90vh;
+    margin: 20px auto;
+    position: relative;
+    background: white;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+    overflow: hidden;
+  }
+
+  .page {
+    width: 100%;
+    height: 100%;
+    position: relative;
+  }
+
+  .page-image {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+  }
+
+  #controls {
+    margin: 10px auto;
+    display: flex;
+    justify-content: center;
+    gap: 10px;
+  }
+
+  button {
+    padding: 8px 14px;
+    font-size: 16px;
+    border: none;
+    border-radius: 6px;
+    background: #007bff;
+    color: white;
+    cursor: pointer;
+  }
+
+  button:hover { background: #0056b3; }
+
+  #thumbBar {
+    display: flex;
+    overflow-x: auto;
+    gap: 5px;
+    margin-top: 10px;
+    padding: 5px;
+    background: #eee;
+    border-top: 1px solid #ccc;
+    justify-content: center;
+  }
+
+  #thumbBar img {
+    width: 80px;
+    height: 110px;
+    object-fit: cover;
+    cursor: pointer;
+    border: 2px solid transparent;
+    transition: 0.2s;
+  }
+
+  #thumbBar img:hover {
+    border: 2px solid #007bff;
+  }
+
+  /* Overlay for translated Arabic text */
+  #overlay-translation {
+    position: absolute;
+    top: 0; left: 0;
+    width: 100%; height: 100%;
+    pointer-events: none;
+    color: #111;
+  }
+
+  .overlay-line {
+    position: absolute;
+    direction: rtl;
+    text-align: right;
+    font-size: 1rem;
+    line-height: 1.3;
+    background: rgba(255,255,255,0.85);
+    border-radius: 4px;
+    padding: 2px 4px;
+  }
+</style>
+
+<!-- MathJax -->
+<script>
+  window.MathJax = {
+    tex: { inlineMath: [['$', '$'], ['\\(', '\\)']] },
+    svg: { fontCache: 'global' }
+  };
+</script>
+<script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-svg.js"></script>
+
+<!-- Tesseract.js for OCR -->
+<script src="https://cdn.jsdelivr.net/npm/tesseract.js@5.0.3/dist/tesseract.min.js"></script>
 </head>
+
 <body>
+<h2>📘 PHYS101 Interactive Flipbook</h2>
 
-<div id="lockScreen">
-  <div class="lock-box">
-    <h2>Enter your Student ID</h2>
-    <input id="idInput" type="text" maxlength="12" placeholder="Student ID" />
-    <button onclick="checkID()">Unlock</button>
-    <p id="idError" style="color:red;display:none;">Invalid ID</p>
-  </div>
+<div id="controls">
+  <button id="prevPage">⬅ Previous</button>
+  <button id="nextPage">Next ➡</button>
+  <button id="translateBtn">🌐 Translate Page to Arabic</button>
+  <button id="hideTranslateBtn" style="display:none;">❌ Hide Arabic</button>
 </div>
 
-<div class="toolbar">
-  <button onclick="firstPage()">⏮ First</button>
-  <button onclick="prevPage()">⬅ Prev</button>
-  <input id="pageInput" type="number" min="1" placeholder="Page #" />
-  <button onclick="jumpToPage()">Go</button>
-  <button onclick="nextPage()">Next ➡</button>
-  <button onclick="lastPage()">⏭ Last</button>
-</div>
-
-<div id="thumbbar" class="thumbbar"></div>
 <div id="flipbook">
-  <div id="ocrOverlay"></div>
-</div>
-
-<div id="footer">
-  <div class="footer-left">
-    <button id="indexToggle" aria-expanded="false">☰ Index</button>
-  </div>
-  <div id="pageCounter">Page 1 / 292</div>
-  <div class="footer-right">
-    <button id="fullBtn" onclick="toggleFullScreen()">⛶</button>
-    <button id="shareBtn" onclick="shareBook()">🔗</button>
-  </div>
-  <div id="indexMenu" role="menu" aria-hidden="true"></div>
-</div>
-
-<button id="aiHelperToggle">🧠</button>
-<button id="translateBtn">🌐</button>
-
-<div id="aiHelperModal">
-  <div class="ai-content">
-    <button id="aiCloseBtn">×</button>
-    <h2>AI Study Helper</h2>
-    <p>Get help with <strong id="aiChapterTitle">Chapter 1</strong>.</p>
-    <div class="ai-buttons">
-      <button onclick="getAiHelp('explain')">Explain a Concept</button>
-      <button onclick="getAiHelp('quiz')">Quiz Me on Chapter</button>
-      <button onclick="getAiHelp('relate')">Relate to Life Sciences</button>
-      <button onclick="getAiHelp('analyze_page')">Analyze This Page</button>
-    </div>
-    <div id="aiResponse" class="ai-response"></div>
-    <div id="aiLoading" style="display: none;">Thinking...</div>
+  <div class="page">
+    <img class="page-image" src="./images/Book_PHYS101_0.png" alt="Page 1">
+    <div id="overlay-translation"></div>
   </div>
 </div>
+
+<div id="thumbBar"></div>
 
 <script>
-  const config = {
-      totalPages: 292,
-      imagePath: './images/Book_PHYS101_',
-      thumbPath: './thumbs/Book_PHYS101_',
-      chapters: [
-          { title: "CHAPTER 1 – Physics and Measurements", page: 8 },
-          { title: "CHAPTER 2 – Solids and Elasticity", page: 40 },
-          { title: "CHAPTER 3 – Fluids", page: 62 },
-          { title: "CHAPTER 4 – Thermal Physics", page: 134 },
-          { title: "CHAPTER 5 – Waves and Sound", page: 216 },
-          { title: "APPENDIX", page: 278 }
-      ]
-  };
+const totalPages = 5; // update according to number of images
+let currentPage = 0;
+const GEMINI_API_KEY = "AIzaSyAntGKIXHhHIWkYT7R6rPlpBk0tZuLtlD8"; // ← Add your Gemini API key here (optional)
+const flipbook = document.getElementById("flipbook");
+const overlay = document.getElementById("overlay-translation");
+const hideTranslateBtn = document.getElementById("hideTranslateBtn");
 
-  let ALLOWED_IDS = [];
-  async function loadIDs() {
-    try {
-      const res = await fetch("./students.json");
-      if (!res.ok) throw new Error("File not found");
-      ALLOWED_IDS = (await res.json()).allowed;
-    } catch (err) { console.error("Could not load student IDs:", err); }
-  }
-  loadIDs();
-  
-  function checkID() {
-    const entered = document.getElementById("idInput").value.trim();
-    if (ALLOWED_IDS.includes(entered)) {
-      document.getElementById("lockScreen").style.display = "none";
-    } else {
-      document.getElementById("idError").style.display = "block";
-    }
-  }
-
-  const totalPages = config.totalPages;
-  const images = Array.from({ length: totalPages }, (_, i) => `${config.imagePath}${i}.png`);
-  const thumbs = Array.from({ length: totalPages }, (_, i) => `${config.thumbPath}${i}.jpg`);
-  let currentPage = 0;
-  const flipbook = document.getElementById("flipbook");
-  const thumbbar = document.getElementById("thumbbar");
-  const counter = document.getElementById("pageCounter");
-  const pageInput = document.getElementById("pageInput");
-  const footer = document.getElementById("footer");
-  const indexToggle = document.getElementById("indexToggle");
-  const indexMenu = document.getElementById("indexMenu");
-  const overlay = document.getElementById("ocrOverlay");
-
-  function renderPage() {
-    flipbook.querySelectorAll('.page-image').forEach(e => e.remove());
-    overlay.innerHTML = '';
-    const img = document.createElement("img");
-    img.className = "page-image";
-    img.src = images[currentPage];
-    img.alt = `Page ${currentPage + 1}`;
-    img.crossOrigin = "anonymous";
-    img.onerror = () => { img.alt = "Image not available"; img.style.opacity = 0.5; };
-    flipbook.appendChild(img);
-    counter.textContent = `Page ${currentPage + 1} / ${totalPages}`;
-    highlightThumb();
-    if (window.MathJax) MathJax.typesetPromise();
-  }
-
-  // ... (keep all your original flipbook navigation + AI helper logic here exactly as before)
-
-  // --- TRANSLATION FEATURE ---
-  const GEMINI_API_KEY = 'AIzaSyAntGKIXHhHIWkYT7R6rPlpBk0tZuLtlD8';
-  const translateBtn = document.getElementById('translateBtn');
-
-  translateBtn.addEventListener('click', async () => {
-    const pageImg = document.querySelector('.page-image');
-    if (!pageImg) return alert('No page image found.');
-    overlay.innerHTML = '<div style="color:white;background:rgba(0,0,0,0.7);position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);padding:1rem;border-radius:8px;">Translating...</div>';
-
-    try {
-      const result = await Tesseract.recognize(pageImg.src, 'eng');
-      overlay.innerHTML = '';
-      const lines = result.data.lines.map(l => ({ text: l.text.trim(), bbox: l.bbox })).filter(l => l.text);
-      const fullText = lines.map(l => l.text).join('\n');
-      const translated = await translateToArabic(fullText);
-      const arabicLines = translated.split('\n');
-      const imgRect = pageImg.getBoundingClientRect();
-      const scaleX = imgRect.width / result.data.imageSize.width;
-      const scaleY = imgRect.height / result.data.imageSize.height;
-
-      arabicLines.forEach((text, i) => {
-        const line = lines[i];
-        if (!line || !text.trim()) return;
-        const div = document.createElement('div');
-        div.textContent = text.trim();
-        div.style.position = 'absolute';
-        div.style.left = `${line.bbox.x0 * scaleX}px`;
-        div.style.top = `${line.bbox.y0 * scaleY}px`;
-        div.style.width = `${(line.bbox.x1 - line.bbox.x0) * scaleX}px`;
-        div.style.height = `${(line.bbox.y1 - line.bbox.y0) * scaleY}px`;
-        div.style.textAlign = 'right';
-        div.style.direction = 'rtl';
-        div.style.fontFamily = 'Amiri, "Scheherazade New", serif';
-        div.style.fontSize = `${(line.bbox.y1 - line.bbox.y0) * scaleY * 0.8}px`;
-        div.style.color = 'black';
-        div.style.background = 'rgba(255,255,255,0.6)';
-        div.style.borderRadius = '4px';
-        div.style.padding = '2px';
-        overlay.appendChild(div);
-      });
-    } catch (err) {
-      console.error(err);
-      overlay.innerHTML = '<div style="color:red;background:#fff;padding:1rem;">Translation failed.</div>';
-    }
-  });
-
-  async function translateToArabic(englishText) {
-    const prompt = `Translate the following English textbook lines into Arabic. Keep the same number of lines and order:\n\n${englishText}`;
-    const body = { contents: [{ parts: [{ text: prompt }] }] };
-    const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${GEMINI_API_KEY}`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(body)
-    });
-    const data = await res.json();
-    return data.candidates?.[0]?.content?.parts?.[0]?.text || '';
-  }
-
-  // --- INIT ---
-  pageInput.max = totalPages;
+// Load a specific page
+function loadPage() {
+  flipbook.innerHTML = `
+    <div class="page">
+      <img class="page-image" src="./images/Book_PHYS101_${currentPage}.png" alt="Page ${currentPage+1}">
+      <div id="overlay-translation"></div>
+    </div>`;
+  MathJax.typesetPromise();
   renderThumbs();
-  renderIndex();
-  renderPage();
+}
+
+// Render page thumbnails
+function renderThumbs() {
+  const thumbBar = document.getElementById("thumbBar");
+  thumbBar.innerHTML = "";
+  for (let i = 0; i < totalPages; i++) {
+    const thumb = document.createElement("img");
+    thumb.src = `./images/Book_PHYS101_${i}.png`;
+    thumb.onclick = () => { currentPage = i; loadPage(); };
+    thumbBar.appendChild(thumb);
+  }
+}
+
+// Translation function
+async function translateCurrentPage() {
+  const overlay = document.getElementById("overlay-translation");
+  const pageImg = document.querySelector(".page-image");
+  if (!pageImg) return alert("Page image not ready.");
+
+  overlay.style.display = "block";
+  overlay.textContent = "🔎 Running OCR...";
+
+  try {
+    const ocrResult = await Tesseract.recognize(pageImg.src, "eng", { logger: m => {} });
+    const { lines } = ocrResult.data;
+
+    if (!lines?.length) {
+      overlay.textContent = "⚠️ No readable English text found.";
+      return;
+    }
+
+    overlay.innerHTML = "";
+    const imgWidth = ocrResult.data.image?.dims?.width || pageImg.naturalWidth;
+    const imgHeight = ocrResult.data.image?.dims?.height || pageImg.naturalHeight;
+
+    for (const line of lines) {
+      const engLine = (line.text || "").trim();
+      if (!engLine) continue;
+
+      // Translate each line
+      let translated = engLine;
+      if (GEMINI_API_KEY) {
+        try {
+          const resp = await fetch(
+            `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${GEMINI_API_KEY}`,
+            {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({
+                contents: [{ parts: [{ text: `Translate to Arabic (preserve meaning and math):\n${engLine}` }] }]
+              })
+            }
+          );
+          const data = await resp.json();
+          translated = data.candidates?.[0]?.content?.parts?.[0]?.text || engLine;
+        } catch (err) {
+          console.warn("Translation error:", err);
+        }
+      }
+
+      // Bounding box positioning
+      const { x0, y0, x1, y1 } = line.bbox;
+      const leftPct = (x0 / imgWidth) * 100;
+      const topPct = (y0 / imgHeight) * 100;
+      const widthPct = ((x1 - x0) / imgWidth) * 100;
+      const heightPct = ((y1 - y0) / imgHeight) * 100;
+
+      const div = document.createElement("div");
+      div.className = "overlay-line";
+      div.innerHTML = translated;
+      div.style.left = `${leftPct}%`;
+      div.style.top = `${topPct}%`;
+      div.style.width = `${widthPct}%`;
+      div.style.height = `${heightPct}%`;
+
+      overlay.appendChild(div);
+    }
+
+    hideTranslateBtn.style.display = "inline-block";
+    MathJax.typesetPromise();
+
+  } catch (err) {
+    console.error("OCR/Translate error:", err);
+    overlay.textContent = "❌ Translation failed.";
+  }
+}
+
+// Hide Arabic overlay
+hideTranslateBtn.onclick = () => {
+  overlay.innerHTML = "";
+  hideTranslateBtn.style.display = "none";
+};
+
+// Page navigation
+document.getElementById("nextPage").onclick = () => {
+  if (currentPage < totalPages - 1) { currentPage++; loadPage(); }
+};
+document.getElementById("prevPage").onclick = () => {
+  if (currentPage > 0) { currentPage--; loadPage(); }
+};
+
+// Translate button
+document.getElementById("translateBtn").onclick = translateCurrentPage;
+
+// Initialize
+loadPage();
 </script>
 </body>
 </html>
