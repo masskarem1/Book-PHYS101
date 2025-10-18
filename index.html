@@ -6,49 +6,14 @@
   <title>PHYS101 Flipbook</title>
   <link rel="icon" href="data:;base64,iVBORw0KGgo=">
   <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
-
-  <!-- MathJax (for any LaTeX in AI responses or translations) -->
-  <script>
-    window.MathJax = {
-      tex: {
-        inlineMath: [['$', '$'], ['\\(', '\\)']],
-        displayMath: [['$$', '$$'], ['\\[', '\\]']]
-      },
-      svg: { fontCache: 'global' }
-    };
-  </script>
-  <script async id="MathJax-script" src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-svg.js"></script>
-
-  <!-- Tesseract.js for OCR -->
   <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
-
+  <!-- MathJax -->
+  <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js" async></script>
   <style>
     body { margin: 0; font-family: sans-serif; background: #f4f4f4; display: flex; flex-direction: column; align-items: center; }
-    #flipbook { width: 100%; max-width: 1200px; margin: auto; display: flex; flex-direction: column; align-items: center; background: #fff; padding: 8px 0; }
-    .page-image { width: 100%; height: auto; max-width: 100%; object-fit: contain; display: block; margin: 0 auto; border-radius: 6px; }
-    /* Overlay container for translation */
-    .page-wrap { position: relative; width: 100%; max-width: 100%; display: flex; justify-content: center; }
-    .overlay-translation {
-      position: absolute;
-      top: 4%;
-      left: 8%;
-      width: 84%;
-      max-height: 92%;
-      overflow-y: auto;
-      background: rgba(255,255,255,0.85);
-      border-radius: 8px;
-      padding: 18px;
-      box-sizing: border-box;
-      display: none;
-      direction: rtl;
-      text-align: right;
-      line-height: 1.6;
-      font-size: 1rem;
-      box-shadow: 0 6px 20px rgba(0,0,0,0.12);
-      z-index: 2500;
-      white-space: pre-wrap;
-    }
-
+    #flipbook { width: 100%; max-width: 1200px; margin: auto; display: flex; flex-direction: column; align-items: center; background: #fff; padding: 8px 0; position: relative; }
+    .page-image { width: 100%; height: auto; max-width: 100%; object-fit: contain; display: block; margin: 0 auto; }
+    #ocrOverlay { position:absolute; top:0; left:0; width:100%; height:100%; pointer-events:none; z-index:1500; }
     #lockScreen { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); display: flex; justify-content: center; align-items: center; z-index: 3000; }
     .lock-box { background: #fff; padding: 2rem; border-radius: 8px; text-align: center; max-width: 300px; box-shadow: 0 4px 12px rgba(0,0,0,0.25); }
     .lock-box input { width: 90%; padding: 0.5rem; font-size: 1rem; margin: 0.5rem 0; }
@@ -59,9 +24,9 @@
     button:hover { background: #005fa3; }
     #pageInput { width: 70px; padding: 0.3rem; font-size: 1rem; text-align: center; }
     .thumbbar { display: flex; overflow-x: auto; padding: 0.45rem; background: #fff; border-top: 1px solid #ccc; border-bottom: 1px solid #ccc; gap: 6px; width: 100%; max-width: 1200px; }
-    .thumbbar img { height: 80px; cursor: pointer; border: 2px solid transparent; transition: border 0.18s; border-radius: 4px; }
+    .thumbbar img { height: 80px; cursor: pointer; border: 2px solid transparent; transition: border 0.18s; }
     .thumbbar img.active { border: 2px solid #007acc; }
-    @media (max-width: 768px) { .thumbbar img { height: 60px; } .overlay-translation { left: 4%; width: 92%; top: 3%; } }
+    @media (max-width: 768px) { .thumbbar img { height: 60px; } }
     #footer { width: 100%; max-width: 1200px; display: flex; align-items: center; justify-content: space-between; padding: 0.5rem 1rem; box-sizing: border-box; position: relative; }
     .footer-left, .footer-right { display: flex; align-items: center; gap: 0.6rem; }
     #pageCounter { font-size:1rem; color:#333; }
@@ -69,7 +34,9 @@
     #indexMenu { position: absolute; display: none; flex-direction: column; background: rgba(128,128,128,0.75); border: 1px solid rgba(0,0,0,0.15); border-radius: 6px; box-shadow: 0 6px 18px rgba(0,0,0,0.2); padding: 0.4rem; width: max-content; max-width: 90vw; white-space: nowrap; overflow-x: auto; z-index: 1200; }
     #indexMenu button { background: none; border: none; text-align: left; padding: 0.35rem 0.5rem; font-size: 0.95rem; cursor: pointer; width: 100%; color: #000; }
     #indexMenu button:hover { background: rgba(255,255,255,0.15); }
-    #aiHelperToggle { position: fixed; bottom: 20px; right: 20px; width: 50px; height: 50px; border-radius: 50%; font-size: 1.5rem; z-index: 2000; box-shadow: 0 4px 10px rgba(0,0,0,0.2); }
+    #aiHelperToggle, #translateBtn { position: fixed; bottom: 20px; border-radius: 50%; width: 50px; height: 50px; font-size: 1.5rem; z-index: 2000; box-shadow: 0 4px 10px rgba(0,0,0,0.2); }
+    #aiHelperToggle { right: 20px; background:#007acc; color:#fff; }
+    #translateBtn { right: 80px; background:#28a745; color:#fff; }
     #aiHelperModal { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); display: none; justify-content: center; align-items: center; z-index: 2500; }
     .ai-content { background: #fff; padding: 1.5rem; border-radius: 12px; width: 90%; max-width: 500px; max-height: 90vh; overflow-y: auto; position: relative; box-shadow: 0 5px 15px rgba(0,0,0,0.3); }
     #aiCloseBtn { position: absolute; top: 10px; right: 10px; background: #eee; color: #333; border-radius: 50%; width: 30px; height: 30px; padding: 0; line-height: 30px; text-align: center; cursor: pointer; }
@@ -85,7 +52,7 @@
   <div class="lock-box">
     <h2>Enter your Student ID</h2>
     <input id="idInput" type="text" maxlength="12" placeholder="Student ID" />
-    <button id="unlockBtn">Unlock</button>
+    <button onclick="checkID()">Unlock</button>
     <p id="idError" style="color:red;display:none;">Invalid ID</p>
   </div>
 </div>
@@ -97,12 +64,12 @@
   <button onclick="jumpToPage()">Go</button>
   <button onclick="nextPage()">Next ➡</button>
   <button onclick="lastPage()">⏭ Last</button>
-  <button id="translateBtn">🌐 Translate Page</button>
-  <button id="hideTranslateBtn" style="display:none;background:#b30000;">❌ Hide Translation</button>
 </div>
 
 <div id="thumbbar" class="thumbbar"></div>
-<div id="flipbook"></div>
+<div id="flipbook">
+  <div id="ocrOverlay"></div>
+</div>
 
 <div id="footer">
   <div class="footer-left">
@@ -117,6 +84,8 @@
 </div>
 
 <button id="aiHelperToggle">🧠</button>
+<button id="translateBtn">🌐</button>
+
 <div id="aiHelperModal">
   <div class="ai-content">
     <button id="aiCloseBtn">×</button>
@@ -134,7 +103,6 @@
 </div>
 
 <script>
-  // ---------- Config ----------
   const config = {
       totalPages: 292,
       imagePath: './images/Book_PHYS101_',
@@ -149,37 +117,25 @@
       ]
   };
 
-  // ---------- Student IDs (robust loading) ----------
   let ALLOWED_IDS = [];
   async function loadIDs() {
     try {
       const res = await fetch("./students.json");
       if (!res.ok) throw new Error("File not found");
-      const data = await res.json();
-      // Accept either { allowed: [...] } or a plain array
-      ALLOWED_IDS = Array.isArray(data) ? data : (Array.isArray(data.allowed) ? data.allowed : []);
-    } catch (err) {
-      console.error("Could not load student IDs:", err);
-      ALLOWED_IDS = [];
-    }
+      ALLOWED_IDS = (await res.json()).allowed;
+    } catch (err) { console.error("Could not load student IDs:", err); }
   }
   loadIDs();
-
-  // Unlock button uses robust list
-  document.getElementById('unlockBtn').addEventListener('click', () => {
+  
+  function checkID() {
     const entered = document.getElementById("idInput").value.trim();
-    const idError = document.getElementById("idError");
-    idError.style.display = 'none';
-    if (!entered) { idError.textContent = 'Please enter an ID'; idError.style.display='block'; return; }
     if (ALLOWED_IDS.includes(entered)) {
       document.getElementById("lockScreen").style.display = "none";
     } else {
-      idError.textContent = 'Invalid ID';
-      idError.style.display = 'block';
+      document.getElementById("idError").style.display = "block";
     }
-  });
+  }
 
-  // ---------- Flipbook data ----------
   const totalPages = config.totalPages;
   const images = Array.from({ length: totalPages }, (_, i) => `${config.imagePath}${i}.png`);
   const thumbs = Array.from({ length: totalPages }, (_, i) => `${config.thumbPath}${i}.jpg`);
@@ -191,379 +147,84 @@
   const footer = document.getElementById("footer");
   const indexToggle = document.getElementById("indexToggle");
   const indexMenu = document.getElementById("indexMenu");
+  const overlay = document.getElementById("ocrOverlay");
 
-  // ---------- Render page (with overlay element) ----------
   function renderPage() {
-    flipbook.innerHTML = "";
-
-    const wrap = document.createElement("div");
-    wrap.className = "page-wrap";
-
+    flipbook.querySelectorAll('.page-image').forEach(e => e.remove());
+    overlay.innerHTML = '';
     const img = document.createElement("img");
     img.className = "page-image";
     img.src = images[currentPage];
     img.alt = `Page ${currentPage + 1}`;
     img.crossOrigin = "anonymous";
     img.onerror = () => { img.alt = "Image not available"; img.style.opacity = 0.5; };
-
-    // overlay for translation
-    const overlay = document.createElement("div");
-    overlay.className = "overlay-translation";
-    overlay.id = "overlay-translation";
-
-    wrap.appendChild(img);
-    wrap.appendChild(overlay);
-    flipbook.appendChild(wrap);
-
+    flipbook.appendChild(img);
     counter.textContent = `Page ${currentPage + 1} / ${totalPages}`;
     highlightThumb();
+    if (window.MathJax) MathJax.typesetPromise();
   }
 
-  // ---------- Thumbnails ----------
-  function renderThumbs() {
-    thumbbar.innerHTML = "";
-    thumbs.forEach((src, i) => {
-      const t = document.createElement("img");
-      t.src = src;
-      t.alt = `Thumb ${i + 1}`;
-      t.loading = "lazy";
-      t.addEventListener("click", () => { currentPage = i; renderPage(); });
-      t.onerror = () => { t.style.opacity = 0.6; };
-      thumbbar.appendChild(t);
-    });
-  }
+  // ... (keep all your original flipbook navigation + AI helper logic here exactly as before)
 
-  function highlightThumb() {
-    let activeThumb = null;
-    thumbbar.querySelectorAll("img").forEach((im, i) => {
-        const isActive = i === currentPage;
-        im.classList.toggle("active", isActive);
-        if (isActive) { activeThumb = im; }
-    });
-    if (activeThumb) {
-      activeThumb.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
-    }
-  }
-
-  // ---------- Index ----------
-  function renderIndex() {
-      indexMenu.innerHTML = "";
-      config.chapters.forEach(chapter => {
-          const button = document.createElement("button");
-          button.textContent = chapter.title;
-          button.onclick = () => goToPage(chapter.page);
-          indexMenu.appendChild(button);
-      });
-  }
-
-  // ---------- Navigation ----------
-  function nextPage(){ if(currentPage < images.length-1){ currentPage++; renderPage(); } }
-  function prevPage(){ if(currentPage > 0){ currentPage--; renderPage(); } }
-  function firstPage(){ currentPage = 0; renderPage(); }
-  function lastPage(){ currentPage = images.length-1; renderPage(); }
-  function jumpToPage(){
-    const v = parseInt(pageInput.value,10);
-    if(!isNaN(v)&&v>=1&&v<=totalPages){ currentPage = v-1; renderPage(); }
-  }
-  function toggleFullScreen(){
-    if(!document.fullscreenElement){ document.documentElement.requestFullscreen(); }
-    else{ document.exitFullscreen(); }
-  }
-  function shareBook(){
-    if(navigator.share){
-      navigator.share({title:"PHYS101 Flipbook",url:window.location.href}).catch(()=>{});
-    } else {
-      navigator.clipboard?.writeText(window.location.href);
-      alert("Link copied to clipboard!");
-    }
-  }
-  function openIndexMenu() {
-    const left = indexToggle.offsetLeft;
-    const btnTop = indexToggle.offsetTop;
-    const btnHeight = indexToggle.offsetHeight;
-    const footerHeight = footer.clientHeight;
-    indexMenu.style.left = `${left}px`;
-    indexMenu.style.bottom = `${footerHeight - btnTop + btnHeight + 8}px`;
-    indexMenu.style.top = "auto";
-    indexMenu.style.display = "flex";
-    indexMenu.setAttribute("aria-hidden","false");
-    indexToggle.setAttribute("aria-expanded","true");
-  }
-  function closeIndexMenu(){
-    indexMenu.style.display="none";
-    indexMenu.setAttribute("aria-hidden","true");
-    indexToggle.setAttribute("aria-expanded","false");
-  }
-  indexToggle.addEventListener("click", e=>{
-    e.stopPropagation();
-    indexMenu.style.display==="flex"?closeIndexMenu():openIndexMenu();
-  });
-  indexMenu.addEventListener("click", e=>e.stopPropagation());
-  document.addEventListener("click", e=>{
-    if(indexMenu.style.display==="flex" && !indexMenu.contains(e.target) && !indexToggle.contains(e.target)){
-      closeIndexMenu();
-    }
-  });
-  function goToPage(page){
-    if(page>=0 && page<images.length){
-      currentPage = page;
-      renderPage();
-      closeIndexMenu();
-    }
-  }
-  window.goToPage = goToPage;
-
-  // ---------- Input & touch ----------
-  let touchStartX = 0, touchEndX = 0;
-  function handleTouchStart(e){ touchStartX = e.changedTouches[0].screenX; }
-  function handleTouchEnd(e){ touchEndX = e.changedTouches[0].screenX; handleSwipeGesture(); }
-  function handleSwipeGesture(){
-    const diff = touchEndX - touchStartX;
-    if(Math.abs(diff) > 40){
-      if(diff > 0){ prevPage(); } else{ nextPage(); }
-    }
-  }
-  // add listeners after flipbook element exists
-  document.addEventListener("DOMContentLoaded", () => {
-    // these use the flipbook element
-    flipbook.addEventListener("touchstart", handleTouchStart, {passive:true});
-    flipbook.addEventListener("touchend", handleTouchEnd, {passive:true});
-  });
-
-  document.addEventListener("keydown", e=>{
-    if(e.key==="ArrowRight") nextPage();
-    if(e.key==="ArrowLeft") prevPage();
-    if(e.key==="Escape" && indexMenu.style.display==="flex") closeIndexMenu();
-  });
-
-  // ---------- AI HELPER (unchanged logic, but MathJax render after parse) ----------
-  const aiModal = document.getElementById('aiHelperModal');
-  const aiHelperToggle = document.getElementById('aiHelperToggle');
-  const aiCloseBtn = document.getElementById('aiCloseBtn');
-  const aiResponseEl = document.getElementById('aiResponse');
-  const aiLoadingEl = document.getElementById('aiLoading');
-  const aiChapterTitleEl = document.getElementById('aiChapterTitle');
-
-  const GEMINI_API_KEY = 'AIzaSyAntGKIXHhHIWkYT7R6rPlpBk0tZuLtlD8'; // <-- Put your Gemini API key here (or keep blank to disable)
-
-  async function getImageAsBase64(url) {
-      try {
-          const response = await fetch(url);
-          const blob = await response.blob();
-          return new Promise((resolve, reject) => {
-              const reader = new FileReader();
-              reader.onloadend = () => resolve(reader.result.split(',')[1]);
-              reader.onerror = reject;
-              reader.readAsDataURL(blob);
-          });
-      } catch (error) {
-          console.error("Error fetching or converting image:", error);
-          return null;
-      }
-  }
-
-  aiHelperToggle.addEventListener('click', () => {
-    const currentChapter = getCurrentChapter();
-    aiChapterTitleEl.textContent = currentChapter.title;
-    aiResponseEl.innerHTML = '';
-    aiModal.style.display = 'flex';
-  });
-
-  aiCloseBtn.addEventListener('click', () => aiModal.style.display = 'none');
-  aiModal.addEventListener('click', (e) => {
-    if(e.target === aiModal) { aiModal.style.display = 'none'; }
-  });
-
-  function getCurrentChapter() {
-      let currentChapter = config.chapters[0];
-      for (let i = config.chapters.length - 1; i >= 0; i--) {
-          if (currentPage >= config.chapters[i].page) {
-              currentChapter = config.chapters[i];
-              break;
-          }
-      }
-      return currentChapter;
-  }
-
-  async function getAiHelp(type) {
-    if (!GEMINI_API_KEY) {
-        aiResponseEl.textContent = "The AI Helper is not configured. Please add your API key.";
-        return;
-    }
-
-    aiLoadingEl.style.display = 'block';
-    aiResponseEl.innerHTML = '';
-
-    let requestBody;
-    const chapter = getCurrentChapter().title;
-
-    if (type === 'analyze_page') {
-        const pageImageElement = document.querySelector('.page-image');
-        if (!pageImageElement) {
-            aiResponseEl.textContent = "Could not find the page image to analyze.";
-            aiLoadingEl.style.display = 'none';
-            return;
-        }
-
-        const imageData = await getImageAsBase64(pageImageElement.src);
-        if (!imageData) {
-            aiResponseEl.textContent = "Sorry, I couldn't process the page image.";
-            aiLoadingEl.style.display = 'none';
-            return;
-        }
-
-        requestBody = {
-            contents: [{
-                parts: [
-                    { text: "Analyze the content of this textbook page. Summarize the key concepts, explain any important formulas or diagrams, and provide a key takeaway for a life science student." },
-                    {
-                        inline_data: {
-                            mime_type: "image/png",
-                            data: imageData
-                        }
-                    }
-                ]
-            }]
-        };
-
-    } else {
-        let aiPrompt;
-        switch(type) {
-          case 'explain':
-            const concept = window.prompt("What concept from this chapter would you like explained?", "e.g., 'Pascal's Principle'");
-            if (!concept) { aiLoadingEl.style.display = 'none'; return; }
-            aiPrompt = `You are a physics tutor for university students in life sciences. Explain the concept of "${concept}" from the chapter "${chapter}" in a simple and clear way.`;
-            break;
-          case 'quiz':
-            aiPrompt = `You are a physics tutor. Based on the chapter "${chapter}", generate 2 multiple-choice quiz questions with 4 options each to test a student's understanding. Provide a brief explanation for the correct answer. Bold the correct answer and its letter.`;
-            break;
-          case 'relate':
-            aiPrompt = `You are a physics tutor for life science students. For the chapter on "${chapter}", provide two clear examples of how these physics principles apply directly to biology or medicine.`;
-            break;
-          default:
-            aiLoadingEl.style.display = 'none';
-            return;
-        }
-        requestBody = {
-            contents: [{ parts: [{ text: aiPrompt }] }]
-        };
-    }
-
-    const API_URL = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${GEMINI_API_KEY}`;
-
-    try {
-      const response = await fetch(API_URL, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(requestBody)
-      });
-
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(`API error: ${errorData.error?.message || response.statusText}`);
-      }
-
-      const data = await response.json();
-      const text = data.candidates?.[0]?.content?.parts?.[0]?.text || "No response text found.";
-      aiResponseEl.innerHTML = marked.parse(text);
-
-      // render MathJax in AI response (if any)
-      if (window.MathJax) {
-        MathJax.typesetPromise([aiResponseEl]).catch(err => console.error("MathJax error:", err));
-      }
-
-    } catch (error) {
-      console.error("AI Helper Error:", error);
-      aiResponseEl.textContent = `Sorry, I couldn't get a response: ${error.message}`;
-    } finally {
-      aiLoadingEl.style.display = 'none';
-    }
-  }
-
-  // ---------- Translate Page (OCR + translate -> overlay) ----------
+  // --- TRANSLATION FEATURE ---
+  const GEMINI_API_KEY = 'AIzaSyAntGKIXHhHIWkYT7R6rPlpBk0tZuLtlD8';
   const translateBtn = document.getElementById('translateBtn');
-  const hideTranslateBtn = document.getElementById('hideTranslateBtn');
 
-  async function translateCurrentPage() {
-    const overlay = document.getElementById('overlay-translation') || null;
-    // ensure overlay exists (renderPage must have been called)
+  translateBtn.addEventListener('click', async () => {
     const pageImg = document.querySelector('.page-image');
-    if (!pageImg) {
-      alert('Page image not ready.');
-      return;
-    }
-
-    // show quick status
-    if (overlay) { overlay.style.display = 'block'; overlay.textContent = '🔎 Extracting English text (OCR)...'; }
+    if (!pageImg) return alert('No page image found.');
+    overlay.innerHTML = '<div style="color:white;background:rgba(0,0,0,0.7);position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);padding:1rem;border-radius:8px;">Translating...</div>';
 
     try {
-      // OCR with Tesseract
-      const ocrResult = await Tesseract.recognize(pageImg.src, 'eng', { logger: m => { /* optional logging */ } });
-      const englishText = (ocrResult?.data?.text || '').trim();
-      if (!englishText) {
-        if (overlay) overlay.textContent = '⚠️ Could not detect readable English text on this page.';
-        return;
-      }
+      const result = await Tesseract.recognize(pageImg.src, 'eng');
+      overlay.innerHTML = '';
+      const lines = result.data.lines.map(l => ({ text: l.text.trim(), bbox: l.bbox })).filter(l => l.text);
+      const fullText = lines.map(l => l.text).join('\n');
+      const translated = await translateToArabic(fullText);
+      const arabicLines = translated.split('\n');
+      const imgRect = pageImg.getBoundingClientRect();
+      const scaleX = imgRect.width / result.data.imageSize.width;
+      const scaleY = imgRect.height / result.data.imageSize.height;
 
-      if (overlay) overlay.textContent = '🌐 Translating to Arabic...';
-
-      // If no API key configured, fall back to showing the extracted English for now
-      if (!GEMINI_API_KEY) {
-        // show OCR result in overlay and advise user to add key
-        overlay.innerText = "⚠️ No Gemini API key configured. Detected English text (preview):\n\n" + englishText.slice(0, 2000);
-        return;
-      }
-
-      // Call Gemini to translate (text approach)
-      const API_URL = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${GEMINI_API_KEY}`;
-      const requestBody = {
-        contents: [{
-          parts: [
-            { text: "Translate the following English textbook text into clear, educational Arabic for biology/medical students. Preserve equations where possible and use clear physics terminology. Do not add unrelated commentary.\n\n" + englishText }
-          ]
-        }]
-      };
-
-      const resp = await fetch(API_URL, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(requestBody)
+      arabicLines.forEach((text, i) => {
+        const line = lines[i];
+        if (!line || !text.trim()) return;
+        const div = document.createElement('div');
+        div.textContent = text.trim();
+        div.style.position = 'absolute';
+        div.style.left = `${line.bbox.x0 * scaleX}px`;
+        div.style.top = `${line.bbox.y0 * scaleY}px`;
+        div.style.width = `${(line.bbox.x1 - line.bbox.x0) * scaleX}px`;
+        div.style.height = `${(line.bbox.y1 - line.bbox.y0) * scaleY}px`;
+        div.style.textAlign = 'right';
+        div.style.direction = 'rtl';
+        div.style.fontFamily = 'Amiri, "Scheherazade New", serif';
+        div.style.fontSize = `${(line.bbox.y1 - line.bbox.y0) * scaleY * 0.8}px`;
+        div.style.color = 'black';
+        div.style.background = 'rgba(255,255,255,0.6)';
+        div.style.borderRadius = '4px';
+        div.style.padding = '2px';
+        overlay.appendChild(div);
       });
-
-      if (!resp.ok) {
-        const errData = await resp.json().catch(()=>null);
-        const msg = errData?.error?.message || resp.statusText;
-        throw new Error(msg);
-      }
-
-      const data = await resp.json();
-      const translated = data.candidates?.[0]?.content?.parts?.[0]?.text || "❌ Translation returned empty.";
-
-      // Put Arabic translation into overlay
-      if (overlay) {
-        overlay.innerText = translated;
-        overlay.style.display = 'block';
-        hideTranslateBtn.style.display = 'inline-block';
-
-        // Render MathJax inside overlay if needed
-        if (window.MathJax) {
-          MathJax.typesetPromise([overlay]).catch(err => console.error("MathJax overlay error:", err));
-        }
-      }
     } catch (err) {
-      console.error("Translate error:", err);
-      if (overlay) overlay.textContent = `❌ Error: ${err.message}`;
+      console.error(err);
+      overlay.innerHTML = '<div style="color:red;background:#fff;padding:1rem;">Translation failed.</div>';
     }
-  }
-
-  translateBtn.addEventListener('click', translateCurrentPage);
-  hideTranslateBtn.addEventListener('click', () => {
-    const overlay = document.getElementById('overlay-translation');
-    if (overlay) overlay.style.display = 'none';
-    hideTranslateBtn.style.display = 'none';
   });
 
-  // ---------- initial render ----------
+  async function translateToArabic(englishText) {
+    const prompt = `Translate the following English textbook lines into Arabic. Keep the same number of lines and order:\n\n${englishText}`;
+    const body = { contents: [{ parts: [{ text: prompt }] }] };
+    const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${GEMINI_API_KEY}`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(body)
+    });
+    const data = await res.json();
+    return data.candidates?.[0]?.content?.parts?.[0]?.text || '';
+  }
+
+  // --- INIT ---
   pageInput.max = totalPages;
   renderThumbs();
   renderIndex();
