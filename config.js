@@ -1,6 +1,7 @@
 // ---------- Config ----------
 const config = {
     totalPages: 292,
+    // MODIFIED: Use relative paths for portability
     imagePath: './images/Book_PHYS101_',
     thumbPath: './thumbs/Book_PHYS101_',
     chapters: [
