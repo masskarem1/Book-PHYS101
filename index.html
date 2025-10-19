@@ -149,13 +149,15 @@
 
 
 <!-- Load config file first -->
-<script src="config.js"></script>
+<!-- MODIFIED: Use relative path -->
+<script src="./config.js"></script>
 
 <!-- Main Application Script -->
 <script>
   let ALLOWED_IDS = [];
   async function loadIDs() {
     try {
+      // MODIFIED: Use relative path
       const res = await fetch("./students.json");
       if (!res.ok) throw new Error("File not found");
       const data = await res.json();
@@ -361,8 +363,6 @@
     }
   }
   
-  // --- CORRECTED CODE ---
-  // Listeners are attached directly since the script is at the end of the body.
   flipbook.addEventListener("touchstart", handleTouchStart, {passive:true});
   flipbook.addEventListener("touchend", handleTouchEnd, {passive:true});
 
@@ -395,6 +395,7 @@
   videoModal.addEventListener('click', (e) => { if(e.target === videoModal) { closeVideoModal(); } });
 
   // AI Helper and Translate Page logic is here but omitted from this view for brevity...
+  // (Your existing AI and Translate functions would go here)
 
   pageInput.max = totalPages;
   renderThumbs();
