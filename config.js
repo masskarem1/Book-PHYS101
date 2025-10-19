@@ -33,7 +33,7 @@ const config = {
         },
         {
             page: 48, // Example: On page 48
-            url: "https://www.youtube.com/shorts/-H4oOfKtPDw"
+            url: "https://youtube.com/shorts/-H4oOfKtPDw?si=Jv94nlu73WhiL7M1"
         }
     ]
 };
