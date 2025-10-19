@@ -15,12 +15,12 @@ const config = {
     // ---------- Simulation Config ----------
     simulations: [
         { 
-            page: 65, 
-            url: "https://phet.colorado.edu/sims/html/under-pressure/latest/under-pressure_en.html" 
+            page: 9, 
+            url: "https://phet.colorado.edu/sims/html/curve-fitting/latest/curve-fitting_all.html" 
         },
         { 
-            page: 72, 
-            url: "https://phet.colorado.edu/sims/html/fluid-pressure-and-flow/latest/fluid-pressure-and-flow_en.html"
+            page: 45, 
+            url: "https://phet.colorado.edu/sims/html/masses-and-springs-basics/latest/masses-and-springs-basics_all.html"
         }
     ],
 
@@ -29,11 +29,11 @@ const config = {
     videos: [
         {
             page: 10, // Example: On page 10
-            url: "https://www.youtube.com/watch?v=hQ-rR-4n-7I" // Standard YouTube link
+            url: "https://www.youtube.com/watch?v=JieVY0q1Ypg" // Standard YouTube link
         },
         {
-            page: 42, // Example: On page 42
-            url: "https://www.youtube.com/watch?v=S-JpEjA2-iA"
+            page: 48, // Example: On page 48
+            url: "https://www.youtube.com/shorts/-H4oOfKtPDw"
         }
     ]
 };
