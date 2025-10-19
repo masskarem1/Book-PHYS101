@@ -5,11 +5,11 @@ const config = {
     thumbPath: './thumbs/Book_PHYS101_',
     chapters: [
         { title: "CHAPTER 1 – Physics and Measurements", page: 9 },
-        { title: "CHAPTER 2 – Solids and Elasticity", page: 42 },
-        { title: "CHAPTER 3 – Fluids", page: 62 },
-        { title: "CHAPTER 4 – Thermal Physics", page: 134 },
-        { title: "CHAPTER 5 – Waves and Sound", page: 216 },
-        { title: "APPENDIX", page: 278 }
+        { title: "CHAPTER 2 – Solids and Elasticity", page: 41 },
+        { title: "CHAPTER 3 – Fluids", page: 63 },
+        { title: "CHAPTER 4 – Thermal Physics", page: 135 },
+        { title: "CHAPTER 5 – Waves and Sound", page: 217 },
+        { title: "APPENDIX", page: 279 }
     ],
     
     // ---------- Simulation Config ----------
