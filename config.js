@@ -1,5 +1,6 @@
 // ---------- Config ----------
 const config = {
+requireLogin: false, // <-- student login by id (set to true or false)
 totalPages: 292,
 imagePath: './images/Book_PHYS101_',
 thumbPath: './thumbs/Book_PHYS101_',
