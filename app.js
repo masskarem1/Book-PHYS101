@@ -431,9 +431,7 @@ function startDrawing(e) {
     isDrawing = true;
     const pos = getDrawPosition(e, highlightCanvas);
     [lastX, lastY] = [pos.x, pos.y];
-    ctx.beginPath();
-
-    // No need to set fillStyle here anymore as we draw lines
+    // No drawing happens here, just setup
 }
 
 
@@ -445,13 +443,15 @@ function draw(e) {
     ctx.lineCap = 'round';
     ctx.lineJoin = 'round';
     if (drawMode === 'highlight') {
-        ctx.globalCompositeOperation = 'source-over'; // Reverted to default
+        ctx.globalCompositeOperation = 'source-over'; // Use the default drawing mode
         const highlightColor = colorPicker.value;
-        const transparentColor = hexToRgba(highlightColor, 0.4); // Use 40% opacity
+        // Convert the hex color to a transparent RGBA color
+        const transparentColor = hexToRgba(highlightColor, 0.4); // 40% opacity
         ctx.strokeStyle = transparentColor;
         ctx.lineWidth = brushSizeSlider.value;
-    } else { // Eraser
-        ctx.globalCompositeOperation = 'destination-out';
+    } else { // Eraser mode
+        ctx.globalCompositeOperation = 'destination-out'; // This erases content
+        ctx.strokeStyle = 'rgba(0,0,0,1)'; // Eraser needs an opaque color to work
         ctx.lineWidth = brushSizeSlider.value;
     }
     ctx.moveTo(lastX, lastY);
@@ -766,6 +766,7 @@ document.addEventListener("DOMContentLoaded", () => {
     renderIndex();
     renderPage();
 });
+
 
 
 
