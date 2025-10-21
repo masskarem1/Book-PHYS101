@@ -342,6 +342,10 @@ const swipeThreshold = 50;
 function handleTouchStart(e){ touchStartX = e.touches[0].clientX; } // Use clientX for touch
 function handleTouchEnd(e){ touchEndX = e.changedTouches[0].clientX; handleSwipeGesture(); }
 function handleSwipeGesture(){
+    // If we are in drawing mode, do not handle swipes for page turning.
+    if (document.body.classList.contains('highlight-mode')) {
+        return;
+    }
     const diff = touchEndX - touchStartX;
     if (Math.abs(diff) > swipeThreshold){
          if(diff > 0){ prevPage(); } else { nextPage(); }
@@ -747,5 +751,6 @@ document.addEventListener("DOMContentLoaded", () => {
     renderIndex();
     renderPage();
 });
+
 
 
