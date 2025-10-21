@@ -583,12 +583,10 @@ async function getAiHelp(type) {
             };
         }
 
-        const API_URL_VISION = `https://generativelanguage.googleapis.com/v1beta/models/gemini-pro-vision:generateContent?key=${GEMINI_API_KEY}`;
-        const API_URL_TEXT = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${GEMINI_API_KEY}`; // Use flash for text-only
+        // --- FIX: Use the correct model name for all API calls ---
+        const API_URL = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=${GEMINI_API_KEY}`;
 
-        const urlToUse = (type === 'analyze_page') ? API_URL_VISION : API_URL_TEXT;
-
-        const response = await fetch(urlToUse, {
+        const response = await fetch(API_URL, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json'
@@ -664,8 +662,8 @@ async function translateCurrentPage() {
     overlay.textContent = '🌐 Translating to Arabic... Please wait.';
 
     try {
-        // Use a model suitable for translation, like flash
-        const API_URL_TEXT = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${GEMINI_API_KEY}`;
+        // --- FIX: Use the correct model name for translation API call ---
+        const API_URL = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=${GEMINI_API_KEY}`;
         const requestBody = {
             contents: [{
                 parts: [{
@@ -674,7 +672,7 @@ async function translateCurrentPage() {
             }]
         };
 
-        const resp = await fetch(API_URL_TEXT, {
+        const resp = await fetch(API_URL, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json'
@@ -725,3 +723,4 @@ hideTranslateBtn.addEventListener('click', () => {
 </script>
 </body>
 </html>
+
