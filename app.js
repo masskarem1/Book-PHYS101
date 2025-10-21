@@ -583,7 +583,6 @@ async function getAiHelp(type) {
             };
         }
 
-        // --- FIX: Use the correct model name for all API calls ---
         const API_URL = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=${GEMINI_API_KEY}`;
 
         const response = await fetch(API_URL, {
@@ -598,16 +597,17 @@ async function getAiHelp(type) {
             let errorText = response.statusText;
             try {
                 const errorData = await response.json();
-                errorText = errorData.error ? .message || errorText;
+                // FIX: Replace optional chaining with standard boolean logic
+                errorText = (errorData.error && errorData.error.message) || errorText;
             } catch (e) { /* Ignore if response body isn't JSON */ }
             throw new Error(`API error (${response.status}): ${errorText}`);
         }
 
         const data = await response.json();
 
-        // Handle potential safety blocks or empty responses
+        // FIX: Replace optional chaining with standard boolean logic
+        let finishReason = (data.candidates && data.candidates[0] && data.candidates[0].finishReason) || 'Unknown reason';
         if (!data.candidates || data.candidates.length === 0 || !data.candidates[0].content || !data.candidates[0].content.parts || data.candidates[0].content.parts.length === 0) {
-            let finishReason = data.candidates ? .[0] ? .finishReason || 'Unknown reason';
             console.warn("AI response missing content. Finish reason:", finishReason, data);
             aiResponseEl.textContent = `Sorry, the AI response was blocked or empty. Reason: ${finishReason}. Please try rephrasing or a different request.`;
         } else {
@@ -662,7 +662,6 @@ async function translateCurrentPage() {
     overlay.textContent = '🌐 Translating to Arabic... Please wait.';
 
     try {
-        // --- FIX: Use the correct model name for translation API call ---
         const API_URL = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=${GEMINI_API_KEY}`;
         const requestBody = {
             contents: [{
@@ -684,16 +683,17 @@ async function translateCurrentPage() {
             let errorText = resp.statusText;
             try {
                 const errData = await resp.json();
-                errorText = errData.error ? .message || errorText;
+                // FIX: Replace optional chaining with standard boolean logic
+                errorText = (errData.error && errData.error.message) || errorText;
             } catch (e) { /* Ignore JSON parse error */ }
             throw new Error(`API error (${resp.status}): ${errorText}`);
         }
 
         const data = await resp.json();
 
-        // Handle potential safety blocks or empty responses
+        // FIX: Replace optional chaining with standard boolean logic
+        let finishReason = (data.candidates && data.candidates[0] && data.candidates[0].finishReason) || 'Unknown reason';
         if (!data.candidates || data.candidates.length === 0 || !data.candidates[0].content || !data.candidates[0].content.parts || data.candidates[0].content.parts.length === 0) {
-            let finishReason = data.candidates ? .[0] ? .finishReason || 'Unknown reason';
             console.warn("Translation response missing content. Finish reason:", finishReason, data);
             overlay.textContent = `❌ Translation failed or was blocked. Reason: ${finishReason}.`;
         } else {
@@ -720,7 +720,4 @@ hideTranslateBtn.addEventListener('click', () => {
     hideTranslateBtn.style.display = 'none';
 });
 // --- End Translate Page ---
-</script>
-</body>
-</html>
 
