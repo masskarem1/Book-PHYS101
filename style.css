@@ -62,7 +62,7 @@ body {
     left: 0;
     width: 100%;
     height: 100%;
-    cursor: crosshair;
+    cursor: default; /* Default cursor */
     touch-action: none; /* For mobile drawing */
     pointer-events: none; /* Disabled by default */
 }
@@ -145,6 +145,10 @@ button:disabled {
 }
 
 /* --- HIGHLIGHT TOOLBAR STYLES --- */
+#toggle-draw-mode-btn.active {
+    box-shadow: 0 0 0 3px #ffc107;
+    background-color: #005fa3;
+}
 .highlight-toolbar {
     display: none; /* Hidden by default */
     align-items: center;
