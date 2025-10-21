@@ -602,8 +602,8 @@
                 requestBody = { contents: [{ parts: [{ text: aiPrompt }] }] };
             }
 
-            const API_URL = `https://generativelanguage.googleapis.com/v1beta/models/gemini-pro-vision:generateContent?key=${GEMINI_API_KEY}`;
-            const API_URL_TEXT = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${GEMINI_API_KEY}`; // Use flash for text-only
+            const API_URL = `https://generativelanguage.googleapis.com/v1beta/models/gemini-pro-vision:generateContent?key=${AIzaSyAntGKIXHhHIWkYT7R6rPlpBk0tZuLtlD8}`;
+            const API_URL_TEXT = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${AIzaSyAntGKIXHhHIWkYT7R6rPlpBk0tZuLtlD8}`; // Use flash for text-only
 
             const urlToUse = (type === 'analyze_page') ? API_URL : API_URL_TEXT;
 
@@ -682,7 +682,7 @@
 
         try {
             // Use a model suitable for translation, like flash
-            const API_URL_TEXT = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${GEMINI_API_KEY}`;
+            const API_URL_TEXT = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${AIzaSyAntGKIXHhHIWkYT7R6rPlpBk0tZuLtlD8Y}`;
             const requestBody = {
                 contents: [{
                     parts: [
