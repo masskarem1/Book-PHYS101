@@ -384,6 +384,25 @@ if(videoCloseBtn) videoCloseBtn.addEventListener('click', closeVideoModal);
 if(videoModal) videoModal.addEventListener('click', (e) => { if(e.target === videoModal) closeVideoModal(); });
 
 // --- HIGHLIGHTING LOGIC ---
+
+// NEW HELPER FUNCTION: Converts hex color to RGBA with a specific alpha
+function hexToRgba(hex, alpha) {
+    // Remove the hash at the start if it's there
+    hex = hex.replace('#', '');
+    // Handle short hex codes (e.g., #F0C)
+    if (hex.length === 3) {
+        hex = hex.split('').map(char => char + char).join('');
+    }
+    // Parse the R, G, B values
+    const r = parseInt(hex.substring(0, 2), 16);
+    const g = parseInt(hex.substring(2, 4), 16);
+    const b = parseInt(hex.substring(4, 6), 16);
+
+    // Return the RGBA string
+    return `rgba(${r}, ${g}, ${b}, ${alpha})`;
+}
+
+
 function sizeCanvasToImage(img, canvas) {
     if (!img || !canvas) return;
     const rect = img.getBoundingClientRect();
@@ -413,14 +432,8 @@ function startDrawing(e) {
     const pos = getDrawPosition(e, highlightCanvas);
     [lastX, lastY] = [pos.x, pos.y];
     ctx.beginPath();
-    ctx.fillStyle = (drawMode === 'highlight') ? colorPicker.value : 'rgba(0,0,0,1)';
-    if (drawMode === 'highlight') {
-        ctx.globalCompositeOperation = 'multiply'; // Changed from 'source-over'
-    } else {
-        ctx.globalCompositeOperation = 'destination-out';
-    }
-    ctx.arc(pos.x, pos.y, brushSizeSlider.value / 2, 0, Math.PI * 2);
-    ctx.fill();
+
+    // No need to set fillStyle here anymore as we draw lines
 }
 
 
@@ -432,8 +445,10 @@ function draw(e) {
     ctx.lineCap = 'round';
     ctx.lineJoin = 'round';
     if (drawMode === 'highlight') {
-        ctx.globalCompositeOperation = 'multiply'; // Changed from 'source-over'
-        ctx.strokeStyle = colorPicker.value;
+        ctx.globalCompositeOperation = 'source-over'; // Reverted to default
+        const highlightColor = colorPicker.value;
+        const transparentColor = hexToRgba(highlightColor, 0.4); // Use 40% opacity
+        ctx.strokeStyle = transparentColor;
         ctx.lineWidth = brushSizeSlider.value;
     } else { // Eraser
         ctx.globalCompositeOperation = 'destination-out';
@@ -751,6 +766,7 @@ document.addEventListener("DOMContentLoaded", () => {
     renderIndex();
     renderPage();
 });
+
 
 
 
