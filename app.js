@@ -408,8 +408,17 @@ function startDrawing(e) {
     isDrawing = true;
     const pos = getDrawPosition(e, highlightCanvas);
     [lastX, lastY] = [pos.x, pos.y];
-    draw(e); // Draw a single point on click/tap
+    ctx.beginPath();
+    ctx.fillStyle = (drawMode === 'highlight') ? colorPicker.value : 'rgba(0,0,0,1)';
+    if (drawMode === 'highlight') {
+        ctx.globalCompositeOperation = 'multiply'; // Changed from 'source-over'
+    } else {
+        ctx.globalCompositeOperation = 'destination-out';
+    }
+    ctx.arc(pos.x, pos.y, brushSizeSlider.value / 2, 0, Math.PI * 2);
+    ctx.fill();
 }
+
 
 function draw(e) {
     if (!isDrawing || !ctx) return;
@@ -419,7 +428,7 @@ function draw(e) {
     ctx.lineCap = 'round';
     ctx.lineJoin = 'round';
     if (drawMode === 'highlight') {
-        ctx.globalCompositeOperation = 'source-over';
+        ctx.globalCompositeOperation = 'multiply'; // Changed from 'source-over'
         ctx.strokeStyle = colorPicker.value;
         ctx.lineWidth = brushSizeSlider.value;
     } else { // Eraser
@@ -738,4 +747,5 @@ document.addEventListener("DOMContentLoaded", () => {
     renderIndex();
     renderPage();
 });
+
 
