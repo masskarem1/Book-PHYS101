@@ -46,7 +46,7 @@
       white-space: pre-wrap;
     }
 
-        #lockScreen { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); display: none; justify-content: center; align-items: center; z-index: 3000; }
+    #lockScreen { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); display: none; justify-content: center; align-items: center; z-index: 3000; }
     .lock-box { background: #fff; padding: 2rem; border-radius: 8px; text-align: center; max-width: 300px; box-shadow: 0 4px 12px rgba(0,0,0,0.25); }
     .lock-box input { width: 90%; padding: 0.5rem; font-size: 1rem; margin: 0.5rem 0; }
     .lock-box button { padding: 0.5rem 1rem; background: #007acc; color: #fff; border: none; border-radius: 6px; cursor: pointer; }
@@ -85,7 +85,8 @@
         justify-content: center;
         align-items: center;
         z-index: 2600;
-  .phet-content {
+    }
+    .phet-content {
         background: #fff;
         border-radius: 12px;
         width: 90%;
@@ -147,7 +148,7 @@
         aspect-ratio: 16 / 9; 
         position: relative;
         box-shadow: 0 5px 20px rgba(0,0,0,0.4);
-splay: flex;
+        display: flex; /* <-- CSS FIX 1: Was 'splay: flex;' */
         flex-direction: column;
     }
     #videoCloseBtn {
@@ -263,13 +264,13 @@ splay: flex;
       if (!res.ok) throw new Error("File not found");
       const data = await res.json();
       ALLOWED_IDS = Array.isArray(data) ? data : (Array.isArray(data.allowed) ? data.allowed : []);
-    } catch (err) { // <<< THIS IS THE CORRECTED LINE
+    } catch (err) { 
       console.error("Could not load student IDs:", err);
       ALLOWED_IDS = [];
     }
   }
   
-  // --- MODIFICATION 2: Check config.js to enable/disable login ---
+  // Check config.js to enable/disable login
   // 'config' is loaded from config.js
   if (config.requireLogin === true) {
       loadIDs(); // Load the student IDs
@@ -277,7 +278,6 @@ splay: flex;
   } else {
       // Login is not required, so the lock screen stays hidden (display: none from CSS)
   }
-  // --- END MODIFICATION ---
 
   // Unlock button
   document.getElementById('unlockBtn').addEventListener('click', () => {
@@ -620,13 +620,62 @@ splay: flex;
             return;
         }
 
+        // --- JAVASCRIPT FIX 2: This block was corrupted. It is now correct. ---
         requestBody = {
             contents: [{
                 parts: [
                     { text: "Analyze the content of this textbook page. Summarize the key concepts, explain any important formulas or diagrams, and provide a key takeaway for a life science student." },
                     {
                         inline_data: {
-innerHTML = marked.parse(text);
+                            mime_type: "image/png",
+                            data: imageData
+                        }
+                    }
+                ]
+            }]
+        };
+        // --- END JAVASCRIPT FIX 2 ---
+
+    } else {
+        let aiPrompt;
+        switch(type) {
+          case 'explain':
+            const concept = window.prompt("What concept from this chapter would you like explained?", "e.g., 'Pascal's Principle'");
+            if (!concept) { aiLoadingEl.style.display = 'none'; return; }
+            aiPrompt = `You are a physics tutor for university students in life sciences. Explain the concept of "${concept}" from the chapter "${chapter}" in a simple and clear way.`;
+            break;
+          case 'quiz':
+            aiPrompt = `You are a physics tutor. Based on the chapter "${chapter}", generate 2 multiple-choice quiz questions with 4 options each to test a student's understanding. Provide a brief explanation for the correct answer. Bold the correct answer and its letter.`;
+            break;
+          case 'relate':
+            aiPrompt = `You are a physics tutor for life science students. For the chapter on "${chapter}", provide two clear examples of how these physics principles apply directly to biology or medicine.`;
+            break;
+          default:
+            aiLoadingEl.style.display = 'none';
+            return;
+        }
+        requestBody = {
+            contents: [{ parts: [{ text: aiPrompt }] }]
+        };
+    }
+
+    const API_URL = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${GEMINI_API_KEY}`;
+
+    try {
+      const response = await fetch(API_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(requestBody)
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(`API error: ${errorData.error?.message || response.statusText}`);
+      }
+
+      const data = await response.json();
+      const text = data.candidates?.[0]?.content?.parts?.[0]?.text || "No response text found.";
+      aiResponseEl.innerHTML = marked.parse(text);
 
       if (window.MathJax) {
         MathJax.typesetPromise([aiResponseEl]).catch(err => console.error("MathJax error:", err));
@@ -681,12 +730,13 @@ innerHTML = marked.parse(text);
       const resp = await fetch(API_URL, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-e       body: JSON.stringify(requestBody)
+        // --- JAVASCRIPT FIX 3: Removed the stray 'e' from the line below ---
+        body: JSON.stringify(requestBody)
       });
 
       if (!resp.ok) {
         const errData = await resp.json().catch(()=>null);
-        const msg = errData?.error?.message || resp.statusText;
+NET       const msg = errData?.error?.message || resp.statusText;
         throw new Error(msg);
       }
 
@@ -698,9 +748,9 @@ e       body: JSON.stringify(requestBody)
         overlay.style.display = 'block';
         hideTranslateBtn.style.display = 'inline-block';
 
-        if (window.MathJax) {
+    _REQUEST       if (window.MathJax) {
           MathJax.typesetPromise([overlay]).catch(err => console.error("MathJax overlay error:", err));
-        }
+E         }
       }
     } catch (err) {
       console.error("Translate error:", err);
@@ -713,7 +763,7 @@ e       body: JSON.stringify(requestBody)
     const overlay = document.getElementById('overlay-translation');
     if (overlay) overlay.style.display = 'none';
     hideTranslateBtn.style.display = 'none';
-  });
+Read-Only   });
 
   // ---------- initial render ----------
   pageInput.max = totalPages;
