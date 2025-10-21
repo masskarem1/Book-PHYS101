@@ -392,33 +392,61 @@ function startDrawing(e) {
     isDrawing = true;
     const pos = getDrawPosition(e, highlightCanvas);
     [lastX, lastY] = [pos.x, pos.y];
+
+    // For the eraser, draw a starting dot to make it feel responsive.
+    if (drawMode === 'eraser') {
+        ctx.beginPath();
+        ctx.globalCompositeOperation = 'destination-out';
+        ctx.fillStyle = 'rgba(0,0,0,1)';
+        ctx.arc(pos.x, pos.y, brushSizeSlider.value / 2, 0, Math.PI * 2);
+        ctx.fill();
+    }
 }
 
 function draw(e) {
     if (!isDrawing || !ctx) return;
     if (e.touches) e.preventDefault();
-    const pos = getDrawPosition(e, highlightCanvas);
-    ctx.beginPath();
-    ctx.lineCap = 'round';
-    ctx.lineJoin = 'round';
 
-    if (drawMode === 'highlight') {
-        ctx.globalCompositeOperation = 'source-over';
-        ctx.strokeStyle = colorPicker.value; // Use RGBA value directly from HTML
-        ctx.lineWidth = brushSizeSlider.value;
-    } else { // Eraser mode
+    // Only do freeform drawing for the eraser
+    if (drawMode === 'eraser') {
+        const pos = getDrawPosition(e, highlightCanvas);
+        ctx.beginPath();
         ctx.globalCompositeOperation = 'destination-out';
         ctx.strokeStyle = 'rgba(0,0,0,1)';
         ctx.lineWidth = brushSizeSlider.value;
+        ctx.moveTo(lastX, lastY);
+        ctx.lineTo(pos.x, pos.y);
+        ctx.lineCap = 'round';
+        ctx.lineJoin = 'round';
+        ctx.stroke();
+        [lastX, lastY] = [pos.x, pos.y];
     }
-
-    ctx.moveTo(lastX, lastY);
-    ctx.lineTo(pos.x, pos.y);
-    ctx.stroke();
-    [lastX, lastY] = [pos.x, pos.y];
+    // For 'highlight' mode, we do nothing during the drag.
 }
 
-function stopDrawing() { if (isDrawing) { isDrawing = false; saveHighlights(currentPage); } }
+function stopDrawing(e) {
+    if (!isDrawing) return;
+
+    // For highlight mode, draw the final straight line on mouse/touch up.
+    if (drawMode === 'highlight') {
+        const pos = getDrawPosition(e, highlightCanvas);
+
+        ctx.globalCompositeOperation = 'source-over';
+        ctx.fillStyle = colorPicker.value; // The RGBA value from the HTML
+
+        const rectX = Math.min(lastX, pos.x);
+        const rectY = lastY - (brushSizeSlider.value / 2); // Center the line on start Y
+        const rectWidth = Math.abs(pos.x - lastX);
+        const rectHeight = brushSizeSlider.value;
+
+        ctx.fillRect(rectX, rectY, rectWidth, rectHeight);
+    }
+    // If it was the eraser, the freeform drawing already happened in the 'draw' function.
+
+    isDrawing = false;
+    saveHighlights(currentPage);
+}
+
 
 function setupDrawingListeners(canvas) {
     if (!canvas) return;
@@ -478,7 +506,7 @@ if (toggleDrawModeBtn) {
         const isActive = document.body.classList.contains('highlight-mode');
         toggleDrawModeBtn.classList.toggle('active', isActive);
         if (isActive) {
-            if(highlightToolBtn) highlightToolBtn.click();
+            if(highlightToolBtn) highlightToolBtn.click(); // Default to highlight tool
         } else {
             if(highlightCanvas) highlightCanvas.style.cursor = 'default';
         }
