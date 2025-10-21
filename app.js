@@ -8,29 +8,23 @@ async function loadIDs() {
         ALLOWED_IDS = Array.isArray(data) ? data : (Array.isArray(data.allowed) ? data.allowed : []);
     } catch (err) {
         console.error("Could not load student IDs:", err);
-        ALLOWED_IDS = []; // Default to empty if loading fails
+        ALLOWED_IDS = [];
     }
 }
 
-// Check config.js to enable/disable login
-// Ensure config exists before checking its properties
 if (typeof config !== 'undefined' && config.requireLogin === true) {
-    loadIDs(); // Load the student IDs only if required
+    loadIDs();
     const lockScreen = document.getElementById('lockScreen');
-    if (lockScreen) {
-        lockScreen.style.display = 'flex'; // Show the lock screen
-    }
+    if (lockScreen) lockScreen.style.display = 'flex';
 }
 
-// Unlock button
 const unlockBtn = document.getElementById('unlockBtn');
 if (unlockBtn) {
     unlockBtn.addEventListener('click', () => {
         const idInput = document.getElementById("idInput");
         const entered = idInput ? idInput.value.trim() : "";
         const idError = document.getElementById("idError");
-        if (!idError) return; // Exit if error element not found
-
+        if (!idError) return;
         idError.style.display = 'none';
         if (!entered) {
             idError.textContent = 'Please enter an ID';
@@ -47,13 +41,12 @@ if (unlockBtn) {
     });
 }
 
-
 // ---------- Load Pre-extracted Book Text ----------
 let bookTextData = {};
 async function loadBookText() {
     try {
         const res = await fetch("./book-text.json");
-        if (!res.ok) throw new Error("book-text.json not found or inaccessible");
+        if (!res.ok) throw new Error("book-text.json not found");
         bookTextData = await res.json();
         console.log("Book text loaded successfully.");
     } catch (err) {
@@ -61,17 +54,16 @@ async function loadBookText() {
         const translateBtn = document.getElementById('translateBtn');
         if (translateBtn) {
             translateBtn.disabled = true;
-            translateBtn.title = "Translation unavailable: Book text file failed to load.";
+            translateBtn.title = "Translation unavailable";
             translateBtn.textContent = "🌐 Text Unavailable";
-            translateBtn.style.backgroundColor = '#aaa'; // Ensure disabled style is applied
+            translateBtn.style.backgroundColor = '#aaa';
             translateBtn.style.cursor = 'not-allowed';
         }
     }
 }
 
 // ---------- Flipbook data ----------
-// Make sure config is defined before using it
-const totalPages = (typeof config !== 'undefined' && config.totalPages) ? config.totalPages : 1; // Default to 1 page if config missing
+const totalPages = (typeof config !== 'undefined' && config.totalPages) ? config.totalPages : 1;
 const imagePath = (typeof config !== 'undefined' && config.imagePath) ? config.imagePath : './images/page_';
 const thumbPath = (typeof config !== 'undefined' && config.thumbPath) ? config.thumbPath : './thumbs/thumb_';
 
@@ -94,7 +86,6 @@ const videoBtn = document.getElementById('videoBtn');
 const videoCloseBtn = document.getElementById('videoCloseBtn');
 const videoFrame = document.getElementById('videoFrame');
 
-
 // --- HIGHLIGHTING VARIABLES ---
 const toggleDrawModeBtn = document.getElementById('toggle-draw-mode-btn');
 const highlightToolbar = document.getElementById('highlight-toolbar');
@@ -104,7 +95,6 @@ const colorPicker = document.getElementById('highlight-color');
 const brushSizeSlider = document.getElementById('brush-size');
 const clearHighlightsBtn = document.getElementById('clear-highlights-btn');
 let highlightCanvas, ctx, isDrawing = false, drawMode = 'highlight', lastX = 0, lastY = 0;
-
 
 function getYoutubeEmbedUrl(url) {
     try {
@@ -134,15 +124,15 @@ function getYoutubeEmbedUrl(url) {
 
 // ---------- Render page ----------
 function renderPage() {
-    if (!flipbook) return; // Don't proceed if flipbook element isn't found
-    flipbook.innerHTML = ""; // Clear previous content
+    if (!flipbook) return;
+    flipbook.innerHTML = "";
     const wrap = document.createElement("div");
     wrap.className = "page-wrap";
 
     const img = document.createElement("img");
     const canvas = document.createElement("canvas");
     canvas.id = "highlight-canvas";
-    highlightCanvas = canvas; // Assign to global variable for access
+    highlightCanvas = canvas;
 
     img.className = "page-image";
     img.src = images[currentPage];
@@ -155,30 +145,25 @@ function renderPage() {
     };
 
     img.onload = () => {
-        // Size the canvas to the image once it's loaded
         sizeCanvasToImage(img, canvas);
-        ctx = canvas.getContext('2d'); // Get context AFTER sizing
-        setupDrawingListeners(canvas); // Setup listeners AFTER sizing and context
-        loadHighlights(currentPage); // Load highlights AFTER sizing and context
+        ctx = canvas.getContext('2d');
+        setupDrawingListeners(canvas);
+        loadHighlights(currentPage);
     };
 
     wrap.appendChild(img);
     wrap.appendChild(canvas);
 
-    // Add translation overlay container inside wrap
     const overlay = document.createElement("div");
     overlay.className = "overlay-translation";
     overlay.id = "overlay-translation";
     wrap.appendChild(overlay);
-
-    flipbook.appendChild(wrap); // Add the complete wrap to the flipbook
-
+    flipbook.appendChild(wrap);
 
     if (counter) counter.textContent = `Page ${currentPage + 1} / ${totalPages}`;
     if (pageInput) pageInput.value = currentPage + 1;
     highlightThumb();
 
-    // Safely check config before accessing properties
     if (typeof config !== 'undefined') {
         const simConfig = config.simulations && config.simulations.find(s => s.page === (currentPage + 1));
         if (phetBtn) phetBtn.style.display = simConfig ? 'inline-block' : 'none';
@@ -186,7 +171,6 @@ function renderPage() {
         const videoConfig = config.videos && config.videos.find(v => v.page === (currentPage + 1));
         if (videoBtn) videoBtn.style.display = videoConfig ? 'inline-block' : 'none';
     }
-
 
     const currentOverlay = document.getElementById('overlay-translation');
     if (currentOverlay) currentOverlay.style.display = 'none';
@@ -210,7 +194,7 @@ function renderThumbs() {
         t.alt = `Thumb ${i + 1}`;
         t.loading = "lazy";
         t.addEventListener("click", () => {
-            if (currentPage !== i) { // Prevent re-rendering same page
+            if (currentPage !== i) {
                  currentPage = i;
                  renderPage();
             }
@@ -234,7 +218,7 @@ function highlightThumb() {
     if (activeThumb) {
         const rect = activeThumb.getBoundingClientRect();
         const parentRect = thumbbar.getBoundingClientRect();
-        if (rect.left < parentRect.left || rect.right > parentRect.right || rect.top < parentRect.top || rect.bottom > parentRect.bottom) {
+        if (rect.left < parentRect.left || rect.right > parentRect.right) {
              activeThumb.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
         }
     }
@@ -268,21 +252,21 @@ function jumpToPage() {
         currentPage = v - 1;
         renderPage();
     } else {
-        pageInput.value = currentPage + 1; // Reset if invalid or same page
+        pageInput.value = currentPage + 1;
     }
 }
 if (pageInput) {
     pageInput.addEventListener('keydown', (e) => { if (e.key === 'Enter') { jumpToPage(); e.preventDefault(); } });
 }
 
-
 function toggleFullScreen() {
     if (!document.fullscreenElement) {
-        document.documentElement.requestFullscreen().catch(err => console.error(`Error attempting full screen: ${err.message} (${err.name})`));
+        document.documentElement.requestFullscreen().catch(err => console.error(`Fullscreen error: ${err.message}`));
     } else {
         document.exitFullscreen();
     }
 }
+
 function shareBook(){
     const shareData = { title: "PHYS101 Flipbook", url: window.location.href };
     if (navigator.share) {
@@ -321,7 +305,7 @@ if (indexToggle) {
 if (indexMenu) {
     indexMenu.addEventListener("click", e => e.stopPropagation());
 }
-document.addEventListener("click", e=>{ // Close menu if clicking outside
+document.addEventListener("click", e=>{
     if (indexMenu && indexToggle && indexMenu.style.display === "flex" && !indexMenu.contains(e.target) && !indexToggle.contains(e.target)) {
          closeIndexMenu();
     }
@@ -333,19 +317,15 @@ function goToPage(page){
         closeIndexMenu();
     }
 }
-window.goToPage = goToPage; // Make accessible if needed globally
+window.goToPage = goToPage;
 
 // ---------- Input & touch ----------
-let touchStartX = 0;
-let touchEndX = 0;
+let touchStartX = 0, touchEndX = 0;
 const swipeThreshold = 50;
-function handleTouchStart(e){ touchStartX = e.touches[0].clientX; } // Use clientX for touch
+function handleTouchStart(e){ touchStartX = e.touches[0].clientX; }
 function handleTouchEnd(e){ touchEndX = e.changedTouches[0].clientX; handleSwipeGesture(); }
 function handleSwipeGesture(){
-    // If we are in drawing mode, do not handle swipes for page turning.
-    if (document.body.classList.contains('highlight-mode')) {
-        return;
-    }
+    if (document.body.classList.contains('highlight-mode')) return;
     const diff = touchEndX - touchStartX;
     if (Math.abs(diff) > swipeThreshold){
          if(diff > 0){ prevPage(); } else { nextPage(); }
@@ -384,25 +364,6 @@ if(videoCloseBtn) videoCloseBtn.addEventListener('click', closeVideoModal);
 if(videoModal) videoModal.addEventListener('click', (e) => { if(e.target === videoModal) closeVideoModal(); });
 
 // --- HIGHLIGHTING LOGIC ---
-
-// NEW HELPER FUNCTION: Converts hex color to RGBA with a specific alpha
-function hexToRgba(hex, alpha) {
-    // Remove the hash at the start if it's there
-    hex = hex.replace('#', '');
-    // Handle short hex codes (e.g., #F0C)
-    if (hex.length === 3) {
-        hex = hex.split('').map(char => char + char).join('');
-    }
-    // Parse the R, G, B values
-    const r = parseInt(hex.substring(0, 2), 16);
-    const g = parseInt(hex.substring(2, 4), 16);
-    const b = parseInt(hex.substring(4, 6), 16);
-
-    // Return the RGBA string
-    return `rgba(${r}, ${g}, ${b}, ${alpha})`;
-}
-
-
 function sizeCanvasToImage(img, canvas) {
     if (!img || !canvas) return;
     const rect = img.getBoundingClientRect();
@@ -431,9 +392,7 @@ function startDrawing(e) {
     isDrawing = true;
     const pos = getDrawPosition(e, highlightCanvas);
     [lastX, lastY] = [pos.x, pos.y];
-    // No drawing happens here, just setup
 }
-
 
 function draw(e) {
     if (!isDrawing || !ctx) return;
@@ -442,18 +401,17 @@ function draw(e) {
     ctx.beginPath();
     ctx.lineCap = 'round';
     ctx.lineJoin = 'round';
+
     if (drawMode === 'highlight') {
-        ctx.globalCompositeOperation = 'source-over'; // Use the default drawing mode
-        const highlightColor = colorPicker.value;
-        // Convert the hex color to a transparent RGBA color
-        const transparentColor = hexToRgba(highlightColor, 0.4); // 40% opacity
-        ctx.strokeStyle = transparentColor;
+        ctx.globalCompositeOperation = 'source-over';
+        ctx.strokeStyle = colorPicker.value; // Use RGBA value directly from HTML
         ctx.lineWidth = brushSizeSlider.value;
     } else { // Eraser mode
-        ctx.globalCompositeOperation = 'destination-out'; // This erases content
-        ctx.strokeStyle = 'rgba(0,0,0,1)'; // Eraser needs an opaque color to work
+        ctx.globalCompositeOperation = 'destination-out';
+        ctx.strokeStyle = 'rgba(0,0,0,1)';
         ctx.lineWidth = brushSizeSlider.value;
     }
+
     ctx.moveTo(lastX, lastY);
     ctx.lineTo(pos.x, pos.y);
     ctx.stroke();
@@ -519,19 +477,13 @@ if (toggleDrawModeBtn) {
         if (highlightToolbar) highlightToolbar.classList.toggle('visible');
         const isActive = document.body.classList.contains('highlight-mode');
         toggleDrawModeBtn.classList.toggle('active', isActive);
-
         if (isActive) {
-            drawMode = 'highlight'; // Default to highlight
-            if(highlightToolBtn) highlightToolBtn.classList.add('active');
-            if(eraserToolBtn) eraserToolBtn.classList.remove('active');
-            if(highlightCanvas) highlightCanvas.style.cursor = 'crosshair';
+            if(highlightToolBtn) highlightToolBtn.click();
         } else {
-            // When turning drawing off, just remove cursor style
             if(highlightCanvas) highlightCanvas.style.cursor = 'default';
         }
     });
 }
-
 if (highlightToolBtn) {
     highlightToolBtn.addEventListener('click', () => {
         drawMode = 'highlight';
@@ -540,7 +492,6 @@ if (highlightToolBtn) {
         if(highlightCanvas) highlightCanvas.style.cursor = 'crosshair';
     });
 }
-
 if (eraserToolBtn) {
     eraserToolBtn.addEventListener('click', () => {
         drawMode = 'eraser';
@@ -566,186 +517,19 @@ const aiModal = document.getElementById("aiHelperModal"),
     aiResponseEl = document.getElementById("aiResponse"),
     aiLoadingEl = document.getElementById("aiLoading"),
     aiChapterTitleEl = document.getElementById("aiChapterTitle");
-
 const GEMINI_API_KEY = (typeof config !== 'undefined' && config.geminiApiKey) ? config.geminiApiKey : 'YOUR_API_KEY_HERE';
-
-async function getImageAsBase64FromCanvas() {
-    const e = document.querySelector(".page-image");
-    if (!e || !e.complete || 0 === e.naturalWidth) return console.error("Image not ready"), null;
-    try {
-        const t = document.createElement("canvas");
-        t.width = e.naturalWidth, t.height = e.naturalHeight;
-        return t.getContext("2d").drawImage(e, 0, 0), t.toDataURL("image/png").split(",")[1]
-    } catch (o) {
-        return console.error("Canvas error:", o), null
-    }
-}
+async function getImageAsBase64FromCanvas(){const e=document.querySelector(".page-image");if(!e||!e.complete||0===e.naturalWidth)return console.error("Image not ready"),null;try{const t=document.createElement("canvas");t.width=e.naturalWidth,t.height=e.naturalHeight;return t.getContext("2d").drawImage(e,0,0),t.toDataURL("image/png").split(",")[1]}catch(o){return console.error("Canvas error:",o),null}}
 if(aiHelperToggle)aiHelperToggle.addEventListener("click",()=>{const e=getCurrentChapter();if(aiChapterTitleEl)aiChapterTitleEl.textContent=e?e.title:"Current Page";if(aiResponseEl)aiResponseEl.innerHTML="";if(aiModal)aiModal.style.display="flex"});
 if(aiCloseBtn)aiCloseBtn.addEventListener("click",()=>{if(aiModal)aiModal.style.display="none"});
 if(aiModal)aiModal.addEventListener("click",e=>{if(e.target===aiModal)aiModal.style.display="none"});
-
-function getCurrentChapter() {
-    if (!config.chapters || 0 === config.chapters.length) return null;
-    let e = config.chapters[0];
-    for (let t = config.chapters.length - 1; t >= 0; t--)
-        if (currentPage >= config.chapters[t].page - 1) {
-            e = config.chapters[t];
-            break
-        } return e
-}
-async function getAiHelp(e) {
-    if (!GEMINI_API_KEY || "YOUR_API_KEY_HERE" === GEMINI_API_KEY) return void(aiResponseEl && (aiResponseEl.textContent = "AI Helper not configured."));
-    if (!aiLoadingEl || !aiResponseEl) return;
-    aiLoadingEl.style.display = "block", aiResponseEl.innerHTML = "";
-    let t;
-    const n = getCurrentChapter(),
-        o = n ? n.title : "this page";
-    try {
-        if ("analyze_page" === e) {
-            let a = await getImageAsBase64FromCanvas();
-            if (!a) return aiResponseEl.textContent = "Could not process page image.", void(aiLoadingEl.style.display = "none");
-            t = {
-                contents: [{
-                    parts: [{
-                        text: `Analyze this physics page (from chapter "${o}"). Summarize concepts, explain formulas/diagrams, and give a takeaway for a life science student.`
-                    }, {
-                        inline_data: {
-                            mime_type: "image/png",
-                            data: a
-                        }
-                    }]
-                }]
-            }
-        } else {
-            let r;
-            switch (e) {
-                case "explain":
-                    {
-                        const i = window.prompt(`Concept from "${o}" to explain?`, "Pascal's Principle");
-                        if (!i) return void(aiLoadingEl.style.display = "none");r = `Explain "${i}" from "${o}" simply for life science students.`
-                    }
-                    break;
-                case "quiz":
-                    r = `Generate 2 multiple-choice questions on "${o}". Explain the correct answer (bold it).`;
-                    break;
-                case "relate":
-                    r = `Provide 2 examples of how "${o}" applies to biology or medicine.`;
-                    break;
-                default:
-                    return void(aiLoadingEl.style.display = "none")
-            }
-            t = {
-                contents: [{
-                    parts: [{
-                        text: r
-                    }]
-                }]
-            }
-        }
-        const s = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=${GEMINI_API_KEY}`;
-        const u = await fetch(s, {
-            method: "POST",
-            headers: {
-                "Content-Type": "application/json"
-            },
-            body: JSON.stringify(t)
-        });
-        if (!u.ok) {
-            let p = u.statusText;
-            try {
-                p = (await u.json()).error.message || p
-            } catch (g) {}
-            throw new Error(`API error (${u.status}): ${p}`)
-        }
-        const m = await u.json();
-
-        // **FIX STARTS HERE**
-        let finishReason = "Unknown";
-        if (m.candidates && m.candidates[0] && m.candidates[0].finishReason) {
-            finishReason = m.candidates[0].finishReason;
-        }
-
-        if (!m.candidates || m.candidates.length === 0 || !m.candidates[0].content || !m.candidates[0].content.parts || m.candidates[0].content.parts.length === 0) {
-            console.warn("AI response missing content. Reason:", finishReason, m);
-            aiResponseEl.textContent = `Response was blocked or empty. Reason: ${finishReason}.`;
-            return;
-        }
-        // **FIX ENDS HERE**
-
-        const y = m.candidates[0].content.parts[0].text;
-        "undefined" != typeof marked ? aiResponseEl.innerHTML = marked.parse(y) : aiResponseEl.innerText = y, window.MathJax && MathJax.typesetPromise([aiResponseEl]).catch(b => console.error("MathJax error:", b))
-    } catch (w) {
-        console.error("AI Helper Error:", w), aiResponseEl.textContent = `Error: ${w.message}`
-    } finally {
-        aiLoadingEl.style.display = "none"
-    }
-}
-
+function getCurrentChapter(){if(!config.chapters||0===config.chapters.length)return null;let e=config.chapters[0];for(let t=config.chapters.length-1;t>=0;t--)if(currentPage>=config.chapters[t].page-1){e=config.chapters[t];break}return e}
+async function getAiHelp(e){if(!GEMINI_API_KEY||"YOUR_API_KEY_HERE"===GEMINI_API_KEY)return void(aiResponseEl&&(aiResponseEl.textContent="AI Helper not configured."));if(!aiLoadingEl||!aiResponseEl)return;aiLoadingEl.style.display="block",aiResponseEl.innerHTML="";let t;const n=getCurrentChapter(),o=n?n.title:"this page";try{if("analyze_page"===e){let a=await getImageAsBase64FromCanvas();if(!a)return aiResponseEl.textContent="Could not process page image.",void(aiLoadingEl.style.display="none");t={contents:[{parts:[{text:`Analyze this physics page (from chapter "${o}"). Summarize concepts,explain formulas/diagrams,and give a takeaway for a life science student.`},{inline_data:{mime_type:"image/png",data:a}}]}]}}else{let r;switch(e){case"explain":{const i=window.prompt(`Concept from "${o}" to explain?`,"Pascal's Principle");if(!i)return void(aiLoadingEl.style.display="none");r=`Explain "${i}" from "${o}" simply for life science students.`}break;case"quiz":r=`Generate 2 multiple-choice questions on "${o}". Explain the correct answer (bold it).`;break;case"relate":r=`Provide 2 examples of how "${o}" applies to biology or medicine.`;break;default:return void(aiLoadingEl.style.display="none")}t={contents:[{parts:[{text:r}]}]}}const s=`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=${GEMINI_API_KEY}`;const u=await fetch(s,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(t)});if(!u.ok){let p=u.statusText;try{p=(await u.json()).error.message||p}catch(g){}throw new Error(`API error (${u.status}): ${p}`)}const m=await u.json();if(!m.candidates||0===m.candidates.length||!m.candidates[0].content||!m.candidates[0].content.parts||0===m.candidates[0].content.parts.length){let f="Unknown";if(m.candidates&&m.candidates[0]&&m.candidates[0].finishReason)f=m.candidates[0].finishReason;return console.warn("AI response missing content. Reason:",f,m),void(aiResponseEl.textContent=`Response was blocked or empty. Reason: ${f}.`)}const y=m.candidates[0].content.parts[0].text;"undefined"!=typeof marked?aiResponseEl.innerHTML=marked.parse(y):aiResponseEl.innerText=y,window.MathJax&&MathJax.typesetPromise([aiResponseEl]).catch(b=>console.error("MathJax error:",b))}catch(w){console.error("AI Helper Error:",w),aiResponseEl.textContent=`Error: ${w.message}`}finally{aiLoadingEl.style.display="none"}}
 
 // --- Translate Page ---
-const translateBtn = document.getElementById("translateBtn"),
-    hideTranslateBtn = document.getElementById("hideTranslateBtn");
-async function translateCurrentPage() {
-    const e = document.getElementById("overlay-translation");
-    if (!e) return;
-    e.style.display = "block", e.textContent = "🔄 Loading text...";
-    const t = String(currentPage),
-        n = bookTextData[t];
-    if (void 0 === n) return void(e.textContent = "⚠️ Text data for this page is unavailable.");
-    if (!n || !n.trim()) return void(e.textContent = "ℹ️ No translatable text found for this page.");
-    if (!GEMINI_API_KEY || "YOUR_API_KEY_HERE" === GEMINI_API_KEY) return void(e.innerText = "⚠️ Translation unavailable: No API key.\n\nPreview:\n\n" + n.slice(0, 1500) + (n.length > 1500 ? "..." : ""));
-    e.textContent = "🌐 Translating to Arabic...";
-    try {
-        const o = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=${GEMINI_API_KEY}`,
-            a = {
-                contents: [{
-                    parts: [{
-                        text: `Translate the following English physics text into clear, educational Arabic for university-level biology/medical students. Preserve equations and scientific terms. Do not add commentary.\n\n---START---\n${n}\n---END---`
-                    }]
-                }]
-            };
-        const l = await fetch(o, {
-            method: "POST",
-            headers: {
-                "Content-Type": "application/json"
-            },
-            body: JSON.stringify(a)
-        });
-        if (!l.ok) {
-            let s = l.statusText;
-            try {
-                s = (await l.json()).error.message || s
-            } catch (r) {}
-            throw new Error(`API error (${l.status}): ${s}`)
-        }
-        const d = await l.json();
-
-        // **FIX STARTS HERE**
-        let c = "Unknown";
-        if (d.candidates && d.candidates[0] && d.candidates[0].finishReason) {
-            c = d.candidates[0].finishReason;
-        }
-
-        if (!d.candidates || d.candidates.length === 0 || !d.candidates[0].content || !d.candidates[0].content.parts || d.candidates[0].content.parts.length === 0) {
-            console.warn("Translate response missing. Reason:", c, d);
-            e.textContent = `❌ Translation failed. Reason: ${c}.`;
-            return;
-        }
-        // **FIX ENDS HERE**
-
-        const u = d.candidates[0].content.parts[0].text;
-        e.innerText = u, e.style.display = "block", hideTranslateBtn && (hideTranslateBtn.style.display = "inline-block"), window.MathJax && MathJax.typesetPromise([e]).catch(p => console.error("MathJax translate error:", p))
-    } catch (g) {
-        console.error("Translate error:", g), e.textContent = `❌ Translation Error: ${g.message}`
-    }
-}
-if (translateBtn) translateBtn.addEventListener("click", translateCurrentPage);
-if (hideTranslateBtn) hideTranslateBtn.addEventListener("click", () => {
-    const e = document.getElementById("overlay-translation");
-    if (e) e.style.display = "none";
-    if (hideTranslateBtn) hideTranslateBtn.style.display = "none"
-});
-
+const translateBtn=document.getElementById("translateBtn"),hideTranslateBtn=document.getElementById("hideTranslateBtn");
+async function translateCurrentPage(){const e=document.getElementById("overlay-translation");if(!e)return;e.style.display="block",e.textContent="🔄 Loading text...";const t=String(currentPage),n=bookTextData[t];if(void 0===n)return void(e.textContent="⚠️ Text data for this page is unavailable.");if(!n||!n.trim())return void(e.textContent="ℹ️ No translatable text found for this page.");if(!GEMINI_API_KEY||"YOUR_API_KEY_HERE"===GEMINI_API_KEY)return void(e.innerText="⚠️ Translation unavailable: No API key.\n\nPreview:\n\n"+n.slice(0,1500)+(n.length>1500?"...":""));e.textContent="🌐 Translating to Arabic...";try{const o=`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=${GEMINI_API_KEY}`,a={contents:[{parts:[{text:`Translate the following English physics text into clear, educational Arabic for university-level biology/medical students. Preserve equations and scientific terms. Do not add commentary.\n\n---START---\n${n}\n---END---`}]}]};const l=await fetch(o,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(a)});if(!l.ok){let s=l.statusText;try{s=(await l.json()).error.message||s}catch(r){}throw new Error(`API error (${l.status}): ${s}`)}const d=await l.json();if(!d.candidates||0===d.candidates.length||!d.candidates[0].content||!d.candidates[0].content.parts||0===d.candidates[0].content.parts.length){let c="Unknown";if(d.candidates&&d.candidates[0]&&d.candidates[0].finishReason)c=d.candidates[0].finishReason;return console.warn("Translate response missing. Reason:",c,d),void(e.textContent=`❌ Translation failed. Reason: ${c}.`)}const u=d.candidates[0].content.parts[0].text;e.innerText=u,e.style.display="block",hideTranslateBtn&&(hideTranslateBtn.style.display="inline-block"),window.MathJax&&MathJax.typesetPromise([e]).catch(p=>console.error("MathJax translate error:",p))}catch(g){console.error("Translate error:",g),e.textContent=`❌ Translation Error: ${g.message}`}}
+if(translateBtn)translateBtn.addEventListener("click",translateCurrentPage);
+if(hideTranslateBtn)hideTranslateBtn.addEventListener("click",()=>{const e=document.getElementById("overlay-translation");if(e)e.style.display="none";if(hideTranslateBtn)hideTranslateBtn.style.display="none"});
 
 // --- Initial Setup ---
 document.addEventListener("DOMContentLoaded", () => {
@@ -766,8 +550,4 @@ document.addEventListener("DOMContentLoaded", () => {
     renderIndex();
     renderPage();
 });
-
-
-
-
 
