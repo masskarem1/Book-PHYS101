@@ -5,9 +5,7 @@
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>PHYS101 Flipbook</title>
   <link rel="icon" href="data:;base64,iVBORw0KGgo=">
-  <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
-
-    <script>
+  <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js" defer></script>     <script>
     window.MathJax = {
       tex: {
         inlineMath: [['$', '$'], ['\\(', '\\)']],
@@ -18,9 +16,8 @@
   </script>
   <script async id="MathJax-script" src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-svg.js"></script>
 
-    <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
-
-  <style>
+      <style>
+    /* --- CSS styles (unchanged from your previous version) --- */
     body { margin: 0; font-family: sans-serif; background: #f4f4f4; display: flex; flex-direction: column; align-items: center; }
     #flipbook { width: 100%; max-width: 1200px; margin: auto; display: flex; flex-direction: column; align-items: center; background: #fff; padding: 8px 0; }
     .page-image { width: 100%; height: auto; max-width: 100%; object-fit: contain; display: block; margin: 0 auto; border-radius: 6px; }
@@ -74,112 +71,20 @@
     .ai-response { margin-top: 1rem; padding-top: 1rem; border-top: 1px solid #eee; white-space: pre-wrap; line-height: 1.6; }
 
     /* PhET Sim Modal Styles */
-    #phetModal {
-        position: fixed;
-        top: 0;
-        left: 0;
-        width: 100%;
-        height: 100%;
-        background: rgba(0,0,0,0.6);
-        display: none;
-        justify-content: center;
-        align-items: center;
-        z-index: 2600;
-    }
-    .phet-content {
-        background: #fff;
-        border-radius: 12px;
-        width: 90%;
-        height: 90vh;
-        max-width: 1100px;
-        position: relative;
-        box-shadow: 0 5px 15px rgba(0,0,0,0.3);
-        display: flex;
-        flex-direction: column;
-    }
-    #phetCloseBtn {
-        position: absolute;
-        top: -15px;
-        right: -15px;
-        background: #333;
-        color: #fff;
-        border-radius: 50%;
-        width: 35px;
-        height: 35px;
-        padding: 0;
-        line-height: 35px;
-        text-align: center;
-        cursor: pointer;
-        font-size: 1.2rem;
-        border: 2px solid #fff;
-        z-index: 10;
-    }
-    #phetFrame {
-        width: 100%;
-        height: 100%;
-        border: none;
-        border-radius: 12px;
-    }
-    #phetBtn {
-        background: #d9534f; /* Red */
-    }
-    #phetBtn:hover {
-        background: #c9302c;
-    }
+    #phetModal { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); display: none; justify-content: center; align-items: center; z-index: 2600; }
+    .phet-content { background: #fff; border-radius: 12px; width: 90%; height: 90vh; max-width: 1100px; position: relative; box-shadow: 0 5px 15px rgba(0,0,0,0.3); display: flex; flex-direction: column; }
+    #phetCloseBtn { position: absolute; top: -15px; right: -15px; background: #333; color: #fff; border-radius: 50%; width: 35px; height: 35px; padding: 0; line-height: 35px; text-align: center; cursor: pointer; font-size: 1.2rem; border: 2px solid #fff; z-index: 10; }
+    #phetFrame { width: 100%; height: 100%; border: none; border-radius: 12px; }
+    #phetBtn { background: #d9534f; }
+    #phetBtn:hover { background: #c9302c; }
 
     /* Video Modal Styles */
-    #videoModal {
-        position: fixed;
-        top: 0;
-        left: 0;
-        width: 100%;
-        height: 100%;
-        background: rgba(0,0,0,0.7); /* Darker background */
-        display: none;
-        justify-content: center;
-        align-items: center;
-        z-index: 2600;
-    }
-    .video-content {
-        background: #000;
-        border-radius: 12px;
-        width: 90%;
-        max-width: 1000px;
-        aspect-ratio: 16 / 9; 
-        position: relative;
-        box-shadow: 0 5px 20px rgba(0,0,0,0.4);
-        display: flex; /* <-- CSS FIX 1: Was 'splay: flex;' */
-        flex-direction: column;
-    }
-    #videoCloseBtn {
-        position: absolute;
-        top: -15px;
-        right: -15px;
-        background: #eee;
-        color: #333;
-        border-radius: 50%;
-        width: 35px;
-        height: 35px;
-        padding: 0;
-        line-height: 35px;
-        text-align: center;
-        cursor: pointer;
-        font-size: 1.2rem;
-        border: 2px solid #fff;
-        z-index: 10;
-    }
-    #videoFrame {
-        width: 100%;
-        height: 100%;
-        border: none;
-        border-radius: 12px;
-    }
-    #videoBtn {
-        background: #28a745; /* Green */
-    }
-    #videoBtn:hover {
-        background: #218838;
-    }
+    #videoModal { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7); display: none; justify-content: center; align-items: center; z-index: 2600; }
+    .video-content { background: #000; border-radius: 12px; width: 90%; max-width: 1000px; aspect-ratio: 16 / 9; position: relative; box-shadow: 0 5px 20px rgba(0,0,0,0.4); display: flex; flex-direction: column; }
+    #videoCloseBtn { position: absolute; top: -15px; right: -15px; background: #eee; color: #333; border-radius: 50%; width: 35px; height: 35px; padding: 0; line-height: 35px; text-align: center; cursor: pointer; font-size: 1.2rem; border: 2px solid #fff; z-index: 10; }
+    #videoFrame { width: 100%; height: 100%; border: none; border-radius: 12px; }
+    #videoBtn { background: #28a745; }
+    #videoBtn:hover { background: #218838; }
   </style>
 </head>
 <body>
@@ -255,7 +160,7 @@
 
 <script src="config.js"></script>
 
-<script>
+<script> // Consider moving this to an external app.js file and adding 'defer'
   // ---------- Student IDs (robust loading) ----------
   let ALLOWED_IDS = [];
   async function loadIDs() {
@@ -264,19 +169,19 @@
       if (!res.ok) throw new Error("File not found");
       const data = await res.json();
       ALLOWED_IDS = Array.isArray(data) ? data : (Array.isArray(data.allowed) ? data.allowed : []);
-    } catch (err) { 
+    } catch (err) {
       console.error("Could not load student IDs:", err);
       ALLOWED_IDS = [];
     }
   }
-  
+
   // Check config.js to enable/disable login
   // 'config' is loaded from config.js
   if (config.requireLogin === true) {
       loadIDs(); // Load the student IDs
       document.getElementById('lockScreen').style.display = 'flex'; // Show the lock screen
   } else {
-      // Login is not required, so the lock screen stays hidden (display: none from CSS)
+      // Login is not required, so the lock screen stays hidden
   }
 
   // Unlock button
@@ -293,11 +198,34 @@
     }
   });
 
+  // ---------- Load Pre-extracted Book Text ----------
+  let bookTextData = {};
+  async function loadBookText() {
+    try {
+        const res = await fetch("./book-text.json");
+        if (!res.ok) throw new Error("book-text.json not found");
+        bookTextData = await res.json();
+        console.log("Book text loaded successfully.");
+    } catch (err) {
+        console.error("Could not load book text:", err);
+        // Optionally inform the user that translation won't work
+        const translateBtn = document.getElementById('translateBtn');
+        if(translateBtn) {
+            translateBtn.disabled = true;
+            translateBtn.textContent = "🌐 Text Unavailable";
+            translateBtn.style.backgroundColor = '#aaa'; // Grey out button
+        }
+    }
+  }
+  loadBookText(); // Load the text when the script runs
+
   // ---------- Flipbook data ----------
   // 'config' is loaded from config.js
   const totalPages = config.totalPages;
-  const images = Array.from({ length: totalPages }, (_, i) => `${config.imagePath}${i}.png`);
-  const thumbs = Array.from({ length: totalPages }, (_, i) => `${config.thumbPath}${i}.jpg`);
+  // --- UPDATED to match your actual image names ---
+  const images = Array.from({ length: totalPages }, (_, i) => `${config.imagePath}Book_PHYS101_${i}.png`);
+  const thumbs = Array.from({ length: totalPages }, (_, i) => `${config.thumbPath}${i}.jpg`); // Assuming thumbs are still 0.jpg, 1.jpg, etc.
+  // --- END UPDATE ---
   let currentPage = 0;
   const flipbook = document.getElementById("flipbook");
   const thumbbar = document.getElementById("thumbbar");
@@ -306,29 +234,23 @@
   const footer = document.getElementById("footer");
   const indexToggle = document.getElementById("indexToggle");
   const indexMenu = document.getElementById("indexMenu");
-  
+
   // PhET Modal Elements
   const phetModal = document.getElementById('phetModal');
   const phetBtn = document.getElementById('phetBtn');
   const phetCloseBtn = document.getElementById('phetCloseBtn');
   const phetFrame = document.getElementById('phetFrame');
-  
+
   // Video Modal Elements
   const videoModal = document.getElementById('videoModal');
   const videoBtn = document.getElementById('videoBtn');
   const videoCloseBtn = document.getElementById('videoCloseBtn');
   const videoFrame = document.getElementById('videoFrame');
 
-  /**
-   * Converts a standard YouTube URL into an embeddable URL.
-   * @param {string} url - The original YouTube URL.
-   * @returns {string} The embeddable URL.
-   */
   function getYoutubeEmbedUrl(url) {
       try {
           const urlObj = new URL(url);
           let videoId = null;
-
           if (urlObj.hostname === 'youtu.be') {
               videoId = urlObj.pathname.slice(1);
           } else if (urlObj.hostname.includes('youtube.com') && urlObj.pathname === '/watch') {
@@ -336,48 +258,42 @@
           } else if (urlObj.hostname.includes('youtube.com') && urlObj.pathname.startsWith('/embed/')) {
               return url;
           }
-
           if (videoId) {
-              const embedUrl = `https://www.youtube-nocookie.com/embed/${videoId}?autoplay=1&rel=0`;
-              return embedUrl;
+              return `https://www.youtube-nocookie.com/embed/${videoId}?autoplay=1&rel=0`;
           }
-      } catch (e) {
-          console.error("Invalid video URL:", url, e);
-      }
-      return url; 
+      } catch (e) { console.error("Invalid video URL:", url, e); }
+      return url;
   }
 
   // ---------- Render page ----------
   function renderPage() {
     flipbook.innerHTML = "";
-
     const wrap = document.createElement("div");
     wrap.className = "page-wrap";
-
     const img = document.createElement("img");
     img.className = "page-image";
     img.src = images[currentPage];
     img.alt = `Page ${currentPage + 1}`;
     img.crossOrigin = "anonymous";
     img.onerror = () => { img.alt = "Image not available"; img.style.opacity = 0.5; };
-
     const overlay = document.createElement("div");
     overlay.className = "overlay-translation";
     overlay.id = "overlay-translation";
-
     wrap.appendChild(img);
     wrap.appendChild(overlay);
     flipbook.appendChild(wrap);
-
     counter.textContent = `Page ${currentPage + 1} / ${totalPages}`;
     highlightThumb();
-
-    // Check for simulations AND videos
     const simConfig = config.simulations.find(s => s.page === (currentPage + 1));
     phetBtn.style.display = simConfig ? 'inline-block' : 'none';
-
     const videoConfig = config.videos.find(v => v.page === (currentPage + 1));
     videoBtn.style.display = videoConfig ? 'inline-block' : 'none';
+
+    // Hide translation overlay when page changes
+    const currentOverlay = document.getElementById('overlay-translation');
+    if (currentOverlay) currentOverlay.style.display = 'none';
+    const hideBtn = document.getElementById('hideTranslateBtn');
+    if (hideBtn) hideBtn.style.display = 'none';
   }
 
   // ---------- Thumbnails ----------
@@ -495,54 +411,31 @@
     if(e.key==="Escape") {
         if (indexMenu.style.display==="flex") closeIndexMenu();
         if (phetModal.style.display==="flex") closePhetModal();
-        if (videoModal.style.display==="flex") closeVideoModal(); 
+        if (videoModal.style.display==="flex") closeVideoModal();
     }
   });
 
   // ---------- PhET Modal Logic ----------
   function openPhetModal() {
     const simConfig = config.simulations.find(s => s.page === (currentPage + 1));
-    if (simConfig) {
-        phetFrame.src = simConfig.url; 
-        phetModal.style.display = 'flex';
-    } else {
-        alert("No simulation found for this page.");
-    }
+    if (simConfig) { phetFrame.src = simConfig.url; phetModal.style.display = 'flex'; }
+    else { alert("No simulation found for this page."); }
   }
-  function closePhetModal() {
-    phetModal.style.display = 'none';
-    phetFrame.src = 'about:blank'; // Stop the simulation
-  }
+  function closePhetModal() { phetModal.style.display = 'none'; phetFrame.src = 'about:blank'; }
   phetBtn.addEventListener('click', openPhetModal);
   phetCloseBtn.addEventListener('click', closePhetModal);
-  phetModal.addEventListener('click', (e) => {
-    if(e.target === phetModal) { closePhetModal(); }
-  });
+  phetModal.addEventListener('click', (e) => { if(e.target === phetModal) closePhetModal(); });
 
   // ---------- Video Modal Logic ----------
   function openVideoModal() {
     const videoConfig = config.videos.find(v => v.page === (currentPage + 1));
-    if (videoConfig) {
-        videoFrame.src = getYoutubeEmbedUrl(videoConfig.url);
-        videoModal.style.display = 'flex';
-    } else {
-        alert("No video found for this page.");
-    }
+    if (videoConfig) { videoFrame.src = getYoutubeEmbedUrl(videoConfig.url); videoModal.style.display = 'flex'; }
+    else { alert("No video found for this page."); }
   }
-
-  function closeVideoModal() {
-    videoModal.style.display = 'none';
-    videoFrame.src = 'about:blank'; // Stop the video
-  }
-
+  function closeVideoModal() { videoModal.style.display = 'none'; videoFrame.src = 'about:blank'; }
   videoBtn.addEventListener('click', openVideoModal);
   videoCloseBtn.addEventListener('click', closeVideoModal);
-  videoModal.addEventListener('click', (e) => {
-    if(e.target === videoModal) { 
-        closeVideoModal();
-    }
-  });
-
+  videoModal.addEventListener('click', (e) => { if(e.target === videoModal) closeVideoModal(); });
 
   // ---------- AI HELPER ----------
   const aiModal = document.getElementById('aiHelperModal');
@@ -554,7 +447,7 @@
 
   const GEMINI_API_KEY = 'AIzaSyAntGKIXHhHIWkYT7R6rPlpBk0tZuLtlD8'; // <-- Your API key
 
-  async function getImageAsBase64(url) {
+  async function getImageAsBase64FromUrl(url) { // Renamed original function
       try {
           const response = await fetch(url);
           const blob = await response.blob();
@@ -578,14 +471,12 @@
   });
 
   aiCloseBtn.addEventListener('click', () => aiModal.style.display = 'none');
-  aiModal.addEventListener('click', (e) => {
-    if(e.target === aiModal) { aiModal.style.display = 'none'; }
-  });
+  aiModal.addEventListener('click', (e) => { if(e.target === aiModal) aiModal.style.display = 'none'; });
 
   function getCurrentChapter() {
       let currentChapter = config.chapters[0];
       for (let i = config.chapters.length - 1; i >= 0; i--) {
-          if (currentPage >= (config.chapters[i].page - 1)) { // 0-based check
+          if (currentPage >= (config.chapters[i].page - 1)) {
               currentChapter = config.chapters[i];
               break;
           }
@@ -595,129 +486,111 @@
 
   async function getAiHelp(type) {
     if (!GEMINI_API_KEY) {
-        aiResponseEl.textContent = "The AI Helper is not configured. Please add your API key.";
+        aiResponseEl.textContent = "AI Helper not configured: API key missing.";
         return;
     }
 
     aiLoadingEl.style.display = 'block';
     aiResponseEl.innerHTML = '';
-
     let requestBody;
     const chapter = getCurrentChapter().title;
 
     if (type === 'analyze_page') {
         const pageImageElement = document.querySelector('.page-image');
         if (!pageImageElement) {
-            aiResponseEl.textContent = "Could not find the page image to analyze.";
+            aiResponseEl.textContent = "Could not find page image.";
             aiLoadingEl.style.display = 'none';
             return;
         }
-
-        const imageData = await getImageAsBase64(pageImageElement.src);
+        // Using the original (less efficient) base64 method for now.
+        // Replace with the canvas method later if needed.
+        const imageData = await getImageAsBase64FromUrl(pageImageElement.src);
         if (!imageData) {
-            aiResponseEl.textContent = "Sorry, I couldn't process the page image.";
+            aiResponseEl.textContent = "Could not process page image.";
             aiLoadingEl.style.display = 'none';
             return;
         }
-
-        // --- JAVASCRIPT FIX 2: This block was corrupted. It is now correct. ---
         requestBody = {
             contents: [{
                 parts: [
-                    { text: "Analyze the content of this textbook page. Summarize the key concepts, explain any important formulas or diagrams, and provide a key takeaway for a life science student." },
-                    {
-                        inline_data: {
-                            mime_type: "image/png",
-                            data: imageData
-                        }
-                    }
+                    { text: "Analyze this textbook page. Summarize key concepts, explain formulas/diagrams, and give a takeaway for a life science student." },
+                    { inline_data: { mime_type: "image/png", data: imageData } }
                 ]
             }]
         };
-        // --- END JAVASCRIPT FIX 2 ---
-
     } else {
         let aiPrompt;
         switch(type) {
           case 'explain':
-            const concept = window.prompt("What concept from this chapter would you like explained?", "e.g., 'Pascal's Principle'");
+            const concept = window.prompt(`Concept from "${chapter}" to explain?`, "e.g., Pascal's Principle");
             if (!concept) { aiLoadingEl.style.display = 'none'; return; }
-            aiPrompt = `You are a physics tutor for university students in life sciences. Explain the concept of "${concept}" from the chapter "${chapter}" in a simple and clear way.`;
+            aiPrompt = `Explain "${concept}" from chapter "${chapter}" simply for life science students.`;
             break;
           case 'quiz':
-            aiPrompt = `You are a physics tutor. Based on the chapter "${chapter}", generate 2 multiple-choice quiz questions with 4 options each to test a student's understanding. Provide a brief explanation for the correct answer. Bold the correct answer and its letter.`;
+            aiPrompt = `Generate 2 multiple-choice questions (4 options) on chapter "${chapter}". Explain the correct answer (bold it).`;
             break;
           case 'relate':
-            aiPrompt = `You are a physics tutor for life science students. For the chapter on "${chapter}", provide two clear examples of how these physics principles apply directly to biology or medicine.`;
+            aiPrompt = `Provide two examples of how principles from chapter "${chapter}" apply to biology or medicine.`;
             break;
-          default:
-            aiLoadingEl.style.display = 'none';
-            return;
+          default: aiLoadingEl.style.display = 'none'; return;
         }
-        requestBody = {
-            contents: [{ parts: [{ text: aiPrompt }] }]
-        };
+        requestBody = { contents: [{ parts: [{ text: aiPrompt }] }] };
     }
 
     const API_URL = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${GEMINI_API_KEY}`;
-
     try {
       const response = await fetch(API_URL, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(requestBody)
       });
-
       if (!response.ok) {
         const errorData = await response.json();
         throw new Error(`API error: ${errorData.error?.message || response.statusText}`);
       }
-
       const data = await response.json();
-      const text = data.candidates?.[0]?.content?.parts?.[0]?.text || "No response text found.";
-      aiResponseEl.innerHTML = marked.parse(text);
-
-      if (window.MathJax) {
-        MathJax.typesetPromise([aiResponseEl]).catch(err => console.error("MathJax error:", err));
-      }
-
+      const text = data.candidates?.[0]?.content?.parts?.[0]?.text || "No response text.";
+      aiResponseEl.innerHTML = marked.parse(text); // Use marked.parse() if available
+      if (window.MathJax) MathJax.typesetPromise([aiResponseEl]).catch(err => console.error("MathJax error:", err));
     } catch (error) {
       console.error("AI Helper Error:", error);
-      aiResponseEl.textContent = `Sorry, I couldn't get a response: ${error.message}`;
+      aiResponseEl.textContent = `Error getting response: ${error.message}`;
     } finally {
       aiLoadingEl.style.display = 'none';
     }
   }
 
-  // ---------- Translate Page (OCR) ----------
+  // --- Translate Page (USING PRE-EXTRACTED TEXT) ---
   const translateBtn = document.getElementById('translateBtn');
   const hideTranslateBtn = document.getElementById('hideTranslateBtn');
 
   async function translateCurrentPage() {
-    const overlay = document.getElementById('overlay-translation') || null;
-    const pageImg = document.querySelector('.page-image');
-    if (!pageImg) {
-      alert('Page image not ready.');
-      return;
+    const overlay = document.getElementById('overlay-translation');
+    if (!overlay) return; // Should not happen
+
+    overlay.style.display = 'block';
+    overlay.textContent = 'Fetching text...';
+
+    // Get pre-extracted text using currentPage (make sure it's a string key)
+    const englishText = bookTextData[String(currentPage)];
+
+    if (englishText === undefined) {
+         overlay.textContent = '⚠️ Text data for this page is unavailable.';
+         return;
+    }
+    if (!englishText.trim()) {
+         overlay.textContent = '⚠️ No readable text found for this page in the data file.';
+         return;
+    }
+
+    if (!GEMINI_API_KEY) {
+        overlay.innerText = "⚠️ No Gemini API key configured. English text preview:\n\n" + englishText.slice(0, 1500) + "...";
+        return;
     }
 
-    if (overlay) { overlay.style.display = 'block'; overlay.textContent = '🔎 Extracting English text (OCR)...'; }
+    overlay.textContent = '🌐 Translating to Arabic...';
 
     try {
-      const ocrResult = await Tesseract.recognize(pageImg.src, 'eng', { logger: m => { /* optional logging */ } });
-      const englishText = (ocrResult?.data?.text || '').trim();
-      if (!englishText) {
-        if (overlay) overlay.textContent = '⚠️ Could not detect readable English text on this page.';
-        return;
-      }
-
-      if (overlay) overlay.textContent = '🌐 Translating to Arabic...';
-
-      if (!GEMINI_API_KEY) {
-        overlay.innerText = "⚠️ No Gemini API key configured. Detected English text (preview):\n\n" + englishText.slice(0, 2000);
-        return;
-      }
-
       const API_URL = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${GEMINI_API_KEY}`;
       const requestBody = {
         contents: [{
@@ -730,31 +603,28 @@
       const resp = await fetch(API_URL, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        // --- JAVASCRIPT FIX 3: Removed the stray 'e' from the line below ---
         body: JSON.stringify(requestBody)
       });
 
       if (!resp.ok) {
         const errData = await resp.json().catch(()=>null);
-NET       const msg = errData?.error?.message || resp.statusText;
-        throw new Error(msg);
+        throw new Error(errData?.error?.message || resp.statusText);
       }
 
       const data = await resp.json();
       const translated = data.candidates?.[0]?.content?.parts?.[0]?.text || "❌ Translation returned empty.";
 
-      if (overlay) {
-        overlay.innerText = translated;
-        overlay.style.display = 'block';
-        hideTranslateBtn.style.display = 'inline-block';
+      overlay.innerText = translated; // Use innerText to prevent potential HTML injection
+      overlay.style.display = 'block';
+      hideTranslateBtn.style.display = 'inline-block';
 
-    _REQUEST       if (window.MathJax) {
-          MathJax.typesetPromise([overlay]).catch(err => console.error("MathJax overlay error:", err));
-E         }
+      if (window.MathJax) {
+        MathJax.typesetPromise([overlay]).catch(err => console.error("MathJax overlay error:", err));
       }
+
     } catch (err) {
       console.error("Translate error:", err);
-      if (overlay) overlay.textContent = `❌ Error: ${err.message}`;
+      overlay.textContent = `❌ Translation Error: ${err.message}`;
     }
   }
 
@@ -763,7 +633,8 @@ E         }
     const overlay = document.getElementById('overlay-translation');
     if (overlay) overlay.style.display = 'none';
     hideTranslateBtn.style.display = 'none';
-Read-Only   });
+  });
+  // --- End Translate Page ---
 
   // ---------- initial render ----------
   pageInput.max = totalPages;
