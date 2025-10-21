@@ -49,11 +49,13 @@
         <button id="eraser-tool-btn" class="tool-btn">Eraser</button>
         <label for="highlight-color">Color:</label>
         <!-- *** THIS IS THE FIX *** -->
-        <!-- Values are now direct RGBA strings for transparency -->
+        <!-- Added Light Blue and Red options -->
         <select id="highlight-color">
             <option value="rgba(255, 255, 0, 0.4)" selected>Yellow</option>
-            <option value="rgba(255, 105, 180, 0.4)">Pink</option>
             <option value="rgba(0, 255, 0, 0.4)">Green</option>
+            <option value="rgba(173, 216, 230, 0.4)">Blue</option> <!-- NEW -->
+            <option value="rgba(255, 105, 180, 0.4)">Pink</option>
+            <option value="rgba(255, 0, 0, 0.4)">Red</option> <!-- NEW -->
         </select>
         <!-- *** END FIX *** -->
         <label for="brush-size">Size:</label>
@@ -95,4 +97,6 @@
 <script src="app.js" defer></script>
 </body>
 </html>
+
+
 
