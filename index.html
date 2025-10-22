@@ -34,6 +34,7 @@
     </div>
 </div>
 
+<!-- Toolbar Container - Now Sticky -->
 <div class="toolbar-container">
     <div class="toolbar">
         <button onclick="firstPage()">⏮ First</button>
@@ -42,29 +43,38 @@
         <button onclick="jumpToPage()">Go</button>
         <button onclick="nextPage()">Next ➡</button>
         <button onclick="lastPage()">⏭ Last</button>
-        <button id="toggle-draw-mode-btn">✏️ Draw</button> <!-- Button to toggle drawing toolbar -->
+        <button id="toggle-draw-mode-btn">✏️ Draw</button>
         <button id="translateBtn">🌐 Translate Page</button>
-        <button id="hideTranslateBtn" style="display:none;background:#b30000;">❌ Hide Translation</button> <!-- Correctly placed hide button -->
+        <button id="hideTranslateBtn" style="display:none;background:#b30000;">❌ Hide Translation</button>
+        <button id="searchBtn">🔍</button> <!-- Added Search Button -->
         <button id="phetBtn" style="display:none;">🔬 Launch Simulation</button>
         <button id="videoBtn" style="display:none;">▶️ Watch Video</button>
     </div>
     <!-- Highlight Toolbar (Initially Hidden) -->
     <div id="highlight-toolbar" class="highlight-toolbar">
-        <button id="highlight-tool-btn" class="tool-btn active">Highlight</button> <!-- Default tool -->
+        <button id="highlight-tool-btn" class="tool-btn active">Highlight</button>
         <button id="eraser-tool-btn" class="tool-btn">Eraser</button>
         <label for="highlight-color">Color:</label>
         <select id="highlight-color">
-            <option value="rgba(255, 255, 0, 0.2)">Yellow</option> <!-- 20% Opacity -->
-            <option value="rgba(144, 238, 144, 0.2)">Green</option> <!-- 20% Opacity -->
-            <option value="rgba(0, 191, 255, 0.2)">Blue</option>   <!-- 20% Opacity -->
-            <option value="rgba(255, 192, 203, 0.2)">Pink</option>   <!-- 20% Opacity -->
-            <option value="rgba(255, 99, 71, 0.2)">Red</option>    <!-- 20% Opacity -->
+            <option value="rgba(255, 255, 0, 0.2)">Yellow</option>
+            <option value="rgba(144, 238, 144, 0.2)">Green</option>
+            <option value="rgba(0, 191, 255, 0.2)">Blue</option>
+            <option value="rgba(255, 192, 203, 0.2)">Pink</option>
+            <option value="rgba(255, 99, 71, 0.2)">Red</option>
         </select>
         <label for="brush-size">Size:</label>
-        <input type="range" id="brush-size" min="30" max="90" value="40"> <!-- Changed range and default value -->
+        <input type="range" id="brush-size" min="30" max="90" value="40">
         <button id="clear-highlights-btn">Clear Page</button>
     </div>
 </div>
+
+<!-- Search UI Container (Below Sticky Toolbar) -->
+<div id="searchContainer" style="display: none;">
+    <input type="text" id="searchInput" placeholder="Search book...">
+    <button id="searchCloseBtn">×</button>
+    <div id="searchResults"></div>
+</div>
+
 
 <div id="thumbbar" class="thumbbar"></div>
 
