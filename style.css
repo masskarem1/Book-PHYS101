@@ -25,16 +25,19 @@ body {
     overflow: hidden; /* Important for containing zoomed content */
     margin-top: 10px; /* Space below sticky toolbar */
     margin-bottom: 10px; /* Space above footer */
+    /* --- FIX: Keep position and z-index --- */
+    position: relative;
+    z-index: 500 !important; /* Keep above thumbbar context */
 }
 
 /* --- Page Wrapper (for image, canvas, overlay, zooming) --- */
 .page-wrap {
     position: relative;
     width: 100%;
-    display: flex; /* Using flex might interfere with absolute positioning, consider removing */
+    display: flex;
     justify-content: center;
-    line-height: 0; /* Prevent extra space under image/canvas */
-    transform-origin: center center; /* Zoom from the center */
+    line-height: 0;
+    transform-origin: center center;
 }
 
 .page-image {
@@ -42,9 +45,9 @@ body {
     height: auto;
     max-width: 100%;
     object-fit: contain;
-    display: block; /* Ensure it behaves like a block */
+    display: block;
     margin: 0 auto;
-    border-radius: 6px; /* Optional rounding */
+    border-radius: 6px;
 }
 
 /* --- Highlight Canvas --- */
@@ -52,24 +55,22 @@ body {
     position: absolute;
     top: 0;
     left: 0;
-    width: 100%; /* Will be sized by JS */
-    height: 100%; /* Will be sized by JS */
-    touch-action: none; /* Crucial for preventing browser gestures during drawing */
-    pointer-events: none; /* Disabled by default */
+    width: 100%;
+    height: 100%;
+    touch-action: none;
+    pointer-events: none;
 }
 body.highlight-mode #highlight-canvas {
-    pointer-events: auto; /* Enable drawing only in highlight mode */
+    pointer-events: auto;
 }
-/* Custom Cursor for Highlighter */
 #highlight-canvas.highlight-cursor {
-    /* SVG Cursor: Vertical dashed rectangle */
     cursor: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="20" height="32" viewBox="0 0 20 32"><rect x="1" y="1" width="18" height="30" fill="none" stroke="black" stroke-width="2" stroke-dasharray="4 2"/></svg>') 10 16, crosshair;
 }
 
 /* --- Translation Overlay --- */
 .overlay-translation {
     position: absolute;
-    top: 2%; /* Adjust as needed */
+    top: 2%;
     left: 5%;
     width: 90%;
     max-height: 94%;
@@ -77,54 +78,47 @@ body.highlight-mode #highlight-canvas {
     background: rgba(255, 255, 255, 0.9);
     border: 1px solid #ccc;
     border-radius: 8px;
-    padding: 20px 20px 20px 50px; /* Make space for close button on left */
+    padding: 20px 20px 20px 50px;
     box-sizing: border-box;
     display: none;
-    direction: rtl; /* Right-to-left for Arabic */
+    direction: rtl;
     text-align: right;
     line-height: 1.7;
     font-size: 1.1rem;
     box-shadow: 0 4px 15px rgba(0,0,0,0.15);
     z-index: 2500;
-    white-space: pre-wrap; /* Preserve line breaks */
+    white-space: pre-wrap;
 }
 
 /* --- Translation Close Button --- */
 .translation-close-btn {
     position: absolute;
     top: 5px;
-    left: 10px; /* Positioned on the left */
+    left: 10px;
     width: 30px;
     height: 30px;
     line-height: 30px;
     text-align: center;
-    font-size: 1.8rem; /* Make 'x' bigger */
+    font-size: 1.8rem;
     font-weight: bold;
     color: #aaa;
-    background-color: transparent; /* Make background transparent */
+    background-color: transparent;
     border-radius: 50%;
     cursor: pointer;
     transition: color 0.2s;
-    z-index: 2501; /* Above overlay content */
-    padding: 0; /* Override button padding */
-    border: none; /* Override button border */
+    z-index: 2501;
+    padding: 0;
+    border: none;
 }
 .translation-close-btn:hover {
-    color: #333; /* Darken 'x' on hover */
+    color: #333;
 }
 
 /* --- Lock Screen --- */
 #lockScreen {
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background: rgba(0, 0, 0, 0.7);
-    display: none;
-    justify-content: center;
-    align-items: center;
-    z-index: 3000;
+    position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+    background: rgba(0, 0, 0, 0.7); display: none; justify-content: center;
+    align-items: center; z-index: 3000;
 }
 .lock-box { background: #fff; padding: 2rem; border-radius: 8px; text-align: center; max-width: 300px; box-shadow: 0 4px 12px rgba(0, 0, 0, 0.25); }
 .lock-box input { width: 90%; padding: 0.5rem; font-size: 1rem; margin: 0.5rem 0; border: 1px solid #ccc; border-radius: 4px;}
@@ -133,273 +127,103 @@ body.highlight-mode #highlight-canvas {
 
 /* --- Toolbar Container (Sticky) --- */
 .toolbar-container {
-    position: sticky;
-    top: 0;
-    left: 0;
-    width: 100%;
-    z-index: 1000; /* Keep on top */
-    background-color: #f0f0f0;
-    padding: 8px;
-    box-sizing: border-box;
-    border-bottom: 1px solid #ddd;
-    box-shadow: 0 2px 5px rgba(0,0,0,0.1);
-    display: flex;
-    flex-direction: column;
-    align-items: center;
+    position: sticky; top: 0; left: 0; width: 100%; z-index: 1000;
+    background-color: #f0f0f0; padding: 8px; box-sizing: border-box;
+    border-bottom: 1px solid #ddd; box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+    display: flex; flex-direction: column; align-items: center;
+    /* --- TEMP DEBUG: Remove background --- */
+    /* background-color: rgba(255, 165, 0, 0.3) !important; */
 }
 
 /* --- Main Toolbar --- */
-.toolbar {
-    margin-bottom: 8px;
-    display: flex;
-    justify-content: center;
-    align-items: center; /* Align items vertically */
-    gap: 8px; /* Consistent gap */
-    flex-wrap: wrap; /* Allow wrapping on small screens */
-    width: 100%;
-    max-width: 1100px; /* Limit width */
-}
+.toolbar { margin-bottom: 8px; display: flex; justify-content: center; align-items: center; gap: 8px; flex-wrap: wrap; width: 100%; max-width: 1100px; }
 
 /* --- General Button Styles --- */
-button {
-    padding: 5px 12px; /* Slightly smaller padding */
-    border: none;
-    border-radius: 6px; /* Slightly less rounded */
-    background: #007acc;
-    color: white;
-    font-size: 0.9rem; /* Slightly smaller font */
-    cursor: pointer;
-    transition: background 0.18s, box-shadow 0.18s, opacity 0.18s;
-    white-space: nowrap; /* Prevent button text wrapping */
-}
-button:hover {
-    background: #005fa3;
-}
-button:disabled {
-    background-color: #b0b0b0; /* More distinct disabled color */
-    cursor: not-allowed;
-    opacity: 0.7;
-}
-button:active {
-    transform: translateY(1px); /* Simple press effect */
-}
-/* Active state for toggle buttons */
-button.active {
-    box-shadow: 0 0 0 3px #ffc107 inset; /* Yellow inner glow */
-    background-color: #005fa3;
-}
+button { padding: 5px 12px; border: none; border-radius: 6px; background: #007acc; color: white; font-size: 0.9rem; cursor: pointer; transition: background 0.18s, box-shadow 0.18s, opacity 0.18s; white-space: nowrap; }
+button:hover { background: #005fa3; }
+button:disabled { background-color: #b0b0b0; cursor: not-allowed; opacity: 0.7; }
+button:active { transform: translateY(1px); }
+button.active { box-shadow: 0 0 0 3px #ffc107 inset; background-color: #005fa3; }
 
 /* --- Page Input --- */
-#pageInput {
-    width: 60px; /* Slightly narrower */
-    padding: 4px;
-    font-size: 0.9rem;
-    text-align: center;
-    border: 1px solid #ccc;
-    border-radius: 4px;
-}
+#pageInput { width: 60px; padding: 4px; font-size: 0.9rem; text-align: center; border: 1px solid #ccc; border-radius: 4px; }
 
 /* --- Specific Button Styles --- */
-#phetBtn { background: #d9534f; }
-#phetBtn:hover { background: #c9302c; }
-#videoBtn { background: #28a745; }
-#videoBtn:hover { background: #218838; }
-#searchBtn { font-size: 1.2rem; padding: 4px 8px; } /* Icon size */
+#phetBtn { background: #d9534f; } #phetBtn:hover { background: #c9302c; }
+#videoBtn { background: #28a745; } #videoBtn:hover { background: #218838; }
+#searchBtn { font-size: 1.2rem; padding: 4px 8px; }
 #toggle-draw-mode-btn { font-size: 1.1rem; padding: 4px 8px; }
 
 /* --- Highlight Buttons Group --- */
-.highlight-buttons-group {
-    display: flex;
-    border: 1px solid #bbb; /* Group border */
-    border-radius: 6px;
-    overflow: hidden; /* Ensure rounded corners clip children */
-}
-.highlight-buttons-group button {
-    border-radius: 0; /* Remove individual radius */
-    margin: 0; /* Remove spacing */
-    border-left: 1px solid #bbb; /* Separator line */
-    padding: 5px 10px;
-}
-.highlight-buttons-group button:first-child {
-    border-left: none; /* No separator on the first button */
-    border-top-left-radius: 5px; /* Round outer corners */
-    border-bottom-left-radius: 5px;
-}
-.highlight-buttons-group button:last-child {
-    border-top-right-radius: 5px; /* Round outer corners */
-    border-bottom-right-radius: 5px;
-}
-.highlight-buttons-group button.active {
-     box-shadow: none; /* Remove outer glow for grouped buttons */
-     background-color: #005fa3; /* Just use darker background for active */
-}
-#highlight-settings-btn {
-    font-size: 1.1rem; /* Adjust arrow size */
-    padding: 5px 6px; /* Make slightly narrower */
-}
-
+.highlight-buttons-group { display: flex; border: 1px solid #bbb; border-radius: 6px; overflow: hidden; }
+.highlight-buttons-group button { border-radius: 0; margin: 0; border-left: 1px solid #bbb; padding: 5px 10px; }
+.highlight-buttons-group button:first-child { border-left: none; border-top-left-radius: 5px; border-bottom-left-radius: 5px; }
+.highlight-buttons-group button:last-child { border-top-right-radius: 5px; border-bottom-right-radius: 5px; }
+.highlight-buttons-group button.active { box-shadow: none; background-color: #005fa3; }
+#highlight-settings-btn { font-size: 1.1rem; padding: 5px 6px; }
 
 /* --- Highlight Pop-up Menu --- */
-.highlight-popup {
-    display: none; /* Hidden by default */
-    position: absolute;
-    top: 100%; /* Position below the toolbar container */
-    margin-top: 5px; /* Small gap */
-    background-color: #ffffff;
-    border: 1px solid #ccc;
-    border-radius: 8px;
-    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
-    padding: 10px;
-    z-index: 1100; /* Above toolbar but below modals */
-    /* display: flex; No - controlled by JS */
-    flex-direction: column;
-    gap: 10px;
-    opacity: 0; /* Start invisible for transition */
-    transform: translateY(-10px); /* Start slightly up */
-    transition: opacity 0.2s ease-out, transform 0.2s ease-out, visibility 0s linear 0.2s; /* Delay visibility change */
-    visibility: hidden; /* Start hidden */
-    min-width: 200px;
-}
-.highlight-popup.visible {
-    display: flex;
-    opacity: 1;
-    transform: translateY(0);
-    visibility: visible; /* Make visible */
-    transition-delay: 0s; /* Remove delay for showing */
-}
-.popup-section {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    padding-bottom: 8px;
-    border-bottom: 1px solid #eee;
-}
-.popup-section:last-child {
-    border-bottom: none;
-    padding-bottom: 0;
-}
-.popup-section label {
-    font-size: 0.9rem;
-    color: #555;
-    min-width: 40px; /* Align labels */
-}
-.popup-section input[type="range"] {
-    flex-grow: 1; /* Allow slider to take available space */
-}
-.popup-section button {
-    background-color: #f0f0f0;
-    color: #333;
-    padding: 4px 10px;
-    font-size: 0.85rem;
-}
-.popup-section button:hover {
-    background-color: #ddd;
-}
-.popup-section button.tool-btn.active {
-    background-color: #007acc;
-    color: white;
-    box-shadow: none;
-}
-.color-swatches {
-    display: flex;
-    gap: 8px;
-}
-.color-swatch {
-    width: 24px;
-    height: 24px;
-    border-radius: 50%;
-    border: 2px solid #ccc;
-    cursor: pointer;
-    transition: transform 0.1s ease-out, border-color 0.1s;
-}
-.color-swatch:hover {
-    transform: scale(1.1);
-}
-.color-swatch.active {
-    border-color: #000;
-    box-shadow: 0 0 0 2px white, 0 0 0 4px #000; /* Ring effect */
-}
+.highlight-popup { display: none; position: absolute; top: 100%; margin-top: 5px; background-color: #ffffff; border: 1px solid #ccc; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.15); padding: 10px; z-index: 1100; flex-direction: column; gap: 10px; opacity: 0; transform: translateY(-10px); transition: opacity 0.2s ease-out, transform 0.2s ease-out, visibility 0s linear 0.2s; visibility: hidden; min-width: 200px; }
+.highlight-popup.visible { display: flex; opacity: 1; transform: translateY(0); visibility: visible; transition-delay: 0s; }
+.popup-section { display: flex; align-items: center; gap: 8px; padding-bottom: 8px; border-bottom: 1px solid #eee; }
+.popup-section:last-child { border-bottom: none; padding-bottom: 0; }
+.popup-section label { font-size: 0.9rem; color: #555; min-width: 40px; }
+.popup-section input[type="range"] { flex-grow: 1; }
+.popup-section button { background-color: #f0f0f0; color: #333; padding: 4px 10px; font-size: 0.85rem; }
+.popup-section button:hover { background-color: #ddd; }
+.popup-section button.tool-btn.active { background-color: #007acc; color: white; box-shadow: none; }
+.color-swatches { display: flex; gap: 8px; }
+.color-swatch { width: 24px; height: 24px; border-radius: 50%; border: 2px solid #ccc; cursor: pointer; transition: transform 0.1s ease-out, border-color 0.1s; }
+.color-swatch:hover { transform: scale(1.1); }
+.color-swatch.active { border-color: #000; box-shadow: 0 0 0 2px white, 0 0 0 4px #000; }
 
 /* --- Search Area --- */
-#searchContainer {
-    width: 100%;
-    max-width: 1100px; /* Match toolbar */
-    padding: 8px;
-    box-sizing: border-box;
-    background-color: #e9e9e9;
-    border-radius: 0 0 8px 8px; /* Round bottom corners */
-    box-shadow: 0 2px 4px rgba(0,0,0,0.1) inset;
-    display: none; /* Hide by default */
-    align-items: center;
-    gap: 10px;
-    margin-top: -8px; /* Overlap slightly with toolbar */
-    margin-bottom: 8px;
-    position: relative; /* Needed for results absolute positioning */
-}
-#searchInput {
-    flex-grow: 1;
-    padding: 6px 10px;
-    border: 1px solid #ccc;
-    border-radius: 4px;
-    font-size: 0.9rem;
-}
-#searchCloseBtn {
-    background: none;
-    border: none;
-    font-size: 1.5rem;
-    color: #888;
-    cursor: pointer;
-    padding: 0 5px;
-    line-height: 1;
-}
+#searchContainer { width: 100%; max-width: 1100px; padding: 8px; box-sizing: border-box; background-color: #e9e9e9; border-radius: 0 0 8px 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1) inset; display: none; align-items: center; gap: 10px; margin-top: -8px; margin-bottom: 8px; position: relative; }
+#searchInput { flex-grow: 1; padding: 6px 10px; border: 1px solid #ccc; border-radius: 4px; font-size: 0.9rem; }
+#searchCloseBtn { background: none; border: none; font-size: 1.5rem; color: #888; cursor: pointer; padding: 0 5px; line-height: 1; }
 #searchCloseBtn:hover { color: #333; }
-#searchResults {
-    position: absolute;
-    top: 100%; /* Below the search container */
-    left: 0;
-    right: 0;
-    max-height: 200px;
-    overflow-y: auto;
-    background: #fff;
-    border: 1px solid #ccc;
-    border-top: none; /* Avoid double border */
-    border-radius: 0 0 6px 6px;
-    box-shadow: 0 4px 8px rgba(0,0,0,0.1);
-    z-index: 1050; /* Above toolbar container content */
-}
-#searchResults div {
-    padding: 8px 12px;
-    font-size: 0.9rem;
-    cursor: pointer;
-    border-bottom: 1px solid #eee;
-}
+#searchResults { position: absolute; top: 100%; left: 0; right: 0; max-height: 200px; overflow-y: auto; background: #fff; border: 1px solid #ccc; border-top: none; border-radius: 0 0 6px 6px; box-shadow: 0 4px 8px rgba(0,0,0,0.1); z-index: 1050; }
+#searchResults div { padding: 8px 12px; font-size: 0.9rem; cursor: pointer; border-bottom: 1px solid #eee; }
 #searchResults div:last-child { border-bottom: none; }
 #searchResults div:hover { background-color: #f0f0f0; }
-#searchResults .no-results {
-    color: #888;
-    padding: 10px;
-    text-align: center;
-    cursor: default;
-}
+#searchResults .no-results { color: #888; padding: 10px; text-align: center; cursor: default; }
 
 /* --- Thumbnail Bar --- */
-.thumbbar { display: flex; overflow-x: auto; padding: 8px; background: #eee; border-top: 1px solid #ccc; border-bottom: 1px solid #ccc; gap: 8px; width: 100%; max-width: 1200px; box-sizing: border-box; }
-.thumbbar img { height: 70px; /* Slightly smaller */ cursor: pointer; border: 3px solid transparent; transition: border 0.18s; border-radius: 4px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
+.thumbbar {
+    display: flex; overflow-x: auto; padding: 8px; background: #eee;
+    border-top: 1px solid #ccc; border-bottom: 1px solid #ccc; gap: 8px;
+    width: 100%; max-width: 1200px; box-sizing: border-box;
+    /* --- FIX: Keep position and z-index --- */
+    position: relative;
+    z-index: 499 !important; /* Keep below flipbook/footer */
+    min-height: 80px; /* Ensure visibility */
+    /* --- TEMP DEBUG: Remove background --- */
+    /* background-color: rgba(0, 255, 0, 0.3) !important; */
+}
+.thumbbar img { height: 70px; cursor: pointer; border: 3px solid transparent; transition: border 0.18s; border-radius: 4px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
 .thumbbar img.active { border: 3px solid #007acc; }
 
 /* --- Footer --- */
-#footer { width: 100%; max-width: 1200px; display: flex; align-items: center; justify-content: space-between; padding: 8px 16px; box-sizing: border-box; position: relative; border-top: 1px solid #ddd; background-color: #f8f8f8; }
+#footer {
+    width: 100%; max-width: 1200px; display: flex; align-items: center;
+    justify-content: space-between; padding: 8px 16px; box-sizing: border-box;
+    position: relative; border-top: 1px solid #ddd; background-color: #f8f8f8;
+    /* --- FIX: Keep position and z-index --- */
+    z-index: 500 !important; /* Keep above thumbbar context */
+    /* --- TEMP DEBUG: Remove background --- */
+    /* background-color: rgba(0, 0, 255, 0.3) !important; */
+}
 .footer-left, .footer-right { display: flex; align-items: center; gap: 10px; }
 #pageCounter { font-size: 1rem; color: #333; }
 #indexToggle, #fullBtn, #shareBtn { padding: 5px 10px; font-size: 0.9rem; }
-#fullBtn { font-size: 1.2rem; } /* Make fullscreen icon bigger */
-#shareBtn { font-size: 1.1rem; } /* Make share icon bigger */
+#fullBtn { font-size: 1.2rem; }
+#shareBtn { font-size: 1.1rem; }
 #indexMenu { position: absolute; display: none; flex-direction: column; background: rgba(250, 250, 250, 0.95); border: 1px solid rgba(0, 0, 0, 0.15); border-radius: 6px; box-shadow: 0 6px 18px rgba(0, 0, 0, 0.2); padding: 5px; width: max-content; max-width: 90vw; white-space: nowrap; overflow-x: auto; z-index: 1200; backdrop-filter: blur(2px); }
 #indexMenu button { background: none; border: none; text-align: left; padding: 6px 10px; font-size: 0.9rem; cursor: pointer; width: 100%; color: #222; border-radius: 4px; }
 #indexMenu button:hover { background: rgba(0, 122, 204, 0.1); }
 
 /* --- AI Helper --- */
-#aiHelperToggle { position: fixed; bottom: 20px; right: 20px; width: 50px; height: 50px; border-radius: 50%; font-size: 1.5rem; z-index: 2000; box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2); background-color: #6a0dad; /* Purple */ color: white; border: 2px solid white;}
+#aiHelperToggle { position: fixed; bottom: 20px; right: 20px; width: 50px; height: 50px; border-radius: 50%; font-size: 1.5rem; z-index: 2000; box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2); background-color: #6a0dad; color: white; border: 2px solid white;}
 #aiHelperToggle:hover { background-color: #5a0bad; }
 #aiHelperModal { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0, 0, 0, 0.5); display: none; justify-content: center; align-items: center; z-index: 2500; padding: 10px; box-sizing: border-box;}
 .ai-content { background: #fff; padding: 1.5rem; border-radius: 12px; width: 95%; max-width: 550px; max-height: 90vh; overflow-y: auto; position: relative; box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3); }
@@ -454,31 +278,4 @@ button.active {
     .ai-content { width: 98%; padding: 0.8rem;}
     .ai-buttons button { font-size: 0.8rem; padding: 5px 8px;}
 }
-
-
-/* --- TEMPORARY DEBUGGING STYLES --- */
-#flipbook {
-    background-color: rgba(255, 0, 0, 0.3) !important; /* Semi-transparent Red */
-    z-index: 500 !important;
-    position: relative; /* Ensure z-index applies */
-}
-
-#footer {
-    background-color: rgba(0, 0, 255, 0.3) !important; /* Semi-transparent Blue */
-    z-index: 500 !important;
-    position: relative; /* Ensure z-index applies */
-}
-
-#thumbbar {
-     background-color: rgba(0, 255, 0, 0.3) !important; /* Semi-transparent Green */
-     z-index: 499 !important; /* Keep it slightly behind */
-     position: relative; /* Ensure z-index applies */
-     /* Add min-height to ensure it's visible even if empty */
-     min-height: 80px;
-}
-.toolbar-container { /* Also check toolbar overlap */
-    background-color: rgba(255, 165, 0, 0.3) !important; /* Orange */
-    z-index: 1001 !important; /* Make sure it stays on top */
-}
-/* --- END TEMPORARY --- */
 
