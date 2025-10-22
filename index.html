@@ -53,11 +53,11 @@
         <div class="popup-section">
             <label>Color:</label>
             <div class="color-swatches">
-                <div class="color-swatch active" data-color="rgba(255, 255, 0, 0.4)" style="background-color: rgba(255, 255, 0, 0.5);"></div>
-                <div class="color-swatch" data-color="rgba(144, 238, 144, 0.4)" style="background-color: rgba(144, 238, 144, 0.5);"></div>
-                <div class="color-swatch" data-color="rgba(0, 191, 255, 0.4)" style="background-color: rgba(0, 191, 255, 0.5);"></div>
-                <div class="color-swatch" data-color="rgba(255, 192, 203, 0.4)" style="background-color: rgba(255, 192, 203, 0.5);"></div>
-                <div class="color-swatch" data-color="rgba(255, 99, 71, 0.4)" style="background-color: rgba(255, 99, 71, 0.5);"></div>
+                <div class="color-swatch active" data-color="rgba(255, 255, 0, 0.2)" style="background-color: rgba(255, 255, 0, 0.5);"></div>
+                <div class="color-swatch" data-color="rgba(144, 238, 144, 0.2)" style="background-color: rgba(144, 238, 144, 0.5);"></div>
+                <div class="color-swatch" data-color="rgba(0, 191, 255, 0.2)" style="background-color: rgba(0, 191, 255, 0.5);"></div>
+                <div class="color-swatch" data-color="rgba(255, 192, 203, 0.2)" style="background-color: rgba(255, 192, 203, 0.5);"></div>
+                <div class="color-swatch" data-color="rgba(255, 99, 71, 0.2)" style="background-color: rgba(255, 99, 71, 0.5);"></div>
             </div>
         </div>
         <div class="popup-section">
@@ -101,9 +101,12 @@
              <button onclick="getAiHelp('quiz')">Quiz Me on Chapter</button>
              <button onclick="getAiHelp('relate')">Relate to Life Sciences</button>
              <button onclick="getAiHelp('analyze_page')">Analyze This Page</button>
-             <!-- *** ADDED Translate Button Here *** --><button onclick="translateCurrentPage()">🌐 Translate This Page</button>
-             <!-- *** END ADDED Button *** --></div>
+             <button onclick="translateCurrentPage()">🌐 Translate This Page</button>
+        </div>
         <div id="aiResponse" class="ai-response"></div>
+        <!-- Translate Analysis Button (Initially Hidden) -->
+        <button id="translate-analysis-btn" style="display: none; margin-top: 15px;">🌐 Translate Analysis</button>
+        <!-- Loading Indicator -->
         <div id="aiLoading" style="display: none;">Thinking...</div>
     </div>
 </div>
