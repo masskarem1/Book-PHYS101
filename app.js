@@ -97,8 +97,8 @@ const colorSwatchesContainer = document.querySelector('.color-swatches');
 const eraserToolBtnPopup = document.getElementById('eraser-tool-btn-popup');
 const brushSizeSliderPopup = document.getElementById('brush-size-popup');
 const clearHighlightsBtnPopup = document.getElementById('clear-highlights-btn-popup');
-let currentHighlightColor = 'rgba(255, 255, 0, 0.2)';
-let currentBrushSize = 40;
+let currentHighlightColor = 'rgba(255, 255, 0, 0.2)'; // Default highlight color
+let currentBrushSize = 40; // Default brush size
 let highlightCanvas, ctx, isDrawing = false, drawMode = 'highlight', lastX = 0, lastY = 0;
 
 // --- ZOOM/PAN VARIABLES ---
@@ -115,7 +115,7 @@ const searchContainer = document.getElementById('searchContainer');
 const searchInput = document.getElementById('searchInput');
 const searchCloseBtn = document.getElementById('searchCloseBtn');
 const searchResults = document.getElementById('searchResults');
-if (searchBtn) searchBtn.disabled = true;
+if (searchBtn) searchBtn.disabled = true; // Disable initially until book text loads
 
 function getYoutubeEmbedUrl(url) {
     try {
@@ -172,9 +172,9 @@ function renderPage() {
     img.onload = () => {
         sizeCanvasToImage(img, canvas);
         ctx = canvas.getContext('2d');
-        setupDrawingListeners(canvas);
-        loadHighlights(currentPage);
-        updateCursor();
+        setupDrawingListeners(canvas); // Setup listeners AFTER sizing and context
+        loadHighlights(currentPage); // Load highlights AFTER sizing and context
+        updateCursor(); // Apply initial cursor state based on draw mode
         // Initialize Hammer.js *after* image and canvas are loaded and sized
         setupHammer(wrap);
     };
@@ -217,11 +217,6 @@ function resetZoomPan(element) {
     if (element) {
         element.style.transform = 'scale(1) translate(0px, 0px)';
     }
-     // Also reset internal state if Hammer is active
-     if (hammerManager) {
-        // Hammer doesn't have a direct reset, but ensure internal state is cleared
-        // Re-initializing might be safer if issues persist
-     }
 }
 
 
@@ -239,7 +234,7 @@ function renderThumbs() {
         t.alt = `Thumb ${i + 1}`;
         t.loading = "lazy";
         t.addEventListener("click", () => { if (currentPage !== i) { currentPage = i; renderPage(); } });
-        t.onerror = () => { t.alt = "Thumb N/A"; t.src = "data:image/svg+xml,..."; };
+        t.onerror = () => { t.alt = "Thumb N/A"; t.src = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' fill='%23eee'/%3E%3Ctext x='50%25' y='50%25' font-family='sans-serif' font-size='12' fill='%23aaa' text-anchor='middle' dominant-baseline='middle'%3EN/A%3C/text%3E%3C/svg%3E"; };
         thumbbar.appendChild(t);
     });
 }
@@ -265,7 +260,7 @@ function renderIndex() {
     if (!indexMenu || !indexToggle) return;
     indexMenu.innerHTML = "";
     if (typeof config !== 'undefined' && config.chapters && config.chapters.length > 0) {
-        config.chapters.forEach(chapter => { /* ... unchanged ... */ const button = document.createElement("button"); button.textContent = chapter.title; button.onclick = () => goToPage(chapter.page - 1); indexMenu.appendChild(button); });
+        config.chapters.forEach(chapter => { const button = document.createElement("button"); button.textContent = chapter.title; button.onclick = () => goToPage(chapter.page - 1); indexMenu.appendChild(button); });
         indexToggle.style.display = 'inline-block';
     } else {
         indexToggle.style.display = 'none';
@@ -291,10 +286,10 @@ if (pageInput) {
     pageInput.addEventListener('keydown', (e) => { if (e.key === 'Enter') { jumpToPage(); e.preventDefault(); } });
 }
 
-function toggleFullScreen() { /* ... unchanged ... */ document.fullscreenElement ? document.exitFullscreen() : document.documentElement.requestFullscreen().catch(err => console.error(`Fullscreen error: ${err.message}`)); }
-function shareBook(){ /* ... unchanged ... */ const shareData = { title: "PHYS101 Flipbook", url: window.location.href }; if (navigator.share) { navigator.share(shareData).catch((err) => console.log("Share failed:", err)); } else if (navigator.clipboard) { const textArea = document.createElement("textarea"); textArea.value = window.location.href; document.body.appendChild(textArea); textArea.focus(); textArea.select(); try { document.execCommand('copy'); alert("Link copied to clipboard!"); } catch (err) { console.error('Fallback copy failed', err); alert('Failed to copy link.'); } document.body.removeChild(textArea); } else { alert("Sharing/Copying not supported."); } }
-function openIndexMenu() { /* ... unchanged ... */ if (!indexToggle || !footer || !indexMenu) return; const rect = indexToggle.getBoundingClientRect(); const footerRect = footer.getBoundingClientRect(); indexMenu.style.left = `${rect.left - footerRect.left}px`; indexMenu.style.bottom = `${footerRect.height}px`; indexMenu.style.top = "auto"; indexMenu.style.display = "flex"; indexMenu.setAttribute("aria-hidden","false"); indexToggle.setAttribute("aria-expanded","true"); }
-function closeIndexMenu(){ /* ... unchanged ... */ if (!indexMenu || !indexToggle) return; indexMenu.style.display="none"; indexMenu.setAttribute("aria-hidden","true"); indexToggle.setAttribute("aria-expanded","false"); }
+function toggleFullScreen() { document.fullscreenElement ? document.exitFullscreen() : document.documentElement.requestFullscreen().catch(err => console.error(`Fullscreen error: ${err.message}`)); }
+function shareBook(){ const shareData = { title: "PHYS101 Flipbook", url: window.location.href }; if (navigator.share) { navigator.share(shareData).catch((err) => console.log("Share failed:", err)); } else if (navigator.clipboard) { const textArea = document.createElement("textarea"); textArea.value = window.location.href; document.body.appendChild(textArea); textArea.focus(); textArea.select(); try { document.execCommand('copy'); alert("Link copied to clipboard!"); } catch (err) { console.error('Fallback copy failed', err); alert('Failed to copy link.'); } document.body.removeChild(textArea); } else { alert("Sharing/Copying not supported."); } }
+function openIndexMenu() { if (!indexToggle || !footer || !indexMenu) return; const rect = indexToggle.getBoundingClientRect(); const footerRect = footer.getBoundingClientRect(); indexMenu.style.left = `${rect.left - footerRect.left}px`; indexMenu.style.bottom = `${footerRect.height}px`; indexMenu.style.top = "auto"; indexMenu.style.display = "flex"; indexMenu.setAttribute("aria-hidden","false"); indexToggle.setAttribute("aria-expanded","true"); }
+function closeIndexMenu(){ if (!indexMenu || !indexToggle) return; indexMenu.style.display="none"; indexMenu.setAttribute("aria-hidden","true"); indexToggle.setAttribute("aria-expanded","false"); }
 if (indexToggle) indexToggle.addEventListener("click", e=>{ e.stopPropagation(); indexMenu.style.display === "flex" ? closeIndexMenu() : openIndexMenu(); });
 if (indexMenu) indexMenu.addEventListener("click", e => e.stopPropagation());
 
@@ -312,39 +307,29 @@ const swipeThreshold = 50;
 let isPinching = false; // Flag to track if pinch is active
 
 function handleTouchStartSwipe(e){
-    // Ignore swipe start if drawing, pinching, or more than one touch
-    if (document.body.classList.contains('highlight-mode') || isPinching || e.touches.length > 1) {
-        touchStartX = null;
-        return;
-    }
+    if (document.body.classList.contains('highlight-mode') || isPinching || e.touches.length > 1) { touchStartX = null; return; }
     touchStartX = e.touches[0].clientX;
 }
 function handleTouchEndSwipe(e){
-    // Ignore swipe end if drawing, pinching, touchStartX wasn't set, or it's a multi-touch end
-     if (document.body.classList.contains('highlight-mode') || isPinching || touchStartX === null || e.touches.length > 0) { // Check e.touches.length > 0
-        touchStartX = null; // Reset just in case
-        return;
-    }
+    if (document.body.classList.contains('highlight-mode') || isPinching || touchStartX === null || e.touches.length > 0) { touchStartX = null; return; }
     touchEndX = e.changedTouches[0].clientX;
     handleSwipeGesture();
 }
 function handleSwipeGesture(){
     if (touchStartX === null) return;
     const diff = touchEndX - touchStartX;
-    if (Math.abs(diff) > swipeThreshold){
-         if(diff > 0){ prevPage(); } else { nextPage(); }
-    }
+    if (Math.abs(diff) > swipeThreshold){ if(diff > 0){ prevPage(); } else { nextPage(); } }
     touchStartX = null;
 }
 
 // ---------- Modals (PhET, Video) ----------
-function openPhetModal(){ /* ... unchanged ... */ const a=typeof config!="undefined"&&config.simulations&&config.simulations.find(e=>e.page===currentPage+1);a&&a.url?(phetFrame&&(phetFrame.src=a.url),phetModal&&(phetModal.style.display="flex")):alert("No simulation found for this page.") }
-function closePhetModal(){ /* ... unchanged ... */ phetModal&&(phetModal.style.display="none"),phetFrame&&(phetFrame.src="about:blank") }
+function openPhetModal(){ const a=typeof config!="undefined"&&config.simulations&&config.simulations.find(e=>e.page===currentPage+1);a&&a.url?(phetFrame&&(phetFrame.src=a.url),phetModal&&(phetModal.style.display="flex")):alert("No simulation found for this page.") }
+function closePhetModal(){ phetModal&&(phetModal.style.display="none"),phetFrame&&(phetFrame.src="about:blank") }
 if(phetBtn)phetBtn.addEventListener("click",openPhetModal);
 if(phetCloseBtn)phetCloseBtn.addEventListener("click",closePhetModal);
 if(phetModal)phetModal.addEventListener("click",e=>{e.target===phetModal&&closePhetModal()});
-function openVideoModal(){ /* ... unchanged ... */ const a=typeof config!="undefined"&&config.videos&&config.videos.find(e=>e.page===currentPage+1);a&&a.url?(videoFrame&&(videoFrame.src=getYoutubeEmbedUrl(a.url)),videoModal&&(videoModal.style.display="flex")):alert("No video found for this page.") }
-function closeVideoModal(){ /* ... unchanged ... */ videoModal&&(videoModal.style.display="none"),videoFrame&&(videoFrame.src="about:blank") }
+function openVideoModal(){ const a=typeof config!="undefined"&&config.videos&&config.videos.find(e=>e.page===currentPage+1);a&&a.url?(videoFrame&&(videoFrame.src=getYoutubeEmbedUrl(a.url)),videoModal&&(videoModal.style.display="flex")):alert("No video found for this page.") }
+function closeVideoModal(){ videoModal&&(videoModal.style.display="none"),videoFrame&&(videoFrame.src="about:blank") }
 if(videoBtn)videoBtn.addEventListener("click",openVideoModal);
 if(videoCloseBtn)videoCloseBtn.addEventListener("click",closeVideoModal);
 if(videoModal)videoModal.addEventListener("click",e=>{e.target===videoModal&&closeVideoModal()});
@@ -353,297 +338,113 @@ if(videoModal)videoModal.addEventListener("click",e=>{e.target===videoModal&&clo
 // --- HAMMER.JS SETUP ---
 function setupHammer(element) {
     if (!element || typeof Hammer === 'undefined') return;
-
-    // Clean up previous instance if exists
-    if (hammerManager) {
-        hammerManager.destroy();
-        hammerManager = null;
-    }
+    if (hammerManager) { hammerManager.destroy(); hammerManager = null; }
 
     hammerManager = new Hammer.Manager(element);
-
     const pinch = new Hammer.Pinch();
-    const pan = new Hammer.Pan({ pointers: 2 }); // Only pan with two fingers when zoomed
-
-    pinch.recognizeWith(pan); // Allow pinch and two-finger pan simultaneously
-
+    const pan = new Hammer.Pan({ pointers: 2 });
+    pinch.recognizeWith(pan);
     hammerManager.add([pinch, pan]);
 
-    let initialOffsetX = currentOffsetX; // Store offset at start of pan
-    let initialOffsetY = currentOffsetY;
+    let initialOffsetX = currentOffsetX, initialOffsetY = currentOffsetY;
 
-    hammerManager.on('pinchstart', (e) => {
-        if (isDrawing) return; // Don't pinch while drawing
-        isPinching = true; // Set pinching flag
-        pinchStartScale = currentScale; // Store scale at start
-        element.style.transition = 'none'; // Disable transitions during gesture
-    });
-
-    hammerManager.on('pinchmove', (e) => {
-        if (isDrawing || !isPinching) return;
-        currentScale = Math.max(1, Math.min(pinchStartScale * e.scale, 5)); // Clamp scale between 1x and 5x
-        applyTransform(element);
-    });
-
-    hammerManager.on('pinchend pinchcancel', (e) => {
-        if (isDrawing) return; // Prevent interference if drawing starts mid-pinch
-        isPinching = false; // Clear pinching flag
-        // No need to save scale, it's updated in pinchmove
-        element.style.transition = ''; // Re-enable transitions if any
-    });
-
-    hammerManager.on('panstart', (e) => {
-         // Only pan if zoomed in AND not drawing AND using two fingers
-        if (currentScale <= 1 || isDrawing || e.pointers.length < 2) {
-             hammerManager.stop(true); // Stop recognizing if conditions not met
-             return;
-        }
-        initialOffsetX = currentOffsetX;
-        initialOffsetY = currentOffsetY;
-        element.style.transition = 'none';
-    });
-
+    hammerManager.on('pinchstart', (e) => { if (isDrawing) return; isPinching = true; pinchStartScale = currentScale; element.style.transition = 'none'; });
+    hammerManager.on('pinchmove', (e) => { if (isDrawing || !isPinching) return; currentScale = Math.max(1, Math.min(pinchStartScale * e.scale, 5)); applyTransform(element); });
+    hammerManager.on('pinchend pinchcancel', (e) => { if (isDrawing) return; isPinching = false; element.style.transition = ''; });
+    hammerManager.on('panstart', (e) => { if (currentScale <= 1 || isDrawing || e.pointers.length < 2) { /* hammerManager.stop(true); */ return; } initialOffsetX = currentOffsetX; initialOffsetY = currentOffsetY; element.style.transition = 'none'; });
     hammerManager.on('panmove', (e) => {
         if (currentScale <= 1 || isDrawing || e.pointers.length < 2) return;
-
-        // Calculate maximum allowed movement based on scaled size
         const rect = element.getBoundingClientRect();
-        const parentRect = flipbook.getBoundingClientRect(); // Use flipbook as bounds
-
-        // How much the element overhangs its container (scaled)
+        const parentRect = flipbook.getBoundingClientRect();
         const maxMoveX = Math.max(0, (rect.width - parentRect.width) / 2);
         const maxMoveY = Math.max(0, (rect.height - parentRect.height) / 2);
-
-
         currentOffsetX = initialOffsetX + e.deltaX;
         currentOffsetY = initialOffsetY + e.deltaY;
-
-        // Clamp offsets to prevent panning beyond image edges
         currentOffsetX = Math.max(-maxMoveX, Math.min(currentOffsetX, maxMoveX));
         currentOffsetY = Math.max(-maxMoveY, Math.min(currentOffsetY, maxMoveY));
-
-
         applyTransform(element);
     });
-
-     hammerManager.on('panend pancancel', (e) => {
-        if (currentScale <= 1 || isDrawing) return;
-        element.style.transition = '';
-        // Final offsets already stored in panmove
-     });
+    hammerManager.on('panend pancancel', (e) => { if (currentScale <= 1 || isDrawing) return; element.style.transition = ''; });
 }
 
-function applyTransform(element) {
-    if (!element) return;
-    element.style.transform = `scale(${currentScale}) translate(${currentOffsetX}px, ${currentOffsetY}px)`;
-}
+function applyTransform(element) { if (!element) return; element.style.transform = `scale(${currentScale}) translate(${currentOffsetX}px, ${currentOffsetY}px)`; }
 
+// --- HIGHLIGHTING LOGIC ---
+function sizeCanvasToImage(img, canvas) { if (!img || !canvas) return; const rect = img.getBoundingClientRect(); canvas.width = img.naturalWidth; canvas.height = img.naturalHeight; canvas.style.width = `${rect.width}px`; canvas.style.height = `${rect.height}px`; canvas.style.top = `0px`; canvas.style.left = `0px`; if (ctx) ctx = canvas.getContext('2d'); }
 
-// --- HIGHLIGHTING LOGIC (Updated getDrawPosition) ---
-function sizeCanvasToImage(img, canvas) {
-    if (!img || !canvas) return;
-    const rect = img.getBoundingClientRect();
-    canvas.width = img.naturalWidth;
-    canvas.height = img.naturalHeight;
-    canvas.style.width = `${rect.width}px`;
-    canvas.style.height = `${rect.height}px`;
-    canvas.style.top = `0px`; // Canvas is now inside page-wrap, position relative to it
-    canvas.style.left = `0px`;
-    if (ctx) ctx = canvas.getContext('2d');
-}
-
-// *** MODIFIED getDrawPosition to account for zoom/pan ***
 function getDrawPosition(e, canvas) {
     if (!canvas) return { x: 0, y: 0 };
-    const rect = canvas.getBoundingClientRect(); // Use canvas rect for screen position
-    const pageWrap = canvas.closest('.page-wrap'); // Get the transformed parent
-
-    // Calculate scale relative to canvas internal vs display size
+    const rect = canvas.getBoundingClientRect();
     const scaleXCanvas = canvas.width / rect.width;
     const scaleYCanvas = canvas.height / rect.height;
-
     const clientX = e.touches ? (e.touches[0].pageX - window.scrollX) : e.clientX;
     const clientY = e.touches ? (e.touches[0].pageY - window.scrollY) : e.clientY;
-
-    // 1. Calculate touch position relative to the *visible* canvas area on screen
     const screenX = clientX - rect.left;
     const screenY = clientY - rect.top;
-
-    // 2. Map the screen position to the *unscaled, untranslated* canvas coordinates
-    //    (this gives coordinates as if the canvas was displayed at 1x scale)
     const canvasXUnscaled = screenX * scaleXCanvas;
     const canvasYUnscaled = screenY * scaleYCanvas;
-
-    // 3. Adjust for the current zoom (scale) and pan (offset) of the pageWrap
-    //    We need the coordinates relative to the *actual* pixels of the internal canvas resolution.
-    //    Inverse transform:
-    //    - Subtract the pan offset (scaled appropriately if needed, but offset is usually screen pixels)
-    //    - Divide by the current zoom scale
-
-    // Note: BoundingClientRect includes transforms, which complicates direct mapping.
-    // A simpler approximation: assume touch coordinates relative to the *container*
-    // and then map based on stored scale/offset.
-
-    // Let's rethink: We need the coordinate on the canvas's *internal* resolution.
-    // Mouse/touch event (clientX, clientY) is relative to viewport.
-    // Canvas rect (rect.left, rect.top) is relative to viewport.
-    // Position relative to top-left of *visible* canvas element = (clientX - rect.left, clientY - rect.top)
-    // Position relative to *internal* canvas resolution, considering ONLY display scaling =
-    //      (clientX - rect.left) * (canvas.width / rect.width),
-    //      (clientY - rect.top) * (canvas.height / rect.height)
-    // Now, account for CSS transform on page-wrap: scale and translate affects rect.left/top/width/height.
-
-    // Try mapping relative to the untransformed container? This gets complex fast.
-
-    // --- Simplified approach for now (might need refinement for perfect accuracy at edges when panned) ---
-    // Calculate the touch point relative to the *untransformed* top-left corner of the pageWrap
-    const wrapRectOriginal = pageWrap.getBoundingClientRect(); // Get current screen position/size
-    // Estimate original position without transform (this is tricky)
-    // For simplicity, let's assume the drawing event coordinates (clientX/Y) can be mapped
-    // relative to the canvas's visible area and then scaled up.
-
-    const finalX = canvasXUnscaled; // This might be sufficient if highlightCanvas itself isn't transformed directly
-    const finalY = canvasYUnscaled;
-
-    // If pageWrap transform makes this inaccurate, more complex math is needed involving
-    // the transform-origin and the offsets/scale.
-
-     return { x: finalX, y: finalY };
-
-    // --- More Accurate (but complex) Calculation ---
-    /*
-    const wrapRect = pageWrap.getBoundingClientRect(); // Transformed rect
-    // Center of the wrap element on screen
-    const wrapCenterX = wrapRect.left + wrapRect.width / 2;
-    const wrapCenterY = wrapRect.top + wrapRect.height / 2;
-
-    // Touch position relative to the center of the transformed wrap
-    const clientRelCenterX = clientX - wrapCenterX;
-    const clientRelCenterY = clientY - wrapCenterY;
-
-    // Touch position on the untransformed plane (relative to center)
-    const untransformedRelX = clientRelCenterX / currentScale;
-    const untransformedRelY = clientRelCenterY / currentScale;
-
-    // Dimensions of the canvas at scale 1
-    const originalCanvasWidth = canvas.width / scaleXCanvas;
-    const originalCanvasHeight = canvas.height / scaleYCanvas;
-
-    // Map back to top-left origin of the untransformed canvas
-    const canvasInternalX = (untransformedRelX + originalCanvasWidth / 2 - currentOffsetX / currentScale???) * scaleXCanvas;
-    const canvasInternalY = (untransformedRelY + originalCanvasHeight / 2 - currentOffsetY/ currentScale???) * scaleYCanvas;
-
-    return { x: canvasInternalX, y: canvasInternalY };
-    */
-
+     // This simplified version works if the canvas itself isn't directly transformed
+     // by the pinch/pan, only its parent (.page-wrap).
+    return { x: canvasXUnscaled, y: canvasYUnscaled };
 }
 
 
 function startDrawing(e) {
     if (!highlightCanvas || !ctx || !document.body.classList.contains('highlight-mode') || e.target !== highlightCanvas) return;
-    if (e.touches && e.touches.length > 1) return; // Ignore drawing start if multiple fingers (likely pinch)
-
-    // Disable Hammer gestures while drawing
-    if (hammerManager) {
-        hammerManager.get('pinch').set({ enable: false });
-        hammerManager.get('pan').set({ enable: false });
-    }
-
+    if (e.touches && e.touches.length > 1) return;
+    if (hammerManager) { hammerManager.get('pinch').set({ enable: false }); hammerManager.get('pan').set({ enable: false }); }
     if (e.touches) e.preventDefault();
     isDrawing = true;
     const pos = getDrawPosition(e, highlightCanvas);
     [lastX, lastY] = [pos.x, pos.y];
-
-    if (drawMode === 'eraser') {
-        ctx.beginPath();
-        ctx.globalCompositeOperation = 'destination-out';
-        ctx.fillStyle = 'rgba(0,0,0,1)';
-        ctx.arc(pos.x, pos.y, currentBrushSize / 2 / currentScale, 0, Math.PI * 2); // Adjust size based on scale? Or keep pixel size? Let's keep pixel size for eraser.
-        ctx.arc(pos.x, pos.y, currentBrushSize / 2, 0, Math.PI * 2);
-        ctx.fill();
-    }
+    if (drawMode === 'eraser') { ctx.beginPath(); ctx.globalCompositeOperation = 'destination-out'; ctx.fillStyle = 'rgba(0,0,0,1)'; ctx.arc(pos.x, pos.y, currentBrushSize / 2, 0, Math.PI * 2); ctx.fill(); }
 }
 
 function draw(e) {
     if (!isDrawing || !ctx) return;
     if (e.touches) e.preventDefault();
-
-    if (drawMode === 'eraser') {
-        const pos = getDrawPosition(e, highlightCanvas);
-        ctx.beginPath();
-        ctx.globalCompositeOperation = 'destination-out';
-        ctx.strokeStyle = 'rgba(0,0,0,1)';
-        ctx.lineWidth = currentBrushSize; // Keep pixel size for eraser
-        ctx.moveTo(lastX, lastY);
-        ctx.lineTo(pos.x, pos.y);
-        ctx.lineCap = 'round';
-        ctx.lineJoin = 'round';
-        ctx.stroke();
-        [lastX, lastY] = [pos.x, pos.y];
-    }
+    if (drawMode === 'eraser') { const pos = getDrawPosition(e, highlightCanvas); ctx.beginPath(); ctx.globalCompositeOperation = 'destination-out'; ctx.strokeStyle = 'rgba(0,0,0,1)'; ctx.lineWidth = currentBrushSize; ctx.moveTo(lastX, lastY); ctx.lineTo(pos.x, pos.y); ctx.lineCap = 'round'; ctx.lineJoin = 'round'; ctx.stroke(); [lastX, lastY] = [pos.x, pos.y]; }
 }
 
 function stopDrawing(e) {
     if (!isDrawing) return;
-    isDrawing = false; // Set drawing flag false first
-
+    isDrawing = false;
     let pos;
-    if (e.changedTouches && e.changedTouches.length > 0) {
-        pos = getDrawPosition({ touches: e.changedTouches }, highlightCanvas);
-    } else {
-        pos = getDrawPosition(e, highlightCanvas);
-    }
-
-    if (drawMode === 'highlight') {
-        ctx.beginPath();
-        ctx.globalCompositeOperation = 'source-over';
-        ctx.strokeStyle = currentHighlightColor;
-        // Adjust line width based on current scale to maintain visual thickness?
-        // Or keep pixel thickness constant? Let's keep pixel thickness for now.
-        ctx.lineWidth = currentBrushSize;
-        ctx.lineCap = 'butt';
-        ctx.moveTo(lastX, lastY);
-        ctx.lineTo(pos.x, lastY); // Horizontal line
-        ctx.stroke();
-    }
+    if (e.changedTouches && e.changedTouches.length > 0) { pos = getDrawPosition({ touches: e.changedTouches }, highlightCanvas); } else { pos = getDrawPosition(e, highlightCanvas); }
+    if (drawMode === 'highlight') { ctx.beginPath(); ctx.globalCompositeOperation = 'source-over'; ctx.strokeStyle = currentHighlightColor; ctx.lineWidth = currentBrushSize; ctx.lineCap = 'butt'; ctx.moveTo(lastX, lastY); ctx.lineTo(pos.x, lastY); ctx.stroke(); }
     saveHighlights(currentPage);
-
-    // Re-enable Hammer gestures after drawing stops
-    if (hammerManager) {
-        hammerManager.get('pinch').set({ enable: true });
-        hammerManager.get('pan').set({ enable: true });
-    }
+    if (hammerManager) { hammerManager.get('pinch').set({ enable: true }); hammerManager.get('pan').set({ enable: true }); }
 }
-
 
 function setupDrawingListeners(canvas) {
     if (!canvas) return;
-    // Remove potentially duplicated listeners from previous renders
-    canvas.removeEventListener('mousedown', startDrawing);
-    canvas.removeEventListener('mousemove', draw);
-    canvas.removeEventListener('mouseup', stopDrawing);
-    canvas.removeEventListener('mouseleave', stopDrawing);
-    canvas.removeEventListener('touchstart', startDrawing);
-    canvas.removeEventListener('touchmove', draw);
-    canvas.removeEventListener('touchend', stopDrawing);
-    canvas.removeEventListener('touchcancel', stopDrawing);
-
-    // Add listeners
-    canvas.addEventListener('mousedown', startDrawing);
-    canvas.addEventListener('mousemove', draw);
-    canvas.addEventListener('mouseup', stopDrawing);
-    canvas.addEventListener('mouseleave', stopDrawing);
-    canvas.addEventListener('touchstart', startDrawing, { passive: false });
-    canvas.addEventListener('touchmove', draw, { passive: false });
-    canvas.addEventListener('touchend', stopDrawing);
-    canvas.addEventListener('touchcancel', stopDrawing);
+    canvas.removeEventListener('mousedown', startDrawing); canvas.removeEventListener('mousemove', draw); canvas.removeEventListener('mouseup', stopDrawing); canvas.removeEventListener('mouseleave', stopDrawing); canvas.removeEventListener('touchstart', startDrawing); canvas.removeEventListener('touchmove', draw); canvas.removeEventListener('touchend', stopDrawing); canvas.removeEventListener('touchcancel', stopDrawing);
+    canvas.addEventListener('mousedown', startDrawing); canvas.addEventListener('mousemove', draw); canvas.addEventListener('mouseup', stopDrawing); canvas.addEventListener('mouseleave', stopDrawing); canvas.addEventListener('touchstart', startDrawing, { passive: false }); canvas.addEventListener('touchmove', draw, { passive: false }); canvas.addEventListener('touchend', stopDrawing); canvas.addEventListener('touchcancel', stopDrawing);
 }
 
+function saveHighlights(pageNumber) { if (!highlightCanvas) return; requestAnimationFrame(() => { try { localStorage.setItem(`flipbook-highlights-page-${pageNumber}`, highlightCanvas.toDataURL()); } catch (e) { console.error("Save highlights error:", e); if (e.name === 'QuotaExceededError') alert('Storage full.'); } }); }
 
-function saveHighlights(pageNumber) { /* ... unchanged ... */ if (!highlightCanvas) return; requestAnimationFrame(() => { try { localStorage.setItem(`flipbook-highlights-page-${pageNumber}`, highlightCanvas.toDataURL()); } catch (e) { console.error("Save highlights error:", e); if (e.name === 'QuotaExceededError') alert('Storage full.'); } }); }
-function loadHighlights(pageNumber) { /* ... unchanged ... */ if (!highlightCanvas || !ctx) return; const dataUrl = localStorage.getItem(`flipbook-highlights-page-${pageNumber}`); ctx.clearRect(0, 0, highlightCanvas.width, highlightCanvas.height); if (dataUrl) { const img = new Image(); img.onload = () => ctx.drawImage(img, 0, 0); img.onerror = () => { console.error("Failed load highlight", pageNumber); localStorage.removeItem(`flipbook-highlights-page-${pageNumber}`); } img.src = dataUrl; } }
-function clearCurrentHighlights() { /* ... unchanged ... */ if (!ctx) return; if (confirm("Erase all highlights on this page?")) { ctx.clearRect(0, 0, highlightCanvas.width, highlightCanvas.height); localStorage.removeItem(`flipbook-highlights-page-${currentPage}`); } }
-function updateCursor() { /* ... unchanged ... */ if (!highlightCanvas) return; const isHighlightModeActive = document.body.classList.contains('highlight-mode'); if (!isHighlightModeActive) { highlightCanvas.style.cursor = 'default'; highlightCanvas.classList.remove('highlight-cursor'); } else { if (drawMode === 'highlight') { highlightCanvas.style.cursor = ''; highlightCanvas.classList.add('highlight-cursor'); } else { highlightCanvas.style.cursor = 'cell'; highlightCanvas.classList.remove('highlight-cursor'); } } }
+// Corrected loadHighlights function
+function loadHighlights(pageNumber) {
+    if (!highlightCanvas || !ctx) return;
+    const dataUrl = localStorage.getItem(`flipbook-highlights-page-${pageNumber}`);
+    ctx.clearRect(0, 0, highlightCanvas.width, highlightCanvas.height); // Clear canvas first
+    if (dataUrl) {
+        const img = new Image(); // Create a new Image object
+        img.onload = () => { // Define what happens when the image data is loaded
+            ctx.drawImage(img, 0, 0); // Draw the saved image onto the canvas
+        };
+        img.onerror = () => { // Define what happens if the image data fails to load
+             console.error("Failed load highlight image for page", pageNumber);
+             localStorage.removeItem(`flipbook-highlights-page-${pageNumber}`); // Remove potentially corrupted data
+        }; // Added missing closing parenthesis
+        img.src = dataUrl; // Set the source of the image object to the saved data URL
+    } // Added missing closing curly brace
+} // Added missing closing curly brace
+
+
+function clearCurrentHighlights() { if (!ctx) return; if (confirm("Erase all highlights on this page?")) { ctx.clearRect(0, 0, highlightCanvas.width, highlightCanvas.height); localStorage.removeItem(`flipbook-highlights-page-${currentPage}`); } }
+function updateCursor() { if (!highlightCanvas) return; const e = document.body.classList.contains("highlight-mode"); e ? "highlight" === drawMode ? (highlightCanvas.style.cursor = "", highlightCanvas.classList.add("highlight-cursor")) : (highlightCanvas.style.cursor = "cell", highlightCanvas.classList.remove("highlight-cursor")) : (highlightCanvas.style.cursor = "default", highlightCanvas.classList.remove("highlight-cursor")) }
 
 // Event Listeners for Highlight Pop-up
 if (toggleDrawModeBtn) {
@@ -652,18 +453,12 @@ if (toggleDrawModeBtn) {
         if (highlightPopup) {
             const isVisible = highlightPopup.classList.contains('visible');
             if (isVisible) {
-                closeHighlightPopup();
-                document.body.classList.remove('highlight-mode');
-                toggleDrawModeBtn.classList.remove('active');
-                updateCursor();
+                closeHighlightPopup(); document.body.classList.remove('highlight-mode'); toggleDrawModeBtn.classList.remove('active'); updateCursor();
             } else {
-                openHighlightPopup();
-                document.body.classList.add('highlight-mode');
-                toggleDrawModeBtn.classList.add('active');
+                openHighlightPopup(); document.body.classList.add('highlight-mode'); toggleDrawModeBtn.classList.add('active');
                 let activeSwatch = colorSwatchesContainer && colorSwatchesContainer.querySelector('.color-swatch.active');
                 if (!activeSwatch && colorSwatchesContainer) activeSwatch = colorSwatchesContainer.querySelector('.color-swatch');
-                setActiveColorSwatch(activeSwatch);
-                setDrawMode('highlight');
+                setActiveColorSwatch(activeSwatch); setDrawMode('highlight');
             }
         }
     });
@@ -672,26 +467,19 @@ if (toggleDrawModeBtn) {
 function openHighlightPopup() { if(highlightPopup) highlightPopup.classList.add('visible'); }
 function closeHighlightPopup() { if(highlightPopup) highlightPopup.classList.remove('visible'); }
 
-if (colorSwatchesContainer) {
-    colorSwatchesContainer.addEventListener('click', (e) => {
-        if (e.target.classList.contains('color-swatch')) {
-            setActiveColorSwatch(e.target);
-            setDrawMode('highlight');
-        }
-    });
-}
-function setActiveColorSwatch(swatchElement) { /* ... unchanged ... */ if (!swatchElement || !colorSwatchesContainer) return; colorSwatchesContainer.querySelectorAll('.color-swatch').forEach(sw => sw.classList.remove('active')); swatchElement.classList.add('active'); currentHighlightColor = swatchElement.getAttribute('data-color'); }
+if (colorSwatchesContainer) { colorSwatchesContainer.addEventListener('click', (e) => { if (e.target.classList.contains('color-swatch')) { setActiveColorSwatch(e.target); setDrawMode('highlight'); } }); }
+function setActiveColorSwatch(swatchElement) { if (!swatchElement || !colorSwatchesContainer) return; colorSwatchesContainer.querySelectorAll('.color-swatch').forEach(sw => sw.classList.remove('active')); swatchElement.classList.add('active'); currentHighlightColor = swatchElement.getAttribute('data-color'); }
 if (eraserToolBtnPopup) eraserToolBtnPopup.addEventListener('click', () => { setDrawMode('eraser'); });
-function setDrawMode(mode) { /* ... unchanged ... */ drawMode = mode; if (mode === 'highlight') { if(eraserToolBtnPopup) eraserToolBtnPopup.classList.remove('active'); const activeSwatch = colorSwatchesContainer && colorSwatchesContainer.querySelector('.color-swatch[data-color="' + currentHighlightColor + '"]'); if (activeSwatch && !activeSwatch.classList.contains('active')) { setActiveColorSwatch(activeSwatch); } else if (colorSwatchesContainer && !colorSwatchesContainer.querySelector('.color-swatch.active')) { const targetSwatch = colorSwatchesContainer.querySelector('.color-swatch[data-color="' + currentHighlightColor + '"]') || colorSwatchesContainer.querySelector('.color-swatch'); if(targetSwatch) setActiveColorSwatch(targetSwatch); } } else { if(eraserToolBtnPopup) eraserToolBtnPopup.classList.add('active'); if (colorSwatchesContainer) colorSwatchesContainer.querySelectorAll('.color-swatch').forEach(sw => sw.classList.remove('active')); } updateCursor(); }
+function setDrawMode(mode) { drawMode = mode; if (mode === 'highlight') { if(eraserToolBtnPopup) eraserToolBtnPopup.classList.remove('active'); const activeSwatch = colorSwatchesContainer && colorSwatchesContainer.querySelector('.color-swatch[data-color="' + currentHighlightColor + '"]'); if (activeSwatch && !activeSwatch.classList.contains('active')) { setActiveColorSwatch(activeSwatch); } else if (colorSwatchesContainer && !colorSwatchesContainer.querySelector('.color-swatch.active')) { const targetSwatch = colorSwatchesContainer.querySelector('.color-swatch[data-color="' + currentHighlightColor + '"]') || colorSwatchesContainer.querySelector('.color-swatch'); if(targetSwatch) setActiveColorSwatch(targetSwatch); } } else { if(eraserToolBtnPopup) eraserToolBtnPopup.classList.add('active'); if (colorSwatchesContainer) colorSwatchesContainer.querySelectorAll('.color-swatch').forEach(sw => sw.classList.remove('active')); } updateCursor(); }
 if (brushSizeSliderPopup) { brushSizeSliderPopup.addEventListener('input', (e) => { currentBrushSize = e.target.value; }); currentBrushSize = brushSizeSliderPopup.value; }
 if (clearHighlightsBtnPopup) clearHighlightsBtnPopup.addEventListener('click', () => { clearCurrentHighlights(); closeHighlightPopup(); });
 
-window.addEventListener('resize', () => { /* ... unchanged ... */ const img = document.querySelector('.page-image'); if (img && highlightCanvas) { setTimeout(() => { sizeCanvasToImage(img, highlightCanvas); loadHighlights(currentPage); }, 150); } closeHighlightPopup(); if (toggleDrawModeBtn && toggleDrawModeBtn.classList.contains('active')) { toggleDrawModeBtn.classList.remove('active'); document.body.classList.remove('highlight-mode'); updateCursor(); } });
+window.addEventListener('resize', () => { const img = document.querySelector('.page-image'); if (img && highlightCanvas) { setTimeout(() => { sizeCanvasToImage(img, highlightCanvas); loadHighlights(currentPage); }, 150); } closeHighlightPopup(); if (toggleDrawModeBtn && toggleDrawModeBtn.classList.contains('active')) { toggleDrawModeBtn.classList.remove('active'); document.body.classList.remove('highlight-mode'); updateCursor(); } });
 
 // --- SEARCH LOGIC ---
-function toggleSearchBox() { /* ... unchanged ... */ if(!searchContainer)return;"none"!==searchContainer.style.display?closeSearchBox():(searchContainer.style.display="flex",searchInput&&searchInput.focus(),searchResults&&(searchResults.innerHTML="")) }
-function closeSearchBox() { /* ... unchanged ... */ searchContainer&&(searchContainer.style.display="none"),searchInput&&(searchInput.value=""),searchResults&&(searchResults.innerHTML="") }
-function performSearch() { /* ... unchanged ... */ if(!searchInput||!searchResults||0===Object.keys(bookTextData).length)return;const e=searchInput.value.trim().toLowerCase();if(searchResults.innerHTML="",e.length<2){const t=document.createElement("div");return t.classList.add("no-results"),t.textContent="Please enter at least 2 characters.",void searchResults.appendChild(t)}const n=[];for(const o in bookTextData){const a=bookTextData[o];a&&a.toLowerCase().includes(e)&&n.push(parseInt(o,10))}if(n.length>0){n.sort((e,t)=>e-t),n.forEach(e=>{const t=document.createElement("div");t.textContent=`Page ${e+1}`,t.onclick=()=>{goToPage(e),closeSearchBox()},searchResults.appendChild(t)})}else{const l=document.createElement("div");l.classList.add("no-results"),l.textContent="No results found.",searchResults.appendChild(l)} }
+function toggleSearchBox() { if(!searchContainer)return;"none"!==searchContainer.style.display?closeSearchBox():(searchContainer.style.display="flex",searchInput&&searchInput.focus(),searchResults&&(searchResults.innerHTML="")) }
+function closeSearchBox() { searchContainer&&(searchContainer.style.display="none"),searchInput&&(searchInput.value=""),searchResults&&(searchResults.innerHTML="") }
+function performSearch() { if(!searchInput||!searchResults||0===Object.keys(bookTextData).length)return;const e=searchInput.value.trim().toLowerCase();if(searchResults.innerHTML="",e.length<2){const t=document.createElement("div");return t.classList.add("no-results"),t.textContent="Please enter at least 2 characters.",void searchResults.appendChild(t)}const n=[];for(const o in bookTextData){const a=bookTextData[o];a&&a.toLowerCase().includes(e)&&n.push(parseInt(o,10))}if(n.length>0){n.sort((e,t)=>e-t),n.forEach(e=>{const t=document.createElement("div");t.textContent=`Page ${e+1}`,t.onclick=()=>{goToPage(e),closeSearchBox()},searchResults.appendChild(t)})}else{const l=document.createElement("div");l.classList.add("no-results"),l.textContent="No results found.",searchResults.appendChild(l)} }
 if (searchBtn) searchBtn.addEventListener('click', toggleSearchBox);
 if (searchCloseBtn) searchCloseBtn.addEventListener('click', closeSearchBox);
 if (searchInput) { searchInput.addEventListener('keydown', (e) => { if (e.key === 'Enter') { performSearch(); e.preventDefault(); } if (e.key === 'Escape') { closeSearchBox(); e.preventDefault(); } }); }
@@ -720,13 +508,14 @@ document.addEventListener("DOMContentLoaded", () => {
         // Attach SWIPE listeners
         flipbookElement.addEventListener("touchstart", handleTouchStartSwipe, { passive: true });
         flipbookElement.addEventListener("touchend", handleTouchEndSwipe, { passive: true });
-    } else { console.error("Flipbook element not found"); }
-
+    }
     const pageCounterEl = document.getElementById('pageCounter');
     const pageInputEl = document.getElementById('pageInput');
     if (pageCounterEl) pageCounterEl.textContent = `Page ${currentPage + 1} / ${totalPages}`;
-    if (pageInputEl) { pageInputEl.max = totalPages; pageInputEl.value = currentPage + 1; }
-
+    if (pageInputEl) {
+        pageInputEl.max = totalPages;
+        pageInputEl.value = currentPage + 1;
+    }
     renderThumbs();
     renderIndex();
     renderPage(); // Calls setupDrawingListeners, loadHighlights, and setupHammer internally
