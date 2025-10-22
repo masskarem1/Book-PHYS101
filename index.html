@@ -6,11 +6,9 @@
     <title>PHYS101 Flipbook</title>
     <link rel="icon" href="data:;base64,iVBORw0KGgo=">
     <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js" defer></script>
-    <!-- Hammer.js for Pinch/Pan -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/hammer.js/2.0.8/hammer.min.js"></script>
+    <!-- Hammer.js for Pinch/Pan --><script src="https://cdnjs.cloudflare.com/ajax/libs/hammer.js/2.0.8/hammer.min.js"></script>
 
-    <!-- MathJax -->
-    <script>
+    <!-- MathJax --><script>
         window.MathJax = {
             tex: {
                 inlineMath: [['$', '$'], ['\\(', '\\)']],
@@ -21,8 +19,7 @@
     </script>
     <script async id="MathJax-script" src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-svg.js"></script>
 
-    <!-- Link to external CSS -->
-    <link rel="stylesheet" href="style.css">
+    <!-- Link to external CSS --><link rel="stylesheet" href="style.css">
 
 </head>
 <body>
@@ -44,14 +41,15 @@
         <button onclick="jumpToPage()">Go</button>
         <button onclick="nextPage()">Next ➡</button>
         <button onclick="lastPage()">⏭ Last</button>
-        <button id="toggle-draw-mode-btn">✏️ Draw</button>
-        <button id="searchBtn" disabled>🔍 Search</button> <!-- Search button -->
-        <!-- Removed Translate Button from here -->
-        <button id="phetBtn" style="display:none;">🔬 Launch Simulation</button>
+
+        <!-- Highlight Buttons Container --><div class="highlight-buttons-group">
+            <button id="toggle-draw-mode-btn">✏️ Draw</button>
+            <button id="highlight-settings-btn">⌄</button>
+        </div>
+        <!-- End Highlight Buttons Container --><button id="searchBtn" disabled>🔍 Search</button> <!-- Search button --><button id="phetBtn" style="display:none;">🔬 Launch Simulation</button>
         <button id="videoBtn" style="display:none;">▶️ Watch Video</button>
     </div>
-    <!-- Highlight Pop-up (Initially Hidden) -->
-    <div id="highlight-popup" class="highlight-popup">
+    <!-- Highlight Pop-up (Initially Hidden) --><div id="highlight-popup" class="highlight-popup">
         <div class="popup-section">
             <label>Color:</label>
             <div class="color-swatches">
@@ -73,8 +71,7 @@
              <button id="clear-highlights-btn-popup">Clear Page</button>
         </div>
     </div>
-     <!-- Search Input/Results Area (Initially Hidden) -->
-     <div id="searchContainer" style="display: none;">
+     <!-- Search Input/Results Area (Initially Hidden) --><div id="searchContainer" style="display: none;">
         <input type="text" id="searchInput" placeholder="Search book text...">
         <button id="searchCloseBtn">×</button>
         <div id="searchResults"></div>
@@ -83,10 +80,8 @@
 
 <div id="thumbbar" class="thumbbar"></div>
 
-<!-- Flipbook Content Area -->
-<div id="flipbook">
-    <!-- Page content (image and canvas) will be loaded here by JavaScript -->
-</div>
+<!-- Flipbook Content Area --><div id="flipbook">
+    <!-- Page content (image and canvas) will be loaded here by JavaScript --></div>
 
 <div id="footer">
     <div class="footer-left"> <button id="indexToggle" aria-expanded="false">☰ Index</button> </div>
@@ -106,27 +101,20 @@
              <button onclick="getAiHelp('quiz')">Quiz Me on Chapter</button>
              <button onclick="getAiHelp('relate')">Relate to Life Sciences</button>
              <button onclick="getAiHelp('analyze_page')">Analyze This Page</button>
-             <!-- *** ADDED Translate Button Here *** -->
-             <button onclick="translateCurrentPage()">🌐 Translate This Page</button>
-             <!-- *** END ADDED Button *** -->
-        </div>
+             <!-- *** ADDED Translate Button Here *** --><button onclick="translateCurrentPage()">🌐 Translate This Page</button>
+             <!-- *** END ADDED Button *** --></div>
         <div id="aiResponse" class="ai-response"></div>
         <div id="aiLoading" style="display: none;">Thinking...</div>
     </div>
 </div>
 
-<!-- PhET Simulation Modal -->
-<div id="phetModal"> <div class="phet-content"> <button id="phetCloseBtn">×</button> <iframe id="phetFrame" src="about:blank" allowfullscreen></iframe> </div> </div>
+<!-- PhET Simulation Modal --><div id="phetModal"> <div class="phet-content"> <button id="phetCloseBtn">×</button> <iframe id="phetFrame" src="about:blank" allowfullscreen></iframe> </div> </div>
 
-<!-- Video Modal -->
-<div id="videoModal"> <div class="video-content"> <button id="videoCloseBtn">×</button> <iframe id="videoFrame" src="about:blank" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen></iframe> </div> </div>
+<!-- Video Modal --><div id="videoModal"> <div class="video-content"> <button id="videoCloseBtn">×</button> <iframe id="videoFrame" src="about:blank" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen></iframe> </div> </div>
 
-<!-- Load config file first -->
-<script src="config.js"></script>
-<!-- Hammer.js Library -->
-<script src="https://cdnjs.cloudflare.com/ajax/libs/hammer.js/2.0.8/hammer.min.js"></script>
-<!-- Load main application script -->
-<script src="app.js" defer></script>
+<!-- Load config file first --><script src="config.js"></script>
+<!-- Hammer.js Library --><script src="https://cdnjs.cloudflare.com/ajax/libs/hammer.js/2.0.8/hammer.min.js"></script>
+<!-- Load main application script --><script src="app.js" defer></script>
 
 </body>
 </html>
