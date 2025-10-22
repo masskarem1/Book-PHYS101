@@ -6,7 +6,6 @@
     <title>PHYS101 Flipbook</title>
     <link rel="icon" href="data:;base64,iVBORw0KGgo=">
     <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js" defer></script>
-    <link rel="stylesheet" href="style.css">
 
     <!-- MathJax -->
     <script>
@@ -19,6 +18,10 @@
         };
     </script>
     <script async id="MathJax-script" src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-svg.js"></script>
+
+    <!-- Link to external CSS -->
+    <link rel="stylesheet" href="style.css">
+
 </head>
 <body>
 
@@ -39,37 +42,36 @@
         <button onclick="jumpToPage()">Go</button>
         <button onclick="nextPage()">Next ➡</button>
         <button onclick="lastPage()">⏭ Last</button>
-        <button id="toggle-draw-mode-btn">✏️ Draw</button>
+        <button id="toggle-draw-mode-btn">✏️ Draw</button> <!-- Button to toggle drawing toolbar -->
         <button id="translateBtn">🌐 Translate Page</button>
-        <!-- *** ADD THIS LINE BACK *** -->
-        <button id="hideTranslateBtn" style="display:none;background:#b30000;">❌ Hide Translation</button>
-        <!-- *** END FIX *** -->
+        <button id="hideTranslateBtn" style="display:none;background:#b30000;">❌ Hide Translation</button> <!-- Correctly placed hide button -->
         <button id="phetBtn" style="display:none;">🔬 Launch Simulation</button>
         <button id="videoBtn" style="display:none;">▶️ Watch Video</button>
     </div>
+    <!-- Highlight Toolbar (Initially Hidden) -->
     <div id="highlight-toolbar" class="highlight-toolbar">
-        <button id="highlight-tool-btn" class="tool-btn">Highlight</button>
+        <button id="highlight-tool-btn" class="tool-btn active">Highlight</button> <!-- Default tool -->
         <button id="eraser-tool-btn" class="tool-btn">Eraser</button>
         <label for="highlight-color">Color:</label>
-        <!-- *** THIS IS THE FIX *** -->
-        <!-- Added Light Blue and Red options -->
         <select id="highlight-color">
-            <option value="rgba(255, 255, 0, 0.2)" selected>Yellow</option>
-            <option value="rgba(0, 255, 0, 0.2)">Green</option>
-            <option value="rgba(173, 216, 230, 0.2)">Blue</option> <!-- NEW -->
-            <option value="rgba(255, 105, 180, 0.2)">Pink</option>
-            <option value="rgba(255, 0, 0, 0.2)">Red</option> <!-- NEW -->
+            <option value="rgba(255, 255, 0, 0.2)">Yellow</option> <!-- 20% Opacity -->
+            <option value="rgba(144, 238, 144, 0.2)">Green</option> <!-- 20% Opacity -->
+            <option value="rgba(0, 191, 255, 0.2)">Blue</option>   <!-- 20% Opacity -->
+            <option value="rgba(255, 192, 203, 0.2)">Pink</option>   <!-- 20% Opacity -->
+            <option value="rgba(255, 99, 71, 0.2)">Red</option>    <!-- 20% Opacity -->
         </select>
-        <!-- *** END FIX *** -->
         <label for="brush-size">Size:</label>
         <input type="range" id="brush-size" min="5" max="50" value="20">
         <button id="clear-highlights-btn">Clear Page</button>
     </div>
 </div>
 
-
 <div id="thumbbar" class="thumbbar"></div>
-<div id="flipbook"></div>
+
+<!-- Flipbook Content Area -->
+<div id="flipbook">
+    <!-- Page content (image and canvas) will be loaded here by JavaScript -->
+</div>
 
 <div id="footer">
     <div class="footer-left"> <button id="indexToggle" aria-expanded="false">☰ Index</button> </div>
@@ -90,7 +92,10 @@
     </div>
 </div>
 
+<!-- PhET Simulation Modal -->
 <div id="phetModal"> <div class="phet-content"> <button id="phetCloseBtn">×</button> <iframe id="phetFrame" src="about:blank" allowfullscreen></iframe> </div> </div>
+
+<!-- Video Modal -->
 <div id="videoModal"> <div class="video-content"> <button id="videoCloseBtn">×</button> <iframe id="videoFrame" src="about:blank" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen></iframe> </div> </div>
 
 <!-- Load config file first -->
@@ -98,9 +103,7 @@
 
 <!-- Load main application script -->
 <script src="app.js" defer></script>
+
 </body>
 </html>
-
-
-
 
