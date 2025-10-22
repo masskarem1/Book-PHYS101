@@ -132,7 +132,7 @@ function renderPage() {
     const img = document.createElement("img");
     const canvas = document.createElement("canvas");
     canvas.id = "highlight-canvas";
-    highlightCanvas = canvas;
+    highlightCanvas = canvas; // Keep global reference
 
     img.className = "page-image";
     img.src = images[currentPage];
@@ -325,6 +325,7 @@ const swipeThreshold = 50;
 function handleTouchStart(e){ touchStartX = e.touches[0].clientX; }
 function handleTouchEnd(e){ touchEndX = e.changedTouches[0].clientX; handleSwipeGesture(); }
 function handleSwipeGesture(){
+    // Only allow swiping if highlight mode is OFF
     if (document.body.classList.contains('highlight-mode')) return;
     const diff = touchEndX - touchStartX;
     if (Math.abs(diff) > swipeThreshold){
@@ -393,11 +394,11 @@ function startDrawing(e) {
     const pos = getDrawPosition(e, highlightCanvas);
     [lastX, lastY] = [pos.x, pos.y];
 
-    // For the eraser, draw a starting dot to make it feel responsive.
+    // For the eraser, draw a starting dot for immediate feedback.
     if (drawMode === 'eraser') {
         ctx.beginPath();
-        ctx.globalCompositeOperation = 'destination-out';
-        ctx.fillStyle = 'rgba(0,0,0,1)';
+        ctx.globalCompositeOperation = 'destination-out'; // Erase mode
+        ctx.fillStyle = 'rgba(0,0,0,1)'; // Must be opaque for destination-out
         ctx.arc(pos.x, pos.y, brushSizeSlider.value / 2, 0, Math.PI * 2);
         ctx.fill();
     }
@@ -407,12 +408,12 @@ function draw(e) {
     if (!isDrawing || !ctx) return;
     if (e.touches) e.preventDefault();
 
-    // Only do freeform drawing for the eraser
+    // Only draw freeform lines when erasing
     if (drawMode === 'eraser') {
         const pos = getDrawPosition(e, highlightCanvas);
         ctx.beginPath();
         ctx.globalCompositeOperation = 'destination-out';
-        ctx.strokeStyle = 'rgba(0,0,0,1)';
+        ctx.strokeStyle = 'rgba(0,0,0,1)'; // Opaque stroke for erasing
         ctx.lineWidth = brushSizeSlider.value;
         ctx.moveTo(lastX, lastY);
         ctx.lineTo(pos.x, pos.y);
@@ -421,35 +422,36 @@ function draw(e) {
         ctx.stroke();
         [lastX, lastY] = [pos.x, pos.y];
     }
-    // For 'highlight' mode, we do nothing during the drag.
+    // For 'highlight' mode, do nothing during mouse/touch move
 }
 
 function stopDrawing(e) {
     if (!isDrawing) return;
+    isDrawing = false; // Set drawing to false immediately
 
-    // For highlight mode, draw the final straight line on mouse/touch up.
+    // Only draw the final line if in highlight mode
     if (drawMode === 'highlight') {
         const pos = getDrawPosition(e, highlightCanvas);
 
-        ctx.globalCompositeOperation = 'source-over';
-        ctx.fillStyle = colorPicker.value; // The RGBA value from the HTML
+        ctx.beginPath(); // Start a new path for the highlight line
+        ctx.globalCompositeOperation = 'source-over'; // Normal drawing
+        ctx.strokeStyle = colorPicker.value; // Get RGBA color from dropdown
+        ctx.lineWidth = brushSizeSlider.value;
+        ctx.lineCap = 'butt'; // Use flat ends for highlighter effect
 
-        const rectX = Math.min(lastX, pos.x);
-        const rectY = lastY - (brushSizeSlider.value / 2); // Center the line on start Y
-        const rectWidth = Math.abs(pos.x - lastX);
-        const rectHeight = brushSizeSlider.value;
-
-        ctx.fillRect(rectX, rectY, rectWidth, rectHeight);
+        // Draw a straight horizontal line from start Y to end X, end Y
+        ctx.moveTo(lastX, lastY);
+        ctx.lineTo(pos.x, lastY); // Only change X, keep Y the same as start
+        ctx.stroke();
     }
-    // If it was the eraser, the freeform drawing already happened in the 'draw' function.
 
-    isDrawing = false;
-    saveHighlights(currentPage);
+    saveHighlights(currentPage); // Save after drawing is complete
 }
 
 
 function setupDrawingListeners(canvas) {
     if (!canvas) return;
+    // Ensure old listeners are removed before adding new ones
     canvas.removeEventListener('mousedown', startDrawing);
     canvas.removeEventListener('mousemove', draw);
     canvas.removeEventListener('mouseup', stopDrawing);
@@ -458,10 +460,11 @@ function setupDrawingListeners(canvas) {
     canvas.removeEventListener('touchmove', draw);
     canvas.removeEventListener('touchend', stopDrawing);
 
+    // Add new listeners
     canvas.addEventListener('mousedown', startDrawing);
     canvas.addEventListener('mousemove', draw);
     canvas.addEventListener('mouseup', stopDrawing);
-    canvas.addEventListener('mouseleave', stopDrawing);
+    canvas.addEventListener('mouseleave', stopDrawing); // Important to stop drawing if mouse leaves canvas
     canvas.addEventListener('touchstart', startDrawing, { passive: false });
     canvas.addEventListener('touchmove', draw, { passive: false });
     canvas.addEventListener('touchend', stopDrawing);
@@ -469,12 +472,15 @@ function setupDrawingListeners(canvas) {
 
 function saveHighlights(pageNumber) {
     if (!highlightCanvas) return;
-    requestAnimationFrame(() => {
+    requestAnimationFrame(() => { // Ensure drawing is complete before saving
         try {
-            localStorage.setItem(`flipbook-highlights-page-${pageNumber}`, highlightCanvas.toDataURL());
+            const dataUrl = highlightCanvas.toDataURL();
+            localStorage.setItem(`flipbook-highlights-page-${pageNumber}`, dataUrl);
         } catch (e) {
             console.error("Failed to save highlights:", e);
-            if (e.name === 'QuotaExceededError') alert('Could not save highlights. Browser storage is full.');
+            if (e.name === 'QuotaExceededError') {
+                alert('Could not save highlights. Browser storage might be full.');
+            }
         }
     });
 }
@@ -482,10 +488,16 @@ function saveHighlights(pageNumber) {
 function loadHighlights(pageNumber) {
     if (!highlightCanvas || !ctx) return;
     const dataUrl = localStorage.getItem(`flipbook-highlights-page-${pageNumber}`);
-    ctx.clearRect(0, 0, highlightCanvas.width, highlightCanvas.height);
+    ctx.clearRect(0, 0, highlightCanvas.width, highlightCanvas.height); // Clear canvas first
     if (dataUrl) {
         const img = new Image();
-        img.onload = () => ctx.drawImage(img, 0, 0);
+        img.onload = () => {
+            ctx.drawImage(img, 0, 0); // Draw saved highlights
+        };
+        img.onerror = () => {
+             console.error("Failed to load highlight image from localStorage for page", pageNumber);
+             localStorage.removeItem(`flipbook-highlights-page-${pageNumber}`); // Remove bad data
+        }
         img.src = dataUrl;
     }
 }
@@ -505,10 +517,14 @@ if (toggleDrawModeBtn) {
         if (highlightToolbar) highlightToolbar.classList.toggle('visible');
         const isActive = document.body.classList.contains('highlight-mode');
         toggleDrawModeBtn.classList.toggle('active', isActive);
-        if (isActive) {
-            if(highlightToolBtn) highlightToolBtn.click(); // Default to highlight tool
-        } else {
-            if(highlightCanvas) highlightCanvas.style.cursor = 'default';
+
+        if (highlightCanvas) { // Update cursor when toggling draw mode
+             if (isActive) {
+                 if(highlightToolBtn) highlightToolBtn.click(); // Default to highlight tool when turning on
+             } else {
+                 highlightCanvas.style.cursor = 'default'; // Reset cursor
+                 highlightCanvas.classList.remove('highlight-cursor');
+             }
         }
     });
 }
@@ -517,7 +533,10 @@ if (highlightToolBtn) {
         drawMode = 'highlight';
         highlightToolBtn.classList.add('active');
         if(eraserToolBtn) eraserToolBtn.classList.remove('active');
-        if(highlightCanvas) highlightCanvas.style.cursor = 'crosshair';
+        if(highlightCanvas) {
+             highlightCanvas.style.cursor = ''; // Reset to CSS default (our custom cursor)
+             highlightCanvas.classList.add('highlight-cursor');
+        }
     });
 }
 if (eraserToolBtn) {
@@ -525,16 +544,29 @@ if (eraserToolBtn) {
         drawMode = 'eraser';
         eraserToolBtn.classList.add('active');
         if(highlightToolBtn) highlightToolBtn.classList.remove('active');
-        if(highlightCanvas) highlightCanvas.style.cursor = 'cell';
+        if(highlightCanvas) {
+             highlightCanvas.style.cursor = 'cell'; // Use 'cell' for eraser
+             highlightCanvas.classList.remove('highlight-cursor');
+        }
     });
 }
-if (colorPicker) colorPicker.addEventListener('change', () => { if(highlightToolBtn) highlightToolBtn.click(); });
+// When color is picked, ensure highlight tool is active
+if (colorPicker) {
+    colorPicker.addEventListener('change', () => {
+        if (highlightToolBtn) highlightToolBtn.click();
+    });
+}
 if (clearHighlightsBtn) clearHighlightsBtn.addEventListener('click', clearCurrentHighlights);
 
+// Ensure canvas resizes correctly and reloads highlights on window resize
 window.addEventListener('resize', () => {
     const img = document.querySelector('.page-image');
     if (img && highlightCanvas) {
-        setTimeout(() => { sizeCanvasToImage(img, highlightCanvas); loadHighlights(currentPage); }, 100);
+        // Use a small delay to allow layout to settle before resizing/reloading
+        setTimeout(() => {
+            sizeCanvasToImage(img, highlightCanvas);
+            loadHighlights(currentPage); // Reload highlights after resize
+        }, 150); // Adjust delay if needed
     }
 });
 
