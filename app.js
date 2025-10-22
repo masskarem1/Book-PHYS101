@@ -165,7 +165,7 @@ function renderPage() {
         setupDrawingListeners(canvas);
         loadHighlights(currentPage);
          // Apply initial cursor state based on draw mode
-         updateCursor();
+         updateCursor(); // Call updateCursor after setup
     };
 
     wrap.appendChild(img);
@@ -291,14 +291,23 @@ function shareBook(){
     if (navigator.share) {
          navigator.share(shareData).catch((err) => console.log("Share failed:", err));
     } else if (navigator.clipboard) {
-         navigator.clipboard.writeText(window.location.href).then(() => {
+         // Use execCommand for broader compatibility, especially in iFrames
+         const textArea = document.createElement("textarea");
+         textArea.value = window.location.href;
+         document.body.appendChild(textArea);
+         textArea.focus();
+         textArea.select();
+         try {
+             document.execCommand('copy');
              alert("Link copied to clipboard!");
-         }).catch(err => {
-             console.error("Failed to copy link:", err);
-             alert("Failed to copy link.");
-         });
+         } catch (err) {
+             console.error('Fallback: Oops, unable to copy', err);
+             alert('Failed to copy link.');
+         }
+         document.body.removeChild(textArea);
+
     } else {
-        alert("Sharing not supported on this browser.");
+        alert("Sharing/Copying not supported on this browser.");
     }
 }
 function openIndexMenu() {
@@ -466,6 +475,7 @@ function stopDrawing(e) {
 
 function setupDrawingListeners(canvas) {
     if (!canvas) return;
+    // Ensure old listeners are removed before adding new ones
     canvas.removeEventListener('mousedown', startDrawing);
     canvas.removeEventListener('mousemove', draw);
     canvas.removeEventListener('mouseup', stopDrawing);
@@ -474,10 +484,11 @@ function setupDrawingListeners(canvas) {
     canvas.removeEventListener('touchmove', draw);
     canvas.removeEventListener('touchend', stopDrawing);
 
+    // Add new listeners
     canvas.addEventListener('mousedown', startDrawing);
     canvas.addEventListener('mousemove', draw);
     canvas.addEventListener('mouseup', stopDrawing);
-    canvas.addEventListener('mouseleave', stopDrawing);
+    canvas.addEventListener('mouseleave', stopDrawing); // Important to stop drawing if mouse leaves canvas
     canvas.addEventListener('touchstart', startDrawing, { passive: false });
     canvas.addEventListener('touchmove', draw, { passive: false });
     canvas.addEventListener('touchend', stopDrawing);
@@ -485,12 +496,15 @@ function setupDrawingListeners(canvas) {
 
 function saveHighlights(pageNumber) {
     if (!highlightCanvas) return;
-    requestAnimationFrame(() => {
+    requestAnimationFrame(() => { // Ensure drawing is complete before saving
         try {
-            localStorage.setItem(`flipbook-highlights-page-${pageNumber}`, highlightCanvas.toDataURL());
+            const dataUrl = highlightCanvas.toDataURL();
+            localStorage.setItem(`flipbook-highlights-page-${pageNumber}`, dataUrl);
         } catch (e) {
             console.error("Failed to save highlights:", e);
-            if (e.name === 'QuotaExceededError') alert('Could not save highlights. Browser storage is full.');
+            if (e.name === 'QuotaExceededError') {
+                alert('Could not save highlights. Browser storage might be full.');
+            }
         }
     });
 }
@@ -498,13 +512,15 @@ function saveHighlights(pageNumber) {
 function loadHighlights(pageNumber) {
     if (!highlightCanvas || !ctx) return;
     const dataUrl = localStorage.getItem(`flipbook-highlights-page-${pageNumber}`);
-    ctx.clearRect(0, 0, highlightCanvas.width, highlightCanvas.height);
+    ctx.clearRect(0, 0, highlightCanvas.width, highlightCanvas.height); // Clear canvas first
     if (dataUrl) {
         const img = new Image();
-        img.onload = () => ctx.drawImage(img, 0, 0);
+        img.onload = () => {
+            ctx.drawImage(img, 0, 0); // Draw saved highlights
+        };
         img.onerror = () => {
              console.error("Failed to load highlight image for page", pageNumber);
-             localStorage.removeItem(`flipbook-highlights-page-${pageNumber}`);
+             localStorage.removeItem(`flipbook-highlights-page-${pageNumber}`); // Remove bad data
         }
         img.src = dataUrl;
     }
@@ -524,15 +540,15 @@ function updateCursor() {
     const isHighlightModeActive = document.body.classList.contains('highlight-mode');
 
     if (!isHighlightModeActive) {
-        highlightCanvas.style.cursor = 'default';
-        highlightCanvas.classList.remove('highlight-cursor');
+        highlightCanvas.style.cursor = 'default'; // Explicitly set default cursor
+        highlightCanvas.classList.remove('highlight-cursor'); // Remove class if present
     } else {
         if (drawMode === 'highlight') {
-            highlightCanvas.style.cursor = ''; // Use CSS default (which includes our custom cursor class)
-            highlightCanvas.classList.add('highlight-cursor');
+            highlightCanvas.style.cursor = ''; // Clear inline style to let CSS class take over
+            highlightCanvas.classList.add('highlight-cursor'); // Add class for custom cursor
         } else { // Eraser mode
             highlightCanvas.style.cursor = 'cell'; // Explicitly set eraser cursor
-            highlightCanvas.classList.remove('highlight-cursor');
+            highlightCanvas.classList.remove('highlight-cursor'); // Remove custom cursor class
         }
     }
 }
