@@ -149,6 +149,8 @@ function renderPage() {
         ctx = canvas.getContext('2d');
         setupDrawingListeners(canvas);
         loadHighlights(currentPage);
+         // Apply initial cursor state based on draw mode
+         updateCursor();
     };
 
     wrap.appendChild(img);
@@ -374,7 +376,7 @@ function sizeCanvasToImage(img, canvas) {
     canvas.style.height = `${rect.height}px`;
     canvas.style.top = `${img.offsetTop}px`;
     canvas.style.left = `${img.offsetLeft}px`;
-    if (ctx) ctx = canvas.getContext('2d');
+    if (ctx) ctx = canvas.getContext('2d'); // Update context if canvas resizes
 }
 
 function getDrawPosition(e, canvas) {
@@ -510,6 +512,26 @@ function clearCurrentHighlights() {
     }
 }
 
+// Function to update cursor based on current state
+function updateCursor() {
+    if (!highlightCanvas) return;
+    const isHighlightMode = document.body.classList.contains('highlight-mode');
+
+    if (!isHighlightMode) {
+        highlightCanvas.style.cursor = 'default';
+        highlightCanvas.classList.remove('highlight-cursor');
+    } else {
+        if (drawMode === 'highlight') {
+            highlightCanvas.style.cursor = ''; // Use CSS default
+            highlightCanvas.classList.add('highlight-cursor');
+        } else { // Eraser mode
+            highlightCanvas.style.cursor = 'cell';
+            highlightCanvas.classList.remove('highlight-cursor');
+        }
+    }
+}
+
+
 // Event Listeners for Highlight Toolbar
 if (toggleDrawModeBtn) {
     toggleDrawModeBtn.addEventListener('click', () => {
@@ -518,14 +540,10 @@ if (toggleDrawModeBtn) {
         const isActive = document.body.classList.contains('highlight-mode');
         toggleDrawModeBtn.classList.toggle('active', isActive);
 
-        if (highlightCanvas) { // Update cursor when toggling draw mode
-             if (isActive) {
-                 if(highlightToolBtn) highlightToolBtn.click(); // Default to highlight tool when turning on
-             } else {
-                 highlightCanvas.style.cursor = 'default'; // Reset cursor
-                 highlightCanvas.classList.remove('highlight-cursor');
-             }
+        if (isActive) {
+            if(highlightToolBtn) highlightToolBtn.click(); // Default to highlight tool when turning on
         }
+        updateCursor(); // Update cursor when toggling draw mode
     });
 }
 if (highlightToolBtn) {
@@ -533,10 +551,7 @@ if (highlightToolBtn) {
         drawMode = 'highlight';
         highlightToolBtn.classList.add('active');
         if(eraserToolBtn) eraserToolBtn.classList.remove('active');
-        if(highlightCanvas) {
-             highlightCanvas.style.cursor = ''; // Reset to CSS default (our custom cursor)
-             highlightCanvas.classList.add('highlight-cursor');
-        }
+        updateCursor(); // Update cursor
     });
 }
 if (eraserToolBtn) {
@@ -544,16 +559,13 @@ if (eraserToolBtn) {
         drawMode = 'eraser';
         eraserToolBtn.classList.add('active');
         if(highlightToolBtn) highlightToolBtn.classList.remove('active');
-        if(highlightCanvas) {
-             highlightCanvas.style.cursor = 'cell'; // Use 'cell' for eraser
-             highlightCanvas.classList.remove('highlight-cursor');
-        }
+        updateCursor(); // Update cursor
     });
 }
 // When color is picked, ensure highlight tool is active
 if (colorPicker) {
     colorPicker.addEventListener('change', () => {
-        if (highlightToolBtn) highlightToolBtn.click();
+        if (highlightToolBtn) highlightToolBtn.click(); // Clicks highlight tool, which calls updateCursor
     });
 }
 if (clearHighlightsBtn) clearHighlightsBtn.addEventListener('click', clearCurrentHighlights);
@@ -608,6 +620,6 @@ document.addEventListener("DOMContentLoaded", () => {
     }
     renderThumbs();
     renderIndex();
-    renderPage();
+    renderPage(); // Initial render also calls setupDrawingListeners and loadHighlights
 });
 
