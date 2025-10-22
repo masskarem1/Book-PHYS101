@@ -31,12 +31,10 @@ body {
 .page-wrap {
     position: relative;
     width: 100%;
-    /* max-width: 100%; No need for max-width here */
     display: flex; /* Using flex might interfere with absolute positioning, consider removing */
     justify-content: center;
     line-height: 0; /* Prevent extra space under image/canvas */
     transform-origin: center center; /* Zoom from the center */
-    /* transition: transform 0.1s ease-out; /* Smooth zoom/pan transitions (optional) */
 }
 
 .page-image {
@@ -253,18 +251,21 @@ button.active {
     box-shadow: 0 4px 12px rgba(0,0,0,0.15);
     padding: 10px;
     z-index: 1100; /* Above toolbar but below modals */
-    display: flex;
+    /* display: flex; No - controlled by JS */
     flex-direction: column;
     gap: 10px;
     opacity: 0; /* Start invisible for transition */
     transform: translateY(-10px); /* Start slightly up */
-    transition: opacity 0.2s ease-out, transform 0.2s ease-out;
+    transition: opacity 0.2s ease-out, transform 0.2s ease-out, visibility 0s linear 0.2s; /* Delay visibility change */
+    visibility: hidden; /* Start hidden */
     min-width: 200px;
 }
 .highlight-popup.visible {
     display: flex;
     opacity: 1;
     transform: translateY(0);
+    visibility: visible; /* Make visible */
+    transition-delay: 0s; /* Remove delay for showing */
 }
 .popup-section {
     display: flex;
@@ -328,11 +329,12 @@ button.active {
     background-color: #e9e9e9;
     border-radius: 0 0 8px 8px; /* Round bottom corners */
     box-shadow: 0 2px 4px rgba(0,0,0,0.1) inset;
-    display: flex; /* Changed from 'none' to 'flex' by JS */
+    display: none; /* Hide by default */
     align-items: center;
     gap: 10px;
     margin-top: -8px; /* Overlap slightly with toolbar */
     margin-bottom: 8px;
+    position: relative; /* Needed for results absolute positioning */
 }
 #searchInput {
     flex-grow: 1;
@@ -407,7 +409,7 @@ button.active {
 .ai-buttons button { background-color: #f0f0f0; color: #333; font-size: 0.85rem; }
 .ai-buttons button:hover { background-color: #ddd; }
 .ai-response { margin-top: 1rem; padding-top: 1rem; border-top: 1px solid #eee; white-space: pre-wrap; line-height: 1.6; font-size: 0.95rem; }
-#translate-analysis-btn { background-color: #e0f0ff; color: #005fa3; border: 1px solid #007acc;}
+#translate-analysis-btn { background-color: #e0f0ff; color: #005fa3; border: 1px solid #007acc; margin-top: 10px;}
 #translate-analysis-btn:hover { background-color: #cce4ff; }
 
 /* --- Modals (PhET, Video) --- */
@@ -452,4 +454,31 @@ button.active {
     .ai-content { width: 98%; padding: 0.8rem;}
     .ai-buttons button { font-size: 0.8rem; padding: 5px 8px;}
 }
+
+
+/* --- TEMPORARY DEBUGGING STYLES --- */
+#flipbook {
+    background-color: rgba(255, 0, 0, 0.3) !important; /* Semi-transparent Red */
+    z-index: 500 !important;
+    position: relative; /* Ensure z-index applies */
+}
+
+#footer {
+    background-color: rgba(0, 0, 255, 0.3) !important; /* Semi-transparent Blue */
+    z-index: 500 !important;
+    position: relative; /* Ensure z-index applies */
+}
+
+#thumbbar {
+     background-color: rgba(0, 255, 0, 0.3) !important; /* Semi-transparent Green */
+     z-index: 499 !important; /* Keep it slightly behind */
+     position: relative; /* Ensure z-index applies */
+     /* Add min-height to ensure it's visible even if empty */
+     min-height: 80px;
+}
+.toolbar-container { /* Also check toolbar overlap */
+    background-color: rgba(255, 165, 0, 0.3) !important; /* Orange */
+    z-index: 1001 !important; /* Make sure it stays on top */
+}
+/* --- END TEMPORARY --- */
 
