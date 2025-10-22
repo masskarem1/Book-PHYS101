@@ -169,8 +169,47 @@ button {
 button:hover { background: #005fa3; }
 button:disabled { background-color: #aaa; cursor: not-allowed; opacity: 0.7; }
 
+/* Highlight Buttons Group */
+.highlight-buttons-group {
+    display: flex;
+    /* This makes the two buttons appear as a single unit visually */
+    border-radius: 8px;
+    overflow: hidden; /* Ensures child button borders don't show through */
+}
+
+.highlight-buttons-group #toggle-draw-mode-btn,
+.highlight-buttons-group #highlight-settings-btn {
+    border-radius: 0; /* Remove individual button border-radius */
+    margin: 0; /* Remove gap between buttons */
+    padding: 0.45rem 0.7rem; /* Adjust padding if needed for a snug fit */
+    background-color: #007acc;
+}
+
+.highlight-buttons-group #toggle-draw-mode-btn {
+    border-top-left-radius: 8px;
+    border-bottom-left-radius: 8px;
+    padding-left: 0.9rem;
+}
+
+.highlight-buttons-group #highlight-settings-btn {
+    border-top-right-radius: 8px;
+    border-bottom-right-radius: 8px;
+    padding-right: 0.9rem;
+    font-size: 1.2rem; /* Make arrow a bit bigger */
+}
+
+.highlight-buttons-group button:hover {
+    background-color: #005fa3;
+}
+
+
 /* Active state for Draw button */
 #toggle-draw-mode-btn.active {
+    box-shadow: 0 0 0 3px #ffc107; /* Yellow glow */
+    background-color: #005fa3;
+}
+/* Also apply active style to the settings button when popup is open for consistency */
+#highlight-settings-btn.active {
     box-shadow: 0 0 0 3px #ffc107; /* Yellow glow */
     background-color: #005fa3;
 }
@@ -245,69 +284,6 @@ button:disabled { background-color: #aaa; cursor: not-allowed; opacity: 0.7; }
 
 /* --- END HIGHLIGHT POPUP STYLES --- */
 
-/* --- SEARCH STYLES --- */
-#searchContainer {
-    display: none; /* Hidden by default */
-    align-items: center;
-    gap: 10px;
-    padding: 8px 12px;
-    background-color: #e0e0e0;
-    border-radius: 8px;
-    width: 90%;
-    max-width: 500px; /* Limit width */
-    margin-top: 5px;
-    box-shadow: 0 2px 5px rgba(0,0,0,0.1);
-    position: relative; /* Context for results */
-}
-#searchContainer input {
-    flex-grow: 1; /* Input takes most space */
-    padding: 6px 10px;
-    border: 1px solid #ccc;
-    border-radius: 4px;
-    font-size: 1rem;
-}
-#searchContainer button#searchCloseBtn {
-    background: none;
-    border: none;
-    font-size: 1.5rem;
-    color: #666;
-    cursor: pointer;
-    padding: 0 5px;
-}
-#searchResults {
-    position: absolute;
-    top: 100%;
-    left: 0;
-    right: 0;
-    background-color: #fff;
-    border: 1px solid #ccc;
-    border-top: none;
-    border-radius: 0 0 8px 8px;
-    max-height: 200px;
-    overflow-y: auto;
-    z-index: 1550; /* Below toolbar, above content */
-    box-shadow: 0 4px 8px rgba(0,0,0,0.1);
-}
-#searchResults div {
-    padding: 8px 12px;
-    cursor: pointer;
-    border-bottom: 1px solid #eee;
-}
-#searchResults div:last-child {
-    border-bottom: none;
-}
-#searchResults div:hover {
-    background-color: #f0f0f0;
-}
-#searchResults .no-results {
-    padding: 10px;
-    color: #888;
-    text-align: center;
-    cursor: default;
-}
-
-/* --- END SEARCH STYLES --- */
-
 #pageInput {
     width: 70px;
     padding: 0.3rem;
@@ -346,6 +322,12 @@ button:disabled { background-color: #aaa; cursor: not-allowed; opacity: 0.7; }
      .popup-section { gap: 8px; }
      .color-swatch { width: 20px; height: 20px; }
      #searchContainer { width: 95%; }
+
+    /* Mobile adjustments for highlight button group */
+    .highlight-buttons-group #toggle-draw-mode-btn,
+    .highlight-buttons-group #highlight-settings-btn {
+        padding: 0.4rem 0.6rem;
+    }
 }
 
 #footer {
