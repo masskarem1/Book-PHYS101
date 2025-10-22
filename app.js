@@ -217,6 +217,11 @@ function resetZoomPan(element) {
     if (element) {
         element.style.transform = 'scale(1) translate(0px, 0px)';
     }
+     // Re-enable swipe listeners if they exist
+     const flipbookElement = document.getElementById('flipbook');
+     if (flipbookElement && hammerManager) { // Check if hammerManager is initialized
+         hammerManager.get('pan').set({ enable: true, direction: Hammer.DIRECTION_ALL }); // Re-enable panning
+     }
 }
 
 
@@ -295,19 +300,9 @@ if (indexMenu) indexMenu.addEventListener("click", e => e.stopPropagation());
 
 // Global click listener to close popups
 document.addEventListener("click", e => {
-    // Close Index Menu
-    if (indexMenu && indexToggle && indexMenu.style.display === "flex" && !indexMenu.contains(e.target) && !indexToggle.contains(e.target)) {
-        closeIndexMenu();
-    }
-    // Close Search Box
-    if (searchContainer && searchContainer.style.display !== 'none' && !searchContainer.contains(e.target) && e.target !== searchBtn) {
-        closeSearchBox();
-    }
-    // Close Highlight Popup (only if click is outside popup AND outside toggle button)
-    if (highlightPopup && toggleDrawModeBtn && highlightPopup.classList.contains('visible') && !highlightPopup.contains(e.target) && e.target !== toggleDrawModeBtn) {
-        closeHighlightPopup();
-        // Keep draw mode active even if popup closes via outside click
-    }
+    if (indexMenu && indexToggle && indexMenu.style.display === "flex" && !indexMenu.contains(e.target) && !indexToggle.contains(e.target)) { closeIndexMenu(); }
+    if (searchContainer && searchContainer.style.display !== 'none' && !searchContainer.contains(e.target) && e.target !== searchBtn) { closeSearchBox(); }
+    if (highlightPopup && toggleDrawModeBtn && highlightPopup.classList.contains('visible') && !highlightPopup.contains(e.target) && e.target !== toggleDrawModeBtn) { closeHighlightPopup(); }
 });
 
 function goToPage(page){ if (page >= 0 && page < images.length){ currentPage = page; renderPage(); closeIndexMenu(); } }
@@ -347,73 +342,169 @@ if(videoCloseBtn)videoCloseBtn.addEventListener("click",closeVideoModal);
 if(videoModal)videoModal.addEventListener("click",e=>{e.target===videoModal&&closeVideoModal()});
 
 
-// --- HAMMER.JS SETUP ---
+// --- HAMMER.JS SETUP (Updated for Scrolling) ---
 function setupHammer(element) {
     if (!element || typeof Hammer === 'undefined') return;
-    if (hammerManager) { hammerManager.destroy(); hammerManager = null; }
+    if (hammerManager) { hammerManager.destroy(); hammerManager = null; } // Destroy old instance
 
     hammerManager = new Hammer.Manager(element);
-    const pinch = new Hammer.Pinch();
-    const pan = new Hammer.Pan({ pointers: 2 });
+
+    // Pinch recognizer (always requires 2 pointers)
+    const pinch = new Hammer.Pinch({ pointers: 2 });
+    // Pan recognizer (allow pan with 1 or 2 pointers initially)
+    const pan = new Hammer.Pan({ pointers: 0, direction: Hammer.DIRECTION_ALL }); // Enable all directions
+
+    // Pinch needs to recognize simultaneously with 2-finger pan
     pinch.recognizeWith(pan);
+
     hammerManager.add([pinch, pan]);
 
     let initialOffsetX = currentOffsetX, initialOffsetY = currentOffsetY;
 
-    hammerManager.on('pinchstart', (e) => { if (isDrawing) return; isPinching = true; pinchStartScale = currentScale; element.style.transition = 'none'; });
-    hammerManager.on('pinchmove', (e) => { if (isDrawing || !isPinching) return; currentScale = Math.max(1, Math.min(pinchStartScale * e.scale, 5)); applyTransform(element); });
-    hammerManager.on('pinchend pinchcancel', (e) => { if (isDrawing) return; isPinching = false; element.style.transition = ''; });
-    hammerManager.on('panstart', (e) => { if (currentScale <= 1 || isDrawing || e.pointers.length < 2) { /* hammerManager.stop(true); */ return; } initialOffsetX = currentOffsetX; initialOffsetY = currentOffsetY; element.style.transition = 'none'; });
-    hammerManager.on('panmove', (e) => {
-        if (currentScale <= 1 || isDrawing || e.pointers.length < 2) return;
-        const rect = element.getBoundingClientRect();
-        const parentRect = flipbook.getBoundingClientRect();
-        const maxMoveX = Math.max(0, (rect.width - parentRect.width) / 2);
-        const maxMoveY = Math.max(0, (rect.height - parentRect.height) / 2);
-        currentOffsetX = initialOffsetX + e.deltaX;
-        currentOffsetY = initialOffsetY + e.deltaY;
-        currentOffsetX = Math.max(-maxMoveX, Math.min(currentOffsetX, maxMoveX));
-        currentOffsetY = Math.max(-maxMoveY, Math.min(currentOffsetY, maxMoveY));
+    hammerManager.on('pinchstart', (e) => {
+        if (isDrawing) return;
+        isPinching = true;
+        pinchStartScale = currentScale;
+        element.style.transition = 'none'; // Disable transition during pinch
+    });
+
+    hammerManager.on('pinchmove', (e) => {
+        if (isDrawing || !isPinching) return;
+        currentScale = Math.max(1, Math.min(pinchStartScale * e.scale, 5)); // Limit zoom scale
         applyTransform(element);
     });
-    hammerManager.on('panend pancancel', (e) => { if (currentScale <= 1 || isDrawing) return; element.style.transition = ''; });
+
+    hammerManager.on('pinchend pinchcancel', (e) => {
+        if (isDrawing) return;
+        isPinching = false;
+        element.style.transition = ''; // Re-enable transition
+        // Adjust pan limits based on new scale
+         adjustPanLimits(element);
+         applyTransform(element); // Apply constrained transform
+    });
+
+    hammerManager.on('panstart', (e) => {
+        // Allow pan if drawing OR if zoomed in (scale > 1) with 2 fingers OR if not zoomed (scale === 1) with 1 finger (for scrolling)
+        if (isDrawing) return; // Prevent pan while drawing
+        if (currentScale > 1 && e.pointers.length < 2) return; // Prevent 1-finger pan when zoomed
+
+        initialOffsetX = currentOffsetX;
+        initialOffsetY = currentOffsetY;
+        element.style.transition = 'none'; // Disable transition during pan
+    });
+
+    hammerManager.on('panmove', (e) => {
+        if (isDrawing) return;
+
+        // If zoomed in (scale > 1), require 2 fingers for panning
+        if (currentScale > 1 && e.pointers.length < 2) return;
+
+        // If not zoomed (scale === 1), allow single-finger vertical pan (scrolling simulation)
+        if (currentScale === 1 && e.pointers.length === 1) {
+             // Only allow vertical panning to simulate scrolling
+             if (Math.abs(e.deltaY) > Math.abs(e.deltaX)) {
+                 // Prevent Hammer from handling this pan, let browser scroll
+                 return; // Allow default scroll
+             } else {
+                 // Prevent horizontal panning when not zoomed
+                 return;
+             }
+         }
+
+
+        // Proceed with 2-finger panning logic when zoomed
+        const rect = element.getBoundingClientRect();
+        const parentRect = flipbook.getBoundingClientRect();
+
+        // Calculate maximum movement allowed based on scaled size vs container size
+        const maxMoveX = Math.max(0, (rect.width - parentRect.width) / 2);
+        const maxMoveY = Math.max(0, (rect.height - parentRect.height) / 2);
+
+        // Calculate potential new offset
+        let newOffsetX = initialOffsetX + e.deltaX;
+        let newOffsetY = initialOffsetY + e.deltaY;
+
+        // Constrain the offset within calculated limits
+        currentOffsetX = Math.max(-maxMoveX, Math.min(newOffsetX, maxMoveX));
+        currentOffsetY = Math.max(-maxMoveY, Math.min(newOffsetY, maxMoveY));
+
+        applyTransform(element);
+    });
+
+    hammerManager.on('panend pancancel', (e) => {
+        if (isDrawing) return;
+        element.style.transition = ''; // Re-enable transition
+        initialOffsetX = currentOffsetX; // Update initial offset for next pan
+        initialOffsetY = currentOffsetY;
+    });
 }
+
+// Adjust pan limits after zoom to prevent excessive panning
+function adjustPanLimits(element) {
+     if (!element || currentScale <= 1) {
+         // If scale is 1, reset pan
+         currentOffsetX = 0;
+         currentOffsetY = 0;
+         return;
+     }
+
+     const rect = element.getBoundingClientRect();
+     const parentRect = flipbook.getBoundingClientRect();
+     const maxMoveX = Math.max(0, (rect.width - parentRect.width) / 2);
+     const maxMoveY = Math.max(0, (rect.height - parentRect.height) / 2);
+
+     currentOffsetX = Math.max(-maxMoveX, Math.min(currentOffsetX, maxMoveX));
+     currentOffsetY = Math.max(-maxMoveY, Math.min(currentOffsetY, maxMoveY));
+}
+
 
 function applyTransform(element) { if (!element) return; element.style.transform = `scale(${currentScale}) translate(${currentOffsetX}px, ${currentOffsetY}px)`; }
 
-// --- HIGHLIGHTING LOGIC ---
+// --- HIGHLIGHTING LOGIC (Adjusted getDrawPosition) ---
 function sizeCanvasToImage(img, canvas) { if (!img || !canvas) return; const rect = img.getBoundingClientRect(); canvas.width = img.naturalWidth; canvas.height = img.naturalHeight; canvas.style.width = `${rect.width}px`; canvas.style.height = `${rect.height}px`; canvas.style.top = `0px`; canvas.style.left = `0px`; if (ctx) ctx = canvas.getContext('2d'); }
 
 function getDrawPosition(e, canvas) {
     if (!canvas) return { x: 0, y: 0 };
-    const rect = canvas.getBoundingClientRect();
-    const scaleXCanvas = canvas.width / rect.width;
-    const scaleYCanvas = canvas.height / rect.height;
-    // Use pageX/Y if available for touch, adjust for scroll, fallback to clientX/Y
+    const pageWrap = canvas.closest('.page-wrap'); // Get the transformed parent
+    if (!pageWrap) return { x: 0, y: 0 };
+
+    const canvasRect = canvas.getBoundingClientRect(); // Canvas position on screen
+    const wrapRect = pageWrap.getBoundingClientRect(); // Parent's position on screen
+
+    const scaleXCanvas = canvas.width / canvasRect.width; // Canvas internal vs display
+    const scaleYCanvas = canvas.height / canvasRect.height;
+
+    // Determine clientX/Y correctly for touch/mouse, adjusted for scroll
     let clientX, clientY;
     if (e.touches && e.touches.length > 0) {
         clientX = e.touches[0].pageX - window.scrollX;
         clientY = e.touches[0].pageY - window.scrollY;
-    } else if (e.changedTouches && e.changedTouches.length > 0) { // For touchend
+    } else if (e.changedTouches && e.changedTouches.length > 0) {
          clientX = e.changedTouches[0].pageX - window.scrollX;
          clientY = e.changedTouches[0].pageY - window.scrollY;
     } else {
         clientX = e.clientX;
         clientY = e.clientY;
     }
-    const screenX = clientX - rect.left;
-    const screenY = clientY - rect.top;
-    const canvasXUnscaled = screenX * scaleXCanvas;
-    const canvasYUnscaled = screenY * scaleYCanvas;
-    return { x: canvasXUnscaled, y: canvasYUnscaled };
+
+    // Calculate position relative to the visible part of the CANVAS on screen
+    const screenX = clientX - canvasRect.left;
+    const screenY = clientY - canvasRect.top;
+
+    // Scale this screen position to the canvas's internal resolution
+    const canvasInternalX = screenX * scaleXCanvas;
+    const canvasInternalY = screenY * scaleYCanvas;
+
+    return { x: canvasInternalX, y: canvasInternalY };
 }
 
 
 function startDrawing(e) {
     if (!highlightCanvas || !ctx || !document.body.classList.contains('highlight-mode') || e.target !== highlightCanvas) return;
-    if (e.touches && e.touches.length > 1) return;
+    if (e.touches && e.touches.length > 1) return; // Ignore multi-touch for drawing
+    // Disable Hammer gestures ONLY if drawing starts successfully
     if (hammerManager) { hammerManager.get('pinch').set({ enable: false }); hammerManager.get('pan').set({ enable: false }); }
-    if (e.touches) e.preventDefault();
+    if (e.touches) e.preventDefault(); // Prevent scroll/zoom only when drawing
     isDrawing = true;
     const pos = getDrawPosition(e, highlightCanvas);
     [lastX, lastY] = [pos.x, pos.y];
@@ -422,26 +513,27 @@ function startDrawing(e) {
 
 function draw(e) {
     if (!isDrawing || !ctx) return;
-    if (e.touches) e.preventDefault();
+    if (e.touches) e.preventDefault(); // Continue preventing default actions during draw move
     if (drawMode === 'eraser') { const pos = getDrawPosition(e, highlightCanvas); ctx.beginPath(); ctx.globalCompositeOperation = 'destination-out'; ctx.strokeStyle = 'rgba(0,0,0,1)'; ctx.lineWidth = currentBrushSize; ctx.moveTo(lastX, lastY); ctx.lineTo(pos.x, pos.y); ctx.lineCap = 'round'; ctx.lineJoin = 'round'; ctx.stroke(); [lastX, lastY] = [pos.x, pos.y]; }
 }
 
 function stopDrawing(e) {
     if (!isDrawing) return;
     isDrawing = false;
-    let pos = getDrawPosition(e, highlightCanvas); // Use getDrawPosition for consistency
+    let pos = getDrawPosition(e, highlightCanvas);
 
     if (drawMode === 'highlight') {
         ctx.beginPath();
         ctx.globalCompositeOperation = 'source-over';
         ctx.strokeStyle = currentHighlightColor;
         ctx.lineWidth = currentBrushSize;
-        ctx.lineCap = 'butt'; // Use flat ends
-        ctx.moveTo(lastX, lastY); // Start point
-        ctx.lineTo(pos.x, lastY); // End point (same Y coordinate)
+        ctx.lineCap = 'butt';
+        ctx.moveTo(lastX, lastY);
+        ctx.lineTo(pos.x, lastY);
         ctx.stroke();
     }
     saveHighlights(currentPage);
+    // Re-enable Hammer gestures AFTER drawing stops
     if (hammerManager) { hammerManager.get('pinch').set({ enable: true }); hammerManager.get('pan').set({ enable: true }); }
 }
 
@@ -471,25 +563,16 @@ function updateCursor() { if (!highlightCanvas) return; const e = document.body.
 // --- Event Listeners for Highlight Pop-up (Updated) ---
 if (toggleDrawModeBtn) {
     toggleDrawModeBtn.addEventListener('click', (e) => {
-        e.stopPropagation(); // Prevent this click from immediately closing the popup via the document listener
+        e.stopPropagation();
         if (highlightPopup) {
             const isVisible = highlightPopup.classList.contains('visible');
             if (isVisible) {
-                // If popup is visible, clicking button turns everything off
-                closeHighlightPopup();
-                document.body.classList.remove('highlight-mode');
-                toggleDrawModeBtn.classList.remove('active');
-                updateCursor();
+                closeHighlightPopup(); document.body.classList.remove('highlight-mode'); toggleDrawModeBtn.classList.remove('active'); updateCursor();
             } else {
-                // If popup is hidden, clicking button turns mode on and shows popup
-                openHighlightPopup();
-                document.body.classList.add('highlight-mode');
-                toggleDrawModeBtn.classList.add('active');
-                // Ensure a tool is selected visually and logically
+                openHighlightPopup(); document.body.classList.add('highlight-mode'); toggleDrawModeBtn.classList.add('active');
                 let activeSwatch = colorSwatchesContainer && colorSwatchesContainer.querySelector('.color-swatch.active');
-                if (!activeSwatch && colorSwatchesContainer) activeSwatch = colorSwatchesContainer.querySelector('.color-swatch'); // Default to first color
-                setActiveColorSwatch(activeSwatch); // Set color internally
-                setDrawMode('highlight'); // Set mode and update buttons/cursor
+                if (!activeSwatch && colorSwatchesContainer) activeSwatch = colorSwatchesContainer.querySelector('.color-swatch');
+                setActiveColorSwatch(activeSwatch); setDrawMode('highlight');
             }
         }
     });
@@ -498,25 +581,9 @@ if (toggleDrawModeBtn) {
 function openHighlightPopup() { if(highlightPopup) highlightPopup.classList.add('visible'); }
 function closeHighlightPopup() { if(highlightPopup) highlightPopup.classList.remove('visible'); }
 
-// Handle clicks on color swatches - CLOSE POPUP
-if (colorSwatchesContainer) {
-    colorSwatchesContainer.addEventListener('click', (e) => {
-        if (e.target.classList.contains('color-swatch')) {
-            setActiveColorSwatch(e.target);
-            setDrawMode('highlight');
-            closeHighlightPopup(); // Close after selection
-        }
-    });
-}
+if (colorSwatchesContainer) { colorSwatchesContainer.addEventListener('click', (e) => { if (e.target.classList.contains('color-swatch')) { setActiveColorSwatch(e.target); setDrawMode('highlight'); closeHighlightPopup(); } }); } // Close after selection
 function setActiveColorSwatch(swatchElement) { if (!swatchElement || !colorSwatchesContainer) return; colorSwatchesContainer.querySelectorAll('.color-swatch').forEach(sw => sw.classList.remove('active')); swatchElement.classList.add('active'); currentHighlightColor = swatchElement.getAttribute('data-color'); }
-
-// Handle Eraser button click in popup - CLOSE POPUP
-if (eraserToolBtnPopup) {
-    eraserToolBtnPopup.addEventListener('click', () => {
-        setDrawMode('eraser');
-        closeHighlightPopup(); // Close after selection
-    });
-}
+if (eraserToolBtnPopup) eraserToolBtnPopup.addEventListener('click', () => { setDrawMode('eraser'); closeHighlightPopup(); }); // Close after selection
 function setDrawMode(mode) { drawMode = mode; if (mode === 'highlight') { if(eraserToolBtnPopup) eraserToolBtnPopup.classList.remove('active'); const activeSwatch = colorSwatchesContainer && colorSwatchesContainer.querySelector('.color-swatch[data-color="' + currentHighlightColor + '"]'); if (activeSwatch && !activeSwatch.classList.contains('active')) { setActiveColorSwatch(activeSwatch); } else if (colorSwatchesContainer && !colorSwatchesContainer.querySelector('.color-swatch.active')) { const targetSwatch = colorSwatchesContainer.querySelector('.color-swatch[data-color="' + currentHighlightColor + '"]') || colorSwatchesContainer.querySelector('.color-swatch'); if(targetSwatch) setActiveColorSwatch(targetSwatch); } } else { if(eraserToolBtnPopup) eraserToolBtnPopup.classList.add('active'); if (colorSwatchesContainer) colorSwatchesContainer.querySelectorAll('.color-swatch').forEach(sw => sw.classList.remove('active')); } updateCursor(); }
 if (brushSizeSliderPopup) { brushSizeSliderPopup.addEventListener('input', (e) => { currentBrushSize = e.target.value; }); currentBrushSize = brushSizeSliderPopup.value; }
 if (clearHighlightsBtnPopup) clearHighlightsBtnPopup.addEventListener('click', () => { clearCurrentHighlights(); closeHighlightPopup(); });
