@@ -71,8 +71,8 @@ body {
     /* Cursor will be set by JS adding/removing .highlight-cursor or setting style.cursor */
 }
 
-/* Class defining the custom cursor for the highlighter tool */
-.highlight-cursor {
+/* *** CORRECTED CSS RULE for the custom cursor *** */
+#highlight-canvas.highlight-cursor {
     /* SVG Data URL for a vertical dashed rectangle, hotspot at 12,12 */
     cursor: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"><rect x="9" y="2" width="6" height="20" fill="none" stroke="black" stroke-width="1.5" stroke-dasharray="4 2"/></svg>') 12 12, crosshair;
 }
@@ -199,7 +199,7 @@ button:disabled {
     background-color: #e0e0e0;
     box-shadow: 0 2px 5px rgba(0,0,0,0.1);
     box-sizing: border-box;
-    display: flex; /* Use flex for input and button */
+    display: none; /* Hide search by default */
     gap: 5px;
     position: relative; /* Needed for results absolute positioning */
     z-index: 999; /* Below toolbar */
