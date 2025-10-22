@@ -49,7 +49,6 @@ async function loadBookText() {
         if (!res.ok) throw new Error("book-text.json not found");
         bookTextData = await res.json();
         console.log("Book text loaded successfully.");
-         // Enable search button only after text is loaded
          const searchBtn = document.getElementById('searchBtn');
          if (searchBtn) searchBtn.disabled = false;
     } catch (err) {
@@ -62,10 +61,8 @@ async function loadBookText() {
             translateBtn.style.backgroundColor = '#aaa';
             translateBtn.style.cursor = 'not-allowed';
         }
-         // Disable search button if text loading fails
          const searchBtn = document.getElementById('searchBtn');
          if (searchBtn) searchBtn.disabled = true;
-
     }
 }
 
@@ -95,12 +92,13 @@ const videoFrame = document.getElementById('videoFrame');
 
 // --- HIGHLIGHTING VARIABLES ---
 const toggleDrawModeBtn = document.getElementById('toggle-draw-mode-btn');
-const highlightToolbar = document.getElementById('highlight-toolbar');
-const highlightToolBtn = document.getElementById('highlight-tool-btn');
-const eraserToolBtn = document.getElementById('eraser-tool-btn');
-const colorPicker = document.getElementById('highlight-color');
-const brushSizeSlider = document.getElementById('brush-size');
-const clearHighlightsBtn = document.getElementById('clear-highlights-btn');
+const highlightPopup = document.getElementById('highlight-popup'); // New pop-up element
+const colorSwatchesContainer = document.querySelector('.color-swatches');
+const eraserToolBtnPopup = document.getElementById('eraser-tool-btn-popup'); // Eraser in pop-up
+const brushSizeSliderPopup = document.getElementById('brush-size-popup'); // Slider in pop-up
+const clearHighlightsBtnPopup = document.getElementById('clear-highlights-btn-popup'); // Clear in pop-up
+let currentHighlightColor = 'rgba(255, 255, 0, 0.2)'; // Default highlight color
+let currentBrushSize = 40; // Default brush size
 let highlightCanvas, ctx, isDrawing = false, drawMode = 'highlight', lastX = 0, lastY = 0;
 
 // --- SEARCH VARIABLES ---
@@ -109,7 +107,7 @@ const searchContainer = document.getElementById('searchContainer');
 const searchInput = document.getElementById('searchInput');
 const searchCloseBtn = document.getElementById('searchCloseBtn');
 const searchResults = document.getElementById('searchResults');
-if (searchBtn) searchBtn.disabled = true; // Disable initially until book text loads
+if (searchBtn) searchBtn.disabled = true;
 
 function getYoutubeEmbedUrl(url) {
     try {
@@ -147,7 +145,7 @@ function renderPage() {
     const img = document.createElement("img");
     const canvas = document.createElement("canvas");
     canvas.id = "highlight-canvas";
-    highlightCanvas = canvas; // Keep global reference
+    highlightCanvas = canvas;
 
     img.className = "page-image";
     img.src = images[currentPage];
@@ -162,10 +160,9 @@ function renderPage() {
     img.onload = () => {
         sizeCanvasToImage(img, canvas);
         ctx = canvas.getContext('2d');
-        setupDrawingListeners(canvas); // Setup listeners AFTER sizing and context
-        loadHighlights(currentPage); // Load highlights AFTER sizing and context
-         // Apply initial cursor state based on draw mode
-         updateCursor(); // Call updateCursor after setup
+        setupDrawingListeners(canvas);
+        loadHighlights(currentPage);
+        updateCursor();
     };
 
     wrap.appendChild(img);
@@ -194,7 +191,6 @@ function renderPage() {
     const hideBtn = document.getElementById('hideTranslateBtn');
     if (hideBtn) hideBtn.style.display = 'none';
 
-    // Close search box when navigating
     closeSearchBox();
     preloadImages();
 }
@@ -291,24 +287,15 @@ function shareBook(){
     if (navigator.share) {
          navigator.share(shareData).catch((err) => console.log("Share failed:", err));
     } else if (navigator.clipboard) {
-         // Use execCommand for broader compatibility, especially in iFrames
          const textArea = document.createElement("textarea");
          textArea.value = window.location.href;
          document.body.appendChild(textArea);
          textArea.focus();
          textArea.select();
-         try {
-             document.execCommand('copy');
-             alert("Link copied to clipboard!");
-         } catch (err) {
-             console.error('Fallback: Oops, unable to copy', err);
-             alert('Failed to copy link.');
-         }
+         try { document.execCommand('copy'); alert("Link copied to clipboard!"); }
+         catch (err) { console.error('Fallback copy failed', err); alert('Failed to copy link.'); }
          document.body.removeChild(textArea);
-
-    } else {
-        alert("Sharing/Copying not supported on this browser.");
-    }
+    } else { alert("Sharing/Copying not supported."); }
 }
 function openIndexMenu() {
     if (!indexToggle || !footer || !indexMenu) return;
@@ -327,25 +314,28 @@ function closeIndexMenu(){
     indexMenu.setAttribute("aria-hidden","true");
     indexToggle.setAttribute("aria-expanded","false");
 }
-if (indexToggle) {
-    indexToggle.addEventListener("click", e=>{ e.stopPropagation(); indexMenu.style.display === "flex" ? closeIndexMenu() : openIndexMenu(); });
-}
-if (indexMenu) {
-    indexMenu.addEventListener("click", e => e.stopPropagation());
-}
+if (indexToggle) indexToggle.addEventListener("click", e=>{ e.stopPropagation(); indexMenu.style.display === "flex" ? closeIndexMenu() : openIndexMenu(); });
+if (indexMenu) indexMenu.addEventListener("click", e => e.stopPropagation());
+
 document.addEventListener("click", e=>{
+    // Close index menu
     if (indexMenu && indexToggle && indexMenu.style.display === "flex" && !indexMenu.contains(e.target) && !indexToggle.contains(e.target)) {
          closeIndexMenu();
     }
-    // Close search results if clicking outside the search area
+    // Close search results
     if (searchContainer && searchContainer.style.display !== 'none' && !searchContainer.contains(e.target) && e.target !== searchBtn) {
         closeSearchBox();
+    }
+    // Close highlight pop-up
+    if (highlightPopup && toggleDrawModeBtn && highlightPopup.classList.contains('visible') && !highlightPopup.contains(e.target) && e.target !== toggleDrawModeBtn) {
+        // Don't close if clicking draw button itself, it handles its own toggle
+        closeHighlightPopup();
     }
 });
 function goToPage(page){
     if (page >= 0 && page < images.length){
         currentPage = page;
-        renderPage(); // renderPage now also closes search
+        renderPage();
         closeIndexMenu();
     }
 }
@@ -354,67 +344,21 @@ window.goToPage = goToPage;
 // ---------- Input & touch (For SWIPING ONLY) ----------
 let touchStartX = 0, touchEndX = 0;
 const swipeThreshold = 50;
-
-// *** MODIFIED handleTouchStart for swiping ***
-function handleTouchStartSwipe(e){
-    // Only register swipe start if highlight mode is OFF
-    if (!document.body.classList.contains('highlight-mode')) {
-        touchStartX = e.touches[0].clientX;
-    } else {
-        touchStartX = null; // Prevent accidental swipe detection if mode is toggled mid-touch
-    }
-}
-// *** MODIFIED handleTouchEnd for swiping ***
-function handleTouchEndSwipe(e){
-    // Only register swipe end if highlight mode is OFF and touchStartX was set
-    if (!document.body.classList.contains('highlight-mode') && touchStartX !== null) {
-        touchEndX = e.changedTouches[0].clientX;
-        handleSwipeGesture();
-    }
-}
-
-// *** handleSwipeGesture remains mostly the same, but relies on valid touchStartX/EndX ***
-function handleSwipeGesture(){
-    if (touchStartX === null) return; // Exit if swipe didn't start properly
-    const diff = touchEndX - touchStartX;
-    if (Math.abs(diff) > swipeThreshold){
-         if(diff > 0){ prevPage(); } else { nextPage(); }
-    }
-    // Reset start coordinate after swipe attempt
-    touchStartX = null;
-}
-
+function handleTouchStartSwipe(e){ if (!document.body.classList.contains('highlight-mode')) touchStartX = e.touches[0].clientX; else touchStartX = null; }
+function handleTouchEndSwipe(e){ if (!document.body.classList.contains('highlight-mode') && touchStartX !== null) { touchEndX = e.changedTouches[0].clientX; handleSwipeGesture(); } }
+function handleSwipeGesture(){ if (touchStartX === null) return; const diff = touchEndX - touchStartX; if (Math.abs(diff) > swipeThreshold){ if(diff > 0){ prevPage(); } else { nextPage(); } } touchStartX = null; }
 
 // ---------- Modals (PhET, Video) ----------
-function openPhetModal(){
-    const simConfig = typeof config !== 'undefined' && config.simulations && config.simulations.find(s => s.page === (currentPage + 1));
-    if (simConfig && simConfig.url) {
-        if(phetFrame) phetFrame.src = simConfig.url;
-        if(phetModal) phetModal.style.display = 'flex';
-    } else { alert("No simulation found for this page."); }
-}
-function closePhetModal(){
-    if(phetModal) phetModal.style.display = 'none';
-    if(phetFrame) phetFrame.src = 'about:blank';
-}
-if(phetBtn) phetBtn.addEventListener('click', openPhetModal);
-if(phetCloseBtn) phetCloseBtn.addEventListener('click', closePhetModal);
-if(phetModal) phetModal.addEventListener('click', (e) => { if(e.target === phetModal) closePhetModal(); });
-
-function openVideoModal(){
-    const videoConfig = typeof config !== 'undefined' && config.videos && config.videos.find(v => v.page === (currentPage + 1));
-    if (videoConfig && videoConfig.url) {
-        if(videoFrame) videoFrame.src = getYoutubeEmbedUrl(videoConfig.url);
-        if(videoModal) videoModal.style.display = 'flex';
-    } else { alert("No video found for this page."); }
-}
-function closeVideoModal(){
-    if(videoModal) videoModal.style.display = 'none';
-    if(videoFrame) videoFrame.src = 'about:blank';
-}
-if(videoBtn) videoBtn.addEventListener('click', openVideoModal);
-if(videoCloseBtn) videoCloseBtn.addEventListener('click', closeVideoModal);
-if(videoModal) videoModal.addEventListener('click', (e) => { if(e.target === videoModal) closeVideoModal(); });
+function openPhetModal(){ /* ... unchanged ... */ const a=typeof config!="undefined"&&config.simulations&&config.simulations.find(e=>e.page===currentPage+1);a&&a.url?(phetFrame&&(phetFrame.src=a.url),phetModal&&(phetModal.style.display="flex")):alert("No simulation found for this page.") }
+function closePhetModal(){ /* ... unchanged ... */ phetModal&&(phetModal.style.display="none"),phetFrame&&(phetFrame.src="about:blank") }
+if(phetBtn)phetBtn.addEventListener("click",openPhetModal);
+if(phetCloseBtn)phetCloseBtn.addEventListener("click",closePhetModal);
+if(phetModal)phetModal.addEventListener("click",e=>{e.target===phetModal&&closePhetModal()});
+function openVideoModal(){ /* ... unchanged ... */ const a=typeof config!="undefined"&&config.videos&&config.videos.find(e=>e.page===currentPage+1);a&&a.url?(videoFrame&&(videoFrame.src=getYoutubeEmbedUrl(a.url)),videoModal&&(videoModal.style.display="flex")):alert("No video found for this page.") }
+function closeVideoModal(){ /* ... unchanged ... */ videoModal&&(videoModal.style.display="none"),videoFrame&&(videoFrame.src="about:blank") }
+if(videoBtn)videoBtn.addEventListener("click",openVideoModal);
+if(videoCloseBtn)videoCloseBtn.addEventListener("click",closeVideoModal);
+if(videoModal)videoModal.addEventListener("click",e=>{e.target===videoModal&&closeVideoModal()});
 
 // --- HIGHLIGHTING LOGIC ---
 function sizeCanvasToImage(img, canvas) {
@@ -426,7 +370,7 @@ function sizeCanvasToImage(img, canvas) {
     canvas.style.height = `${rect.height}px`;
     canvas.style.top = `${img.offsetTop}px`;
     canvas.style.left = `${img.offsetLeft}px`;
-    if (ctx) ctx = canvas.getContext('2d'); // Update context if canvas resizes
+    if (ctx) ctx = canvas.getContext('2d');
 }
 
 function getDrawPosition(e, canvas) {
@@ -434,28 +378,23 @@ function getDrawPosition(e, canvas) {
     const rect = canvas.getBoundingClientRect();
     const scaleX = canvas.width / rect.width;
     const scaleY = canvas.height / rect.height;
-    // Use pageX/pageY for touch events if available, otherwise clientX/Y
     const clientX = e.touches ? (e.touches[0].pageX - window.scrollX) : e.clientX;
     const clientY = e.touches ? (e.touches[0].pageY - window.scrollY) : e.clientY;
-
     return { x: (clientX - rect.left) * scaleX, y: (clientY - rect.top) * scaleY };
 }
 
-
 function startDrawing(e) {
-    // Check if the event target is the canvas itself, not something else like the image behind it
     if (!highlightCanvas || !ctx || !document.body.classList.contains('highlight-mode') || e.target !== highlightCanvas) return;
-
-    if (e.touches) e.preventDefault(); // Prevent scroll only if drawing starts on canvas
+    if (e.touches) e.preventDefault();
     isDrawing = true;
     const pos = getDrawPosition(e, highlightCanvas);
     [lastX, lastY] = [pos.x, pos.y];
 
     if (drawMode === 'eraser') {
         ctx.beginPath();
-        ctx.globalCompositeOperation = 'destination-out'; // Erase mode
-        ctx.fillStyle = 'rgba(0,0,0,1)'; // Must be opaque for destination-out
-        ctx.arc(pos.x, pos.y, brushSizeSlider.value / 2, 0, Math.PI * 2);
+        ctx.globalCompositeOperation = 'destination-out';
+        ctx.fillStyle = 'rgba(0,0,0,1)';
+        ctx.arc(pos.x, pos.y, currentBrushSize / 2, 0, Math.PI * 2);
         ctx.fill();
     }
 }
@@ -467,8 +406,8 @@ function draw(e) {
         const pos = getDrawPosition(e, highlightCanvas);
         ctx.beginPath();
         ctx.globalCompositeOperation = 'destination-out';
-        ctx.strokeStyle = 'rgba(0,0,0,1)'; // Opaque stroke for erasing
-        ctx.lineWidth = brushSizeSlider.value;
+        ctx.strokeStyle = 'rgba(0,0,0,1)';
+        ctx.lineWidth = currentBrushSize;
         ctx.moveTo(lastX, lastY);
         ctx.lineTo(pos.x, pos.y);
         ctx.lineCap = 'round';
@@ -480,35 +419,29 @@ function draw(e) {
 
 function stopDrawing(e) {
     if (!isDrawing) return;
-    isDrawing = false; // Set drawing to false immediately
+    isDrawing = false;
+    let pos;
+    if (e.changedTouches && e.changedTouches.length > 0) {
+        pos = getDrawPosition({ touches: e.changedTouches }, highlightCanvas);
+    } else {
+        pos = getDrawPosition(e, highlightCanvas);
+    }
 
     if (drawMode === 'highlight') {
-         // Need to determine the end position accurately
-         let pos;
-         // For touchend, changedTouches is used; for mouseup, just use event coords
-         if (e.changedTouches && e.changedTouches.length > 0) {
-             pos = getDrawPosition({ touches: e.changedTouches }, highlightCanvas);
-         } else {
-             pos = getDrawPosition(e, highlightCanvas);
-         }
-
-
-        ctx.beginPath(); // Start a new path for the highlight line
-        ctx.globalCompositeOperation = 'source-over'; // Normal drawing
-        ctx.strokeStyle = colorPicker.value; // Get RGBA color from dropdown
-        ctx.lineWidth = brushSizeSlider.value;
-        ctx.lineCap = 'butt'; // Use flat ends for highlighter effect
-
+        ctx.beginPath();
+        ctx.globalCompositeOperation = 'source-over';
+        ctx.strokeStyle = currentHighlightColor;
+        ctx.lineWidth = currentBrushSize;
+        ctx.lineCap = 'butt';
         ctx.moveTo(lastX, lastY);
-        ctx.lineTo(pos.x, lastY); // Only change X, keep Y the same as start
+        ctx.lineTo(pos.x, lastY); // Horizontal line based on start Y
         ctx.stroke();
     }
-    saveHighlights(currentPage); // Save after drawing is complete
+    saveHighlights(currentPage);
 }
 
 function setupDrawingListeners(canvas) {
     if (!canvas) return;
-    // Ensure old listeners are removed before adding new ones
     canvas.removeEventListener('mousedown', startDrawing);
     canvas.removeEventListener('mousemove', draw);
     canvas.removeEventListener('mouseup', stopDrawing);
@@ -516,222 +449,197 @@ function setupDrawingListeners(canvas) {
     canvas.removeEventListener('touchstart', startDrawing);
     canvas.removeEventListener('touchmove', draw);
     canvas.removeEventListener('touchend', stopDrawing);
-    canvas.removeEventListener('touchcancel', stopDrawing); // Also stop on touchcancel
+    canvas.removeEventListener('touchcancel', stopDrawing);
 
-
-    // Add new listeners
     canvas.addEventListener('mousedown', startDrawing);
     canvas.addEventListener('mousemove', draw);
     canvas.addEventListener('mouseup', stopDrawing);
-    canvas.addEventListener('mouseleave', stopDrawing); // Important to stop drawing if mouse leaves canvas
-    // Use non-passive listeners for touch to allow preventDefault()
+    canvas.addEventListener('mouseleave', stopDrawing);
     canvas.addEventListener('touchstart', startDrawing, { passive: false });
     canvas.addEventListener('touchmove', draw, { passive: false });
     canvas.addEventListener('touchend', stopDrawing);
-    canvas.addEventListener('touchcancel', stopDrawing); // Handle cancelled touches
-
+    canvas.addEventListener('touchcancel', stopDrawing);
 }
 
 function saveHighlights(pageNumber) {
     if (!highlightCanvas) return;
-    requestAnimationFrame(() => { // Ensure drawing is complete before saving
-        try {
-            const dataUrl = highlightCanvas.toDataURL();
-            localStorage.setItem(`flipbook-highlights-page-${pageNumber}`, dataUrl);
-        } catch (e) {
-            console.error("Failed to save highlights:", e);
-            if (e.name === 'QuotaExceededError') {
-                alert('Could not save highlights. Browser storage might be full.');
-            }
-        }
+    requestAnimationFrame(() => {
+        try { localStorage.setItem(`flipbook-highlights-page-${pageNumber}`, highlightCanvas.toDataURL()); }
+        catch (e) { console.error("Save highlights error:", e); if (e.name === 'QuotaExceededError') alert('Storage full.'); }
     });
 }
 
 function loadHighlights(pageNumber) {
     if (!highlightCanvas || !ctx) return;
     const dataUrl = localStorage.getItem(`flipbook-highlights-page-${pageNumber}`);
-    ctx.clearRect(0, 0, highlightCanvas.width, highlightCanvas.height); // Clear canvas first
+    ctx.clearRect(0, 0, highlightCanvas.width, highlightCanvas.height);
     if (dataUrl) {
         const img = new Image();
-        img.onload = () => {
-            ctx.drawImage(img, 0, 0); // Draw saved highlights
-        };
-        img.onerror = () => {
-             console.error("Failed to load highlight image for page", pageNumber);
-             localStorage.removeItem(`flipbook-highlights-page-${pageNumber}`); // Remove bad data
-        }
+        img.onload = () => ctx.drawImage(img, 0, 0);
+        img.onerror = () => { console.error("Failed load highlight", pageNumber); localStorage.removeItem(`flipbook-highlights-page-${pageNumber}`); }
         img.src = dataUrl;
     }
 }
 
 function clearCurrentHighlights() {
     if (!ctx) return;
-    if (confirm("Erase all highlights on this page? This cannot be undone.")) {
+    if (confirm("Erase all highlights on this page?")) {
         ctx.clearRect(0, 0, highlightCanvas.width, highlightCanvas.height);
         localStorage.removeItem(`flipbook-highlights-page-${currentPage}`);
     }
 }
 
-// Function to update cursor based on current state
 function updateCursor() {
     if (!highlightCanvas) return;
     const isHighlightModeActive = document.body.classList.contains('highlight-mode');
-
     if (!isHighlightModeActive) {
-        highlightCanvas.style.cursor = 'default'; // Explicitly set default cursor
-        highlightCanvas.classList.remove('highlight-cursor'); // Remove class if present
+        highlightCanvas.style.cursor = 'default';
+        highlightCanvas.classList.remove('highlight-cursor');
     } else {
         if (drawMode === 'highlight') {
-            highlightCanvas.style.cursor = ''; // Clear inline style to let CSS class take over
-            highlightCanvas.classList.add('highlight-cursor'); // Add class for custom cursor
-        } else { // Eraser mode
-            highlightCanvas.style.cursor = 'cell'; // Explicitly set eraser cursor
-            highlightCanvas.classList.remove('highlight-cursor'); // Remove custom cursor class
+            highlightCanvas.style.cursor = ''; // Use CSS class
+            highlightCanvas.classList.add('highlight-cursor');
+        } else {
+            highlightCanvas.style.cursor = 'cell'; // Eraser cursor
+            highlightCanvas.classList.remove('highlight-cursor');
         }
     }
 }
 
-
-// Event Listeners for Highlight Toolbar
+// Event Listeners for Highlight Pop-up
 if (toggleDrawModeBtn) {
-    toggleDrawModeBtn.addEventListener('click', () => {
-        document.body.classList.toggle('highlight-mode');
-        if (highlightToolbar) highlightToolbar.classList.toggle('visible');
-        const isActive = document.body.classList.contains('highlight-mode');
-        toggleDrawModeBtn.classList.toggle('active', isActive);
-
-        if (isActive) {
-            if(highlightToolBtn) highlightToolBtn.click(); // Default to highlight tool
+    toggleDrawModeBtn.addEventListener('click', (e) => {
+        e.stopPropagation(); // Prevent click from closing popup immediately
+        if (highlightPopup) {
+            const isVisible = highlightPopup.classList.contains('visible');
+            if (isVisible) {
+                closeHighlightPopup();
+                // Optionally turn off highlight mode completely when closing via main button
+                // document.body.classList.remove('highlight-mode');
+                // toggleDrawModeBtn.classList.remove('active');
+                // updateCursor();
+            } else {
+                openHighlightPopup();
+                document.body.classList.add('highlight-mode'); // Ensure mode is on
+                toggleDrawModeBtn.classList.add('active');
+                // Set default tool/cursor when opening
+                setActiveColorSwatch(document.querySelector('.color-swatch[data-color="' + currentHighlightColor + '"]'));
+                setDrawMode('highlight');
+            }
         }
-        updateCursor(); // Update cursor when toggling draw mode
     });
 }
-if (highlightToolBtn) {
-    highlightToolBtn.addEventListener('click', () => {
-        drawMode = 'highlight';
-        highlightToolBtn.classList.add('active');
-        if(eraserToolBtn) eraserToolBtn.classList.remove('active');
-        updateCursor(); // Update cursor
+
+function openHighlightPopup() {
+    if(highlightPopup) highlightPopup.classList.add('visible');
+    // Position popup (optional, could refine based on button position)
+}
+
+function closeHighlightPopup() {
+    if(highlightPopup) highlightPopup.classList.remove('visible');
+    // If you want drawing to turn off when popup closes, uncomment below
+    // document.body.classList.remove('highlight-mode');
+    // if(toggleDrawModeBtn) toggleDrawModeBtn.classList.remove('active');
+    // updateCursor();
+}
+
+// Handle clicks on color swatches
+if (colorSwatchesContainer) {
+    colorSwatchesContainer.addEventListener('click', (e) => {
+        if (e.target.classList.contains('color-swatch')) {
+            setActiveColorSwatch(e.target);
+            setDrawMode('highlight'); // Switch to highlight mode when color is picked
+        }
     });
 }
-if (eraserToolBtn) {
-    eraserToolBtn.addEventListener('click', () => {
-        drawMode = 'eraser';
-        eraserToolBtn.classList.add('active');
-        if(highlightToolBtn) highlightToolBtn.classList.remove('active');
-        updateCursor(); // Update cursor
+
+function setActiveColorSwatch(swatchElement) {
+    if (!swatchElement) return;
+    // Remove active class from all swatches
+    colorSwatchesContainer.querySelectorAll('.color-swatch').forEach(sw => sw.classList.remove('active'));
+    // Add active class to the clicked swatch
+    swatchElement.classList.add('active');
+    // Update the current color
+    currentHighlightColor = swatchElement.getAttribute('data-color');
+}
+
+// Handle Eraser button click in popup
+if (eraserToolBtnPopup) {
+    eraserToolBtnPopup.addEventListener('click', () => {
+        setDrawMode('eraser');
     });
 }
-if (colorPicker) {
-    colorPicker.addEventListener('change', () => {
-        if (highlightToolBtn) highlightToolBtn.click(); // Clicks highlight tool, which calls updateCursor
+
+// Function to set drawing mode and update UI
+function setDrawMode(mode) {
+    drawMode = mode;
+    if (mode === 'highlight') {
+        if(eraserToolBtnPopup) eraserToolBtnPopup.classList.remove('active');
+        // Ensure a color swatch is active (might already be)
+        if (!colorSwatchesContainer.querySelector('.color-swatch.active')) {
+             const firstSwatch = colorSwatchesContainer.querySelector('.color-swatch');
+             if (firstSwatch) setActiveColorSwatch(firstSwatch);
+        }
+    } else { // Eraser mode
+        if(eraserToolBtnPopup) eraserToolBtnPopup.classList.add('active');
+        // Deactivate color swatches visually (optional)
+        // colorSwatchesContainer.querySelectorAll('.color-swatch').forEach(sw => sw.classList.remove('active'));
+    }
+    updateCursor();
+}
+
+
+// Handle Brush size slider change
+if (brushSizeSliderPopup) {
+    brushSizeSliderPopup.addEventListener('input', (e) => {
+        currentBrushSize = e.target.value;
+    });
+    // Initialize brush size variable
+    currentBrushSize = brushSizeSliderPopup.value;
+}
+
+// Handle Clear button click in popup
+if (clearHighlightsBtnPopup) {
+    clearHighlightsBtnPopup.addEventListener('click', () => {
+        clearCurrentHighlights();
+        closeHighlightPopup(); // Close popup after clearing
     });
 }
-if (clearHighlightsBtn) clearHighlightsBtn.addEventListener('click', clearCurrentHighlights);
 
 window.addEventListener('resize', () => {
     const img = document.querySelector('.page-image');
     if (img && highlightCanvas) {
         setTimeout(() => { sizeCanvasToImage(img, highlightCanvas); loadHighlights(currentPage); }, 150);
     }
+    closeHighlightPopup(); // Close popup on resize
 });
 
 // --- SEARCH LOGIC ---
-function toggleSearchBox() {
-    if (!searchContainer) return;
-    const isVisible = searchContainer.style.display !== 'none';
-    if (isVisible) {
-        closeSearchBox();
-    } else {
-        searchContainer.style.display = 'flex';
-        if (searchInput) searchInput.focus(); // Focus input when opening
-        if (searchResults) searchResults.innerHTML = ''; // Clear previous results
-    }
-}
-
-function closeSearchBox() {
-    if (!searchContainer) return;
-    searchContainer.style.display = 'none';
-    if (searchInput) searchInput.value = ''; // Clear input on close
-    if (searchResults) searchResults.innerHTML = ''; // Clear results on close
-}
-
-function performSearch() {
-    if (!searchInput || !searchResults || Object.keys(bookTextData).length === 0) return;
-    const searchTerm = searchInput.value.trim().toLowerCase();
-    searchResults.innerHTML = ''; // Clear previous results
-
-    if (searchTerm.length < 2) { // Require at least 2 characters to search
-        const noResultsDiv = document.createElement('div');
-        noResultsDiv.classList.add('no-results');
-        noResultsDiv.textContent = 'Please enter at least 2 characters.';
-        searchResults.appendChild(noResultsDiv);
-        return;
-    }
-
-    const foundPages = [];
-    // Iterate through the bookTextData object (page numbers are keys)
-    for (const pageNumStr in bookTextData) {
-        const pageText = bookTextData[pageNumStr];
-        if (pageText && pageText.toLowerCase().includes(searchTerm)) {
-            foundPages.push(parseInt(pageNumStr, 10)); // Store page number as integer
-        }
-    }
-
-    if (foundPages.length > 0) {
-        foundPages.sort((a, b) => a - b); // Sort page numbers numerically
-        foundPages.forEach(pageNum => {
-            const resultDiv = document.createElement('div');
-            resultDiv.textContent = `Page ${pageNum + 1}`; // Display 1-based page number
-            resultDiv.onclick = () => {
-                goToPage(pageNum); // goToPage uses 0-based index
-                closeSearchBox(); // Close search after clicking result
-            };
-            searchResults.appendChild(resultDiv);
-        });
-    } else {
-        const noResultsDiv = document.createElement('div');
-        noResultsDiv.classList.add('no-results');
-        noResultsDiv.textContent = 'No results found.';
-        searchResults.appendChild(noResultsDiv);
-    }
-}
-
-// Search Event Listeners
+function toggleSearchBox() { /* ... unchanged ... */ if(!searchContainer)return;"none"!==searchContainer.style.display?closeSearchBox():(searchContainer.style.display="flex",searchInput&&searchInput.focus(),searchResults&&(searchResults.innerHTML="")) }
+function closeSearchBox() { /* ... unchanged ... */ searchContainer&&(searchContainer.style.display="none"),searchInput&&(searchInput.value=""),searchResults&&(searchResults.innerHTML="") }
+function performSearch() { /* ... unchanged ... */ if(!searchInput||!searchResults||0===Object.keys(bookTextData).length)return;const e=searchInput.value.trim().toLowerCase();if(searchResults.innerHTML="",e.length<2){const t=document.createElement("div");return t.classList.add("no-results"),t.textContent="Please enter at least 2 characters.",void searchResults.appendChild(t)}const n=[];for(const o in bookTextData){const a=bookTextData[o];a&&a.toLowerCase().includes(e)&&n.push(parseInt(o,10))}if(n.length>0){n.sort((e,t)=>e-t),n.forEach(e=>{const t=document.createElement("div");t.textContent=`Page ${e+1}`,t.onclick=()=>{goToPage(e),closeSearchBox()},searchResults.appendChild(t)})}else{const l=document.createElement("div");l.classList.add("no-results"),l.textContent="No results found.",searchResults.appendChild(l)} }
 if (searchBtn) searchBtn.addEventListener('click', toggleSearchBox);
 if (searchCloseBtn) searchCloseBtn.addEventListener('click', closeSearchBox);
 if (searchInput) {
     searchInput.addEventListener('keydown', (e) => {
-        if (e.key === 'Enter') {
-            performSearch();
-            e.preventDefault(); // Prevent default form submission
-        }
-         if (e.key === 'Escape') {
-             closeSearchBox();
-             e.preventDefault();
-         }
+        if (e.key === 'Enter') { performSearch(); e.preventDefault(); }
+        if (e.key === 'Escape') { closeSearchBox(); e.preventDefault(); }
     });
 }
 
-
 // --- AI HELPER ---
-const aiModal = document.getElementById("aiHelperModal"),
-    aiHelperToggle = document.getElementById("aiHelperToggle"),
-    aiCloseBtn = document.getElementById("aiCloseBtn"),
-    aiResponseEl = document.getElementById("aiResponse"),
-    aiLoadingEl = document.getElementById("aiLoading"),
-    aiChapterTitleEl = document.getElementById("aiChapterTitle");
+const aiModal=document.getElementById("aiHelperModal"),aiHelperToggle=document.getElementById("aiHelperToggle"),aiCloseBtn=document.getElementById("aiCloseBtn"),aiResponseEl=document.getElementById("aiResponse"),aiLoadingEl=document.getElementById("aiLoading"),aiChapterTitleEl=document.getElementById("aiChapterTitle");
 const GEMINI_API_KEY = (typeof config !== 'undefined' && config.geminiApiKey) ? config.geminiApiKey : 'YOUR_API_KEY_HERE';
-async function getImageAsBase64FromCanvas(){const e=document.querySelector(".page-image");if(!e||!e.complete||0===e.naturalWidth)return console.error("Image not ready"),null;try{const t=document.createElement("canvas");t.width=e.naturalWidth,t.height=e.naturalHeight;return t.getContext("2d").drawImage(e,0,0),t.toDataURL("image/png").split(",")[1]}catch(o){return console.error("Canvas error:",o),null}}
+async function getImageAsBase64FromCanvas(){/* ... unchanged ... */ const e=document.querySelector(".page-image");if(!e||!e.complete||0===e.naturalWidth)return console.error("Image not ready"),null;try{const t=document.createElement("canvas");t.width=e.naturalWidth,t.height=e.naturalHeight;return t.getContext("2d").drawImage(e,0,0),t.toDataURL("image/png").split(",")[1]}catch(o){return console.error("Canvas error:",o),null}}
 if(aiHelperToggle)aiHelperToggle.addEventListener("click",()=>{const e=getCurrentChapter();if(aiChapterTitleEl)aiChapterTitleEl.textContent=e?e.title:"Current Page";if(aiResponseEl)aiResponseEl.innerHTML="";if(aiModal)aiModal.style.display="flex"});
 if(aiCloseBtn)aiCloseBtn.addEventListener("click",()=>{if(aiModal)aiModal.style.display="none"});
 if(aiModal)aiModal.addEventListener("click",e=>{if(e.target===aiModal)aiModal.style.display="none"});
-function getCurrentChapter(){if(!config.chapters||0===config.chapters.length)return null;let e=config.chapters[0];for(let t=config.chapters.length-1;t>=0;t--)if(currentPage>=config.chapters[t].page-1){e=config.chapters[t];break}return e}
-async function getAiHelp(e){if(!GEMINI_API_KEY||"YOUR_API_KEY_HERE"===GEMINI_API_KEY)return void(aiResponseEl&&(aiResponseEl.textContent="AI Helper not configured."));if(!aiLoadingEl||!aiResponseEl)return;aiLoadingEl.style.display="block",aiResponseEl.innerHTML="";let t;const n=getCurrentChapter(),o=n?n.title:"this page";try{if("analyze_page"===e){let a=await getImageAsBase64FromCanvas();if(!a)return aiResponseEl.textContent="Could not process page image.",void(aiLoadingEl.style.display="none");t={contents:[{parts:[{text:`Analyze this physics page (from chapter "${o}"). Summarize concepts,explain formulas/diagrams,and give a takeaway for a life science student.`},{inline_data:{mime_type:"image/png",data:a}}]}]}}else{let r;switch(e){case"explain":{const i=window.prompt(`Concept from "${o}" to explain?`,"Pascal's Principle");if(!i)return void(aiLoadingEl.style.display="none");r=`Explain "${i}" from "${o}" simply for life science students.`}break;case"quiz":r=`Generate 2 multiple-choice questions on "${o}". Explain the correct answer (bold it).`;break;case"relate":r=`Provide 2 examples of how "${o}" applies to biology or medicine.`;break;default:return void(aiLoadingEl.style.display="none")}t={contents:[{parts:[{text:r}]}]}}const s=`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=${GEMINI_API_KEY}`;const u=await fetch(s,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(t)});if(!u.ok){let p=u.statusText;try{p=(await u.json()).error.message||p}catch(g){}throw new Error(`API error (${u.status}): ${p}`)}const m=await u.json();if(!m.candidates||0===m.candidates.length||!m.candidates[0].content||!m.candidates[0].content.parts||0===m.candidates[0].content.parts.length){let f="Unknown";if(m.candidates&&m.candidates[0]&&m.candidates[0].finishReason)f=m.candidates[0].finishReason;return console.warn("AI response missing content. Reason:",f,m),void(aiResponseEl.textContent=`Response was blocked or empty. Reason: ${f}.`)}const y=m.candidates[0].content.parts[0].text;"undefined"!=typeof marked?aiResponseEl.innerHTML=marked.parse(y):aiResponseEl.innerText=y,window.MathJax&&MathJax.typesetPromise([aiResponseEl]).catch(b=>console.error("MathJax error:",b))}catch(w){console.error("AI Helper Error:",w),aiResponseEl.textContent=`Error: ${w.message}`}finally{aiLoadingEl.style.display="none"}}
+function getCurrentChapter(){/* ... unchanged ... */ if(!config.chapters||0===config.chapters.length)return null;let e=config.chapters[0];for(let t=config.chapters.length-1;t>=0;t--)if(currentPage>=config.chapters[t].page-1){e=config.chapters[t];break}return e}
+async function getAiHelp(e){/* ... unchanged ... */ if(!GEMINI_API_KEY||"YOUR_API_KEY_HERE"===GEMINI_API_KEY)return void(aiResponseEl&&(aiResponseEl.textContent="AI Helper not configured."));if(!aiLoadingEl||!aiResponseEl)return;aiLoadingEl.style.display="block",aiResponseEl.innerHTML="";let t;const n=getCurrentChapter(),o=n?n.title:"this page";try{if("analyze_page"===e){let a=await getImageAsBase64FromCanvas();if(!a)return aiResponseEl.textContent="Could not process page image.",void(aiLoadingEl.style.display="none");t={contents:[{parts:[{text:`Analyze this physics page (from chapter "${o}"). Summarize concepts,explain formulas/diagrams,and give a takeaway for a life science student.`},{inline_data:{mime_type:"image/png",data:a}}]}]}}else{let r;switch(e){case"explain":{const i=window.prompt(`Concept from "${o}" to explain?`,"Pascal's Principle");if(!i)return void(aiLoadingEl.style.display="none");r=`Explain "${i}" from "${o}" simply for life science students.`}break;case"quiz":r=`Generate 2 multiple-choice questions on "${o}". Explain the correct answer (bold it).`;break;case"relate":r=`Provide 2 examples of how "${o}" applies to biology or medicine.`;break;default:return void(aiLoadingEl.style.display="none")}t={contents:[{parts:[{text:r}]}]}}const s=`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=${GEMINI_API_KEY}`;const u=await fetch(s,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(t)});if(!u.ok){let p=u.statusText;try{p=(await u.json()).error.message||p}catch(g){}throw new Error(`API error (${u.status}): ${p}`)}const m=await u.json();if(!m.candidates||0===m.candidates.length||!m.candidates[0].content||!m.candidates[0].content.parts||0===m.candidates[0].content.parts.length){let f="Unknown";if(m.candidates&&m.candidates[0]&&m.candidates[0].finishReason)f=m.candidates[0].finishReason;return console.warn("AI response missing content. Reason:",f,m),void(aiResponseEl.textContent=`Response was blocked or empty. Reason: ${f}.`)}const y=m.candidates[0].content.parts[0].text;"undefined"!=typeof marked?aiResponseEl.innerHTML=marked.parse(y):aiResponseEl.innerText=y,window.MathJax&&MathJax.typesetPromise([aiResponseEl]).catch(b=>console.error("MathJax error:",b))}catch(w){console.error("AI Helper Error:",w),aiResponseEl.textContent=`Error: ${w.message}`}finally{aiLoadingEl.style.display="none"}}
 
 // --- Translate Page ---
 const translateBtn=document.getElementById("translateBtn"),hideTranslateBtn=document.getElementById("hideTranslateBtn");
-async function translateCurrentPage(){const e=document.getElementById("overlay-translation");if(!e)return;e.style.display="block",e.textContent="🔄 Loading text...";const t=String(currentPage),n=bookTextData[t];if(void 0===n)return void(e.textContent="⚠️ Text data for this page is unavailable.");if(!n||!n.trim())return void(e.textContent="ℹ️ No translatable text found for this page.");if(!GEMINI_API_KEY||"YOUR_API_KEY_HERE"===GEMINI_API_KEY)return void(e.innerText="⚠️ Translation unavailable: No API key.\n\nPreview:\n\n"+n.slice(0,1500)+(n.length>1500?"...":""));e.textContent="🌐 Translating to Arabic...";try{const o=`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=${GEMINI_API_KEY}`,a={contents:[{parts:[{text:`Translate the following English physics text into clear, educational Arabic for university-level biology/medical students. Preserve equations and scientific terms. Do not add commentary.\n\n---START---\n${n}\n---END---`}]}]};const l=await fetch(o,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(a)});if(!l.ok){let s=l.statusText;try{s=(await l.json()).error.message||s}catch(r){}throw new Error(`API error (${l.status}): ${s}`)}const d=await l.json();if(!d.candidates||0===d.candidates.length||!d.candidates[0].content||!d.candidates[0].content.parts||0===d.candidates[0].content.parts.length){let c="Unknown";if(d.candidates&&d.candidates[0]&&d.candidates[0].finishReason)c=d.candidates[0].finishReason;return console.warn("Translate response missing. Reason:",c,d),void(e.textContent=`❌ Translation failed. Reason: ${c}.`)}const u=d.candidates[0].content.parts[0].text;e.innerText=u,e.style.display="block",hideTranslateBtn&&(hideTranslateBtn.style.display="inline-block"),window.MathJax&&MathJax.typesetPromise([e]).catch(p=>console.error("MathJax translate error:",p))}catch(g){console.error("Translate error:",g),e.textContent=`❌ Translation Error: ${g.message}`}}
+async function translateCurrentPage(){/* ... unchanged ... */ const e=document.getElementById("overlay-translation");if(!e)return;e.style.display="block",e.textContent="🔄 Loading text...";const t=String(currentPage),n=bookTextData[t];if(void 0===n)return void(e.textContent="⚠️ Text data for this page is unavailable.");if(!n||!n.trim())return void(e.textContent="ℹ️ No translatable text found for this page.");if(!GEMINI_API_KEY||"YOUR_API_KEY_HERE"===GEMINI_API_KEY)return void(e.innerText="⚠️ Translation unavailable: No API key.\n\nPreview:\n\n"+n.slice(0,1500)+(n.length>1500?"...":""));e.textContent="🌐 Translating to Arabic...";try{const o=`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=${GEMINI_API_KEY}`,a={contents:[{parts:[{text:`Translate the following English physics text into clear, educational Arabic for university-level biology/medical students. Preserve equations and scientific terms. Do not add commentary.\n\n---START---\n${n}\n---END---`}]}]};const l=await fetch(o,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(a)});if(!l.ok){let s=l.statusText;try{s=(await l.json()).error.message||s}catch(r){}throw new Error(`API error (${l.status}): ${s}`)}const d=await l.json();if(!d.candidates||0===d.candidates.length||!d.candidates[0].content||!d.candidates[0].content.parts||0===d.candidates[0].content.parts.length){let c="Unknown";if(d.candidates&&d.candidates[0]&&d.candidates[0].finishReason)c=d.candidates[0].finishReason;return console.warn("Translate response missing. Reason:",c,d),void(e.textContent=`❌ Translation failed. Reason: ${c}.`)}const u=d.candidates[0].content.parts[0].text;e.innerText=u,e.style.display="block",hideTranslateBtn&&(hideTranslateBtn.style.display="inline-block"),window.MathJax&&MathJax.typesetPromise([e]).catch(p=>console.error("MathJax translate error:",p))}catch(g){console.error("Translate error:",g),e.textContent=`❌ Translation Error: ${g.message}`}}
 if(translateBtn)translateBtn.addEventListener("click",translateCurrentPage);
 if(hideTranslateBtn)hideTranslateBtn.addEventListener("click",()=>{const e=document.getElementById("overlay-translation");if(e)e.style.display="none";if(hideTranslateBtn)hideTranslateBtn.style.display="none"});
 
