@@ -68,6 +68,12 @@ body {
 }
 .highlight-mode #highlight-canvas {
     pointer-events: auto; /* Enable drawing only in highlight mode */
+    /* Default cursor for highlight mode will be set by JS/CSS */
+}
+/* Custom cursor for highlighter tool */
+.highlight-cursor {
+    /* SVG Data URL for a vertical dashed rectangle */
+    cursor: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"><rect x="9" y="2" width="6" height="20" fill="none" stroke="black" stroke-width="1.5" stroke-dasharray="4 2"/></svg>') 12 12, crosshair;
 }
 /* --- END HIGHLIGHT STYLES --- */
 
@@ -145,10 +151,6 @@ button:disabled {
 }
 
 /* --- HIGHLIGHT TOOLBAR STYLES --- */
-#toggle-draw-mode-btn.active {
-    box-shadow: 0 0 0 3px #ffc107;
-    background-color: #005fa3;
-}
 .highlight-toolbar {
     display: none; /* Hidden by default */
     align-items: center;
@@ -168,8 +170,14 @@ button:disabled {
     border: 1px solid #ccc;
     padding: 4px;
 }
+/* Glow for the main toggle button when draw mode is active */
+#toggle-draw-mode-btn.active {
+     box-shadow: 0 0 0 3px #ffc107; /* Yellow glow */
+     background-color: #005fa3;
+}
+/* Glow for active tool within the highlight toolbar */
 .highlight-toolbar .tool-btn.active {
-    box-shadow: 0 0 0 3px #ffc107; /* Yellow glow for active tool */
+    box-shadow: 0 0 0 3px #ffc107; /* Yellow glow */
     background-color: #005fa3;
 }
 /* --- END HIGHLIGHT TOOLBAR STYLES --- */
