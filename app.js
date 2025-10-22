@@ -162,8 +162,8 @@ function renderPage() {
     img.onload = () => {
         sizeCanvasToImage(img, canvas);
         ctx = canvas.getContext('2d');
-        setupDrawingListeners(canvas);
-        loadHighlights(currentPage);
+        setupDrawingListeners(canvas); // Setup listeners AFTER sizing and context
+        loadHighlights(currentPage); // Load highlights AFTER sizing and context
          // Apply initial cursor state based on draw mode
          updateCursor(); // Call updateCursor after setup
     };
@@ -351,19 +351,39 @@ function goToPage(page){
 }
 window.goToPage = goToPage;
 
-// ---------- Input & touch ----------
+// ---------- Input & touch (For SWIPING ONLY) ----------
 let touchStartX = 0, touchEndX = 0;
 const swipeThreshold = 50;
-function handleTouchStart(e){ touchStartX = e.touches[0].clientX; }
-function handleTouchEnd(e){ touchEndX = e.changedTouches[0].clientX; handleSwipeGesture(); }
+
+// *** MODIFIED handleTouchStart for swiping ***
+function handleTouchStartSwipe(e){
+    // Only register swipe start if highlight mode is OFF
+    if (!document.body.classList.contains('highlight-mode')) {
+        touchStartX = e.touches[0].clientX;
+    } else {
+        touchStartX = null; // Prevent accidental swipe detection if mode is toggled mid-touch
+    }
+}
+// *** MODIFIED handleTouchEnd for swiping ***
+function handleTouchEndSwipe(e){
+    // Only register swipe end if highlight mode is OFF and touchStartX was set
+    if (!document.body.classList.contains('highlight-mode') && touchStartX !== null) {
+        touchEndX = e.changedTouches[0].clientX;
+        handleSwipeGesture();
+    }
+}
+
+// *** handleSwipeGesture remains mostly the same, but relies on valid touchStartX/EndX ***
 function handleSwipeGesture(){
-    // Only allow swiping if highlight mode is OFF
-    if (document.body.classList.contains('highlight-mode')) return;
+    if (touchStartX === null) return; // Exit if swipe didn't start properly
     const diff = touchEndX - touchStartX;
     if (Math.abs(diff) > swipeThreshold){
          if(diff > 0){ prevPage(); } else { nextPage(); }
     }
+    // Reset start coordinate after swipe attempt
+    touchStartX = null;
 }
+
 
 // ---------- Modals (PhET, Video) ----------
 function openPhetModal(){
@@ -414,14 +434,19 @@ function getDrawPosition(e, canvas) {
     const rect = canvas.getBoundingClientRect();
     const scaleX = canvas.width / rect.width;
     const scaleY = canvas.height / rect.height;
-    const clientX = e.touches ? e.touches[0].clientX : e.clientX;
-    const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+    // Use pageX/pageY for touch events if available, otherwise clientX/Y
+    const clientX = e.touches ? (e.touches[0].pageX - window.scrollX) : e.clientX;
+    const clientY = e.touches ? (e.touches[0].pageY - window.scrollY) : e.clientY;
+
     return { x: (clientX - rect.left) * scaleX, y: (clientY - rect.top) * scaleY };
 }
 
+
 function startDrawing(e) {
-    if (!highlightCanvas || !ctx || !document.body.classList.contains('highlight-mode')) return;
-    if (e.touches) e.preventDefault();
+    // Check if the event target is the canvas itself, not something else like the image behind it
+    if (!highlightCanvas || !ctx || !document.body.classList.contains('highlight-mode') || e.target !== highlightCanvas) return;
+
+    if (e.touches) e.preventDefault(); // Prevent scroll only if drawing starts on canvas
     isDrawing = true;
     const pos = getDrawPosition(e, highlightCanvas);
     [lastX, lastY] = [pos.x, pos.y];
@@ -458,7 +483,15 @@ function stopDrawing(e) {
     isDrawing = false; // Set drawing to false immediately
 
     if (drawMode === 'highlight') {
-        const pos = getDrawPosition(e, highlightCanvas);
+         // Need to determine the end position accurately
+         let pos;
+         // For touchend, changedTouches is used; for mouseup, just use event coords
+         if (e.changedTouches && e.changedTouches.length > 0) {
+             pos = getDrawPosition({ touches: e.changedTouches }, highlightCanvas);
+         } else {
+             pos = getDrawPosition(e, highlightCanvas);
+         }
+
 
         ctx.beginPath(); // Start a new path for the highlight line
         ctx.globalCompositeOperation = 'source-over'; // Normal drawing
@@ -483,15 +516,20 @@ function setupDrawingListeners(canvas) {
     canvas.removeEventListener('touchstart', startDrawing);
     canvas.removeEventListener('touchmove', draw);
     canvas.removeEventListener('touchend', stopDrawing);
+    canvas.removeEventListener('touchcancel', stopDrawing); // Also stop on touchcancel
+
 
     // Add new listeners
     canvas.addEventListener('mousedown', startDrawing);
     canvas.addEventListener('mousemove', draw);
     canvas.addEventListener('mouseup', stopDrawing);
     canvas.addEventListener('mouseleave', stopDrawing); // Important to stop drawing if mouse leaves canvas
+    // Use non-passive listeners for touch to allow preventDefault()
     canvas.addEventListener('touchstart', startDrawing, { passive: false });
     canvas.addEventListener('touchmove', draw, { passive: false });
     canvas.addEventListener('touchend', stopDrawing);
+    canvas.addEventListener('touchcancel', stopDrawing); // Handle cancelled touches
+
 }
 
 function saveHighlights(pageNumber) {
@@ -700,12 +738,16 @@ if(hideTranslateBtn)hideTranslateBtn.addEventListener("click",()=>{const e=docum
 // --- Initial Setup ---
 document.addEventListener("DOMContentLoaded", () => {
     loadBookText(); // Start loading book text early
+
     const flipbookElement = document.getElementById('flipbook');
     if (flipbookElement) {
-        // Use non-passive listeners only if needed (for preventDefault with drawing)
-        flipbookElement.addEventListener("touchstart", handleTouchStart, { passive: false });
-        flipbookElement.addEventListener("touchend", handleTouchEnd, { passive: false });
+        // *** Attach SWIPE listeners to the main flipbook element ***
+        flipbookElement.addEventListener("touchstart", handleTouchStartSwipe, { passive: true }); // Use passive for swipe
+        flipbookElement.addEventListener("touchend", handleTouchEndSwipe, { passive: true }); // Use passive for swipe
+    } else {
+        console.error("Flipbook element not found");
     }
+
     const pageCounterEl = document.getElementById('pageCounter');
     const pageInputEl = document.getElementById('pageInput');
     if (pageCounterEl) pageCounterEl.textContent = `Page ${currentPage + 1} / ${totalPages}`;
