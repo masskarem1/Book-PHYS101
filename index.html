@@ -41,6 +41,9 @@
         <button onclick="lastPage()">⏭ Last</button>
         <button id="toggle-draw-mode-btn">✏️ Draw</button>
         <button id="translateBtn">🌐 Translate Page</button>
+        <!-- *** ADD THIS LINE BACK *** -->
+        <button id="hideTranslateBtn" style="display:none;background:#b30000;">❌ Hide Translation</button>
+        <!-- *** END FIX *** -->
         <button id="phetBtn" style="display:none;">🔬 Launch Simulation</button>
         <button id="videoBtn" style="display:none;">▶️ Watch Video</button>
     </div>
@@ -51,11 +54,11 @@
         <!-- *** THIS IS THE FIX *** -->
         <!-- Added Light Blue and Red options -->
         <select id="highlight-color">
-            <option value="rgba(255, 255, 0, 0.4)" selected>Yellow</option>
-            <option value="rgba(0, 255, 0, 0.4)">Green</option>
-            <option value="rgba(173, 216, 230, 0.4)">Blue</option> <!-- NEW -->
-            <option value="rgba(255, 105, 180, 0.4)">Pink</option>
-            <option value="rgba(255, 0, 0, 0.4)">Red</option> <!-- NEW -->
+            <option value="rgba(255, 255, 0, 0.2)" selected>Yellow</option>
+            <option value="rgba(0, 255, 0, 0.2)">Green</option>
+            <option value="rgba(173, 216, 230, 0.2)">Blue</option> <!-- NEW -->
+            <option value="rgba(255, 105, 180, 0.2)">Pink</option>
+            <option value="rgba(255, 0, 0, 0.2)">Red</option> <!-- NEW -->
         </select>
         <!-- *** END FIX *** -->
         <label for="brush-size">Size:</label>
@@ -97,6 +100,7 @@
 <script src="app.js" defer></script>
 </body>
 </html>
+
 
 
 
