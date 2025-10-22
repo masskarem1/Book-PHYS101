@@ -293,11 +293,23 @@ function closeIndexMenu(){ if (!indexMenu || !indexToggle) return; indexMenu.sty
 if (indexToggle) indexToggle.addEventListener("click", e=>{ e.stopPropagation(); indexMenu.style.display === "flex" ? closeIndexMenu() : openIndexMenu(); });
 if (indexMenu) indexMenu.addEventListener("click", e => e.stopPropagation());
 
-document.addEventListener("click", e=>{
-    if (indexMenu && indexToggle && indexMenu.style.display === "flex" && !indexMenu.contains(e.target) && !indexToggle.contains(e.target)) { closeIndexMenu(); }
-    if (searchContainer && searchContainer.style.display !== 'none' && !searchContainer.contains(e.target) && e.target !== searchBtn) { closeSearchBox(); }
-    if (highlightPopup && toggleDrawModeBtn && highlightPopup.classList.contains('visible') && !highlightPopup.contains(e.target) && e.target !== toggleDrawModeBtn) { closeHighlightPopup(); }
+// Global click listener to close popups
+document.addEventListener("click", e => {
+    // Close Index Menu
+    if (indexMenu && indexToggle && indexMenu.style.display === "flex" && !indexMenu.contains(e.target) && !indexToggle.contains(e.target)) {
+        closeIndexMenu();
+    }
+    // Close Search Box
+    if (searchContainer && searchContainer.style.display !== 'none' && !searchContainer.contains(e.target) && e.target !== searchBtn) {
+        closeSearchBox();
+    }
+    // Close Highlight Popup (only if click is outside popup AND outside toggle button)
+    if (highlightPopup && toggleDrawModeBtn && highlightPopup.classList.contains('visible') && !highlightPopup.contains(e.target) && e.target !== toggleDrawModeBtn) {
+        closeHighlightPopup();
+        // Keep draw mode active even if popup closes via outside click
+    }
 });
+
 function goToPage(page){ if (page >= 0 && page < images.length){ currentPage = page; renderPage(); closeIndexMenu(); } }
 window.goToPage = goToPage;
 
@@ -377,14 +389,22 @@ function getDrawPosition(e, canvas) {
     const rect = canvas.getBoundingClientRect();
     const scaleXCanvas = canvas.width / rect.width;
     const scaleYCanvas = canvas.height / rect.height;
-    const clientX = e.touches ? (e.touches[0].pageX - window.scrollX) : e.clientX;
-    const clientY = e.touches ? (e.touches[0].pageY - window.scrollY) : e.clientY;
+    // Use pageX/Y if available for touch, adjust for scroll, fallback to clientX/Y
+    let clientX, clientY;
+    if (e.touches && e.touches.length > 0) {
+        clientX = e.touches[0].pageX - window.scrollX;
+        clientY = e.touches[0].pageY - window.scrollY;
+    } else if (e.changedTouches && e.changedTouches.length > 0) { // For touchend
+         clientX = e.changedTouches[0].pageX - window.scrollX;
+         clientY = e.changedTouches[0].pageY - window.scrollY;
+    } else {
+        clientX = e.clientX;
+        clientY = e.clientY;
+    }
     const screenX = clientX - rect.left;
     const screenY = clientY - rect.top;
     const canvasXUnscaled = screenX * scaleXCanvas;
     const canvasYUnscaled = screenY * scaleYCanvas;
-     // This simplified version works if the canvas itself isn't directly transformed
-     // by the pinch/pan, only its parent (.page-wrap).
     return { x: canvasXUnscaled, y: canvasYUnscaled };
 }
 
@@ -409,9 +429,18 @@ function draw(e) {
 function stopDrawing(e) {
     if (!isDrawing) return;
     isDrawing = false;
-    let pos;
-    if (e.changedTouches && e.changedTouches.length > 0) { pos = getDrawPosition({ touches: e.changedTouches }, highlightCanvas); } else { pos = getDrawPosition(e, highlightCanvas); }
-    if (drawMode === 'highlight') { ctx.beginPath(); ctx.globalCompositeOperation = 'source-over'; ctx.strokeStyle = currentHighlightColor; ctx.lineWidth = currentBrushSize; ctx.lineCap = 'butt'; ctx.moveTo(lastX, lastY); ctx.lineTo(pos.x, lastY); ctx.stroke(); }
+    let pos = getDrawPosition(e, highlightCanvas); // Use getDrawPosition for consistency
+
+    if (drawMode === 'highlight') {
+        ctx.beginPath();
+        ctx.globalCompositeOperation = 'source-over';
+        ctx.strokeStyle = currentHighlightColor;
+        ctx.lineWidth = currentBrushSize;
+        ctx.lineCap = 'butt'; // Use flat ends
+        ctx.moveTo(lastX, lastY); // Start point
+        ctx.lineTo(pos.x, lastY); // End point (same Y coordinate)
+        ctx.stroke();
+    }
     saveHighlights(currentPage);
     if (hammerManager) { hammerManager.get('pinch').set({ enable: true }); hammerManager.get('pan').set({ enable: true }); }
 }
@@ -424,41 +453,43 @@ function setupDrawingListeners(canvas) {
 
 function saveHighlights(pageNumber) { if (!highlightCanvas) return; requestAnimationFrame(() => { try { localStorage.setItem(`flipbook-highlights-page-${pageNumber}`, highlightCanvas.toDataURL()); } catch (e) { console.error("Save highlights error:", e); if (e.name === 'QuotaExceededError') alert('Storage full.'); } }); }
 
-// Corrected loadHighlights function
 function loadHighlights(pageNumber) {
     if (!highlightCanvas || !ctx) return;
     const dataUrl = localStorage.getItem(`flipbook-highlights-page-${pageNumber}`);
-    ctx.clearRect(0, 0, highlightCanvas.width, highlightCanvas.height); // Clear canvas first
+    ctx.clearRect(0, 0, highlightCanvas.width, highlightCanvas.height);
     if (dataUrl) {
-        const img = new Image(); // Create a new Image object
-        img.onload = () => { // Define what happens when the image data is loaded
-            ctx.drawImage(img, 0, 0); // Draw the saved image onto the canvas
-        };
-        img.onerror = () => { // Define what happens if the image data fails to load
-             console.error("Failed load highlight image for page", pageNumber);
-             localStorage.removeItem(`flipbook-highlights-page-${pageNumber}`); // Remove potentially corrupted data
-        }; // Added missing closing parenthesis
-        img.src = dataUrl; // Set the source of the image object to the saved data URL
-    } // Added missing closing curly brace
-} // Added missing closing curly brace
-
+        const img = new Image();
+        img.onload = () => { ctx.drawImage(img, 0, 0); };
+        img.onerror = () => { console.error("Failed load highlight", pageNumber); localStorage.removeItem(`flipbook-highlights-page-${pageNumber}`); };
+        img.src = dataUrl;
+    }
+}
 
 function clearCurrentHighlights() { if (!ctx) return; if (confirm("Erase all highlights on this page?")) { ctx.clearRect(0, 0, highlightCanvas.width, highlightCanvas.height); localStorage.removeItem(`flipbook-highlights-page-${currentPage}`); } }
 function updateCursor() { if (!highlightCanvas) return; const e = document.body.classList.contains("highlight-mode"); e ? "highlight" === drawMode ? (highlightCanvas.style.cursor = "", highlightCanvas.classList.add("highlight-cursor")) : (highlightCanvas.style.cursor = "cell", highlightCanvas.classList.remove("highlight-cursor")) : (highlightCanvas.style.cursor = "default", highlightCanvas.classList.remove("highlight-cursor")) }
 
-// Event Listeners for Highlight Pop-up
+// --- Event Listeners for Highlight Pop-up (Updated) ---
 if (toggleDrawModeBtn) {
     toggleDrawModeBtn.addEventListener('click', (e) => {
-        e.stopPropagation();
+        e.stopPropagation(); // Prevent this click from immediately closing the popup via the document listener
         if (highlightPopup) {
             const isVisible = highlightPopup.classList.contains('visible');
             if (isVisible) {
-                closeHighlightPopup(); document.body.classList.remove('highlight-mode'); toggleDrawModeBtn.classList.remove('active'); updateCursor();
+                // If popup is visible, clicking button turns everything off
+                closeHighlightPopup();
+                document.body.classList.remove('highlight-mode');
+                toggleDrawModeBtn.classList.remove('active');
+                updateCursor();
             } else {
-                openHighlightPopup(); document.body.classList.add('highlight-mode'); toggleDrawModeBtn.classList.add('active');
+                // If popup is hidden, clicking button turns mode on and shows popup
+                openHighlightPopup();
+                document.body.classList.add('highlight-mode');
+                toggleDrawModeBtn.classList.add('active');
+                // Ensure a tool is selected visually and logically
                 let activeSwatch = colorSwatchesContainer && colorSwatchesContainer.querySelector('.color-swatch.active');
-                if (!activeSwatch && colorSwatchesContainer) activeSwatch = colorSwatchesContainer.querySelector('.color-swatch');
-                setActiveColorSwatch(activeSwatch); setDrawMode('highlight');
+                if (!activeSwatch && colorSwatchesContainer) activeSwatch = colorSwatchesContainer.querySelector('.color-swatch'); // Default to first color
+                setActiveColorSwatch(activeSwatch); // Set color internally
+                setDrawMode('highlight'); // Set mode and update buttons/cursor
             }
         }
     });
@@ -467,9 +498,25 @@ if (toggleDrawModeBtn) {
 function openHighlightPopup() { if(highlightPopup) highlightPopup.classList.add('visible'); }
 function closeHighlightPopup() { if(highlightPopup) highlightPopup.classList.remove('visible'); }
 
-if (colorSwatchesContainer) { colorSwatchesContainer.addEventListener('click', (e) => { if (e.target.classList.contains('color-swatch')) { setActiveColorSwatch(e.target); setDrawMode('highlight'); } }); }
+// Handle clicks on color swatches - CLOSE POPUP
+if (colorSwatchesContainer) {
+    colorSwatchesContainer.addEventListener('click', (e) => {
+        if (e.target.classList.contains('color-swatch')) {
+            setActiveColorSwatch(e.target);
+            setDrawMode('highlight');
+            closeHighlightPopup(); // Close after selection
+        }
+    });
+}
 function setActiveColorSwatch(swatchElement) { if (!swatchElement || !colorSwatchesContainer) return; colorSwatchesContainer.querySelectorAll('.color-swatch').forEach(sw => sw.classList.remove('active')); swatchElement.classList.add('active'); currentHighlightColor = swatchElement.getAttribute('data-color'); }
-if (eraserToolBtnPopup) eraserToolBtnPopup.addEventListener('click', () => { setDrawMode('eraser'); });
+
+// Handle Eraser button click in popup - CLOSE POPUP
+if (eraserToolBtnPopup) {
+    eraserToolBtnPopup.addEventListener('click', () => {
+        setDrawMode('eraser');
+        closeHighlightPopup(); // Close after selection
+    });
+}
 function setDrawMode(mode) { drawMode = mode; if (mode === 'highlight') { if(eraserToolBtnPopup) eraserToolBtnPopup.classList.remove('active'); const activeSwatch = colorSwatchesContainer && colorSwatchesContainer.querySelector('.color-swatch[data-color="' + currentHighlightColor + '"]'); if (activeSwatch && !activeSwatch.classList.contains('active')) { setActiveColorSwatch(activeSwatch); } else if (colorSwatchesContainer && !colorSwatchesContainer.querySelector('.color-swatch.active')) { const targetSwatch = colorSwatchesContainer.querySelector('.color-swatch[data-color="' + currentHighlightColor + '"]') || colorSwatchesContainer.querySelector('.color-swatch'); if(targetSwatch) setActiveColorSwatch(targetSwatch); } } else { if(eraserToolBtnPopup) eraserToolBtnPopup.classList.add('active'); if (colorSwatchesContainer) colorSwatchesContainer.querySelectorAll('.color-swatch').forEach(sw => sw.classList.remove('active')); } updateCursor(); }
 if (brushSizeSliderPopup) { brushSizeSliderPopup.addEventListener('input', (e) => { currentBrushSize = e.target.value; }); currentBrushSize = brushSizeSliderPopup.value; }
 if (clearHighlightsBtnPopup) clearHighlightsBtnPopup.addEventListener('click', () => { clearCurrentHighlights(); closeHighlightPopup(); });
