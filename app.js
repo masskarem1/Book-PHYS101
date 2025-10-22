@@ -49,6 +49,9 @@ async function loadBookText() {
         if (!res.ok) throw new Error("book-text.json not found");
         bookTextData = await res.json();
         console.log("Book text loaded successfully.");
+         // Enable search button only after text is loaded
+         const searchBtn = document.getElementById('searchBtn');
+         if (searchBtn) searchBtn.disabled = false;
     } catch (err) {
         console.error("Could not load book text:", err);
         const translateBtn = document.getElementById('translateBtn');
@@ -59,6 +62,10 @@ async function loadBookText() {
             translateBtn.style.backgroundColor = '#aaa';
             translateBtn.style.cursor = 'not-allowed';
         }
+         // Disable search button if text loading fails
+         const searchBtn = document.getElementById('searchBtn');
+         if (searchBtn) searchBtn.disabled = true;
+
     }
 }
 
@@ -95,6 +102,14 @@ const colorPicker = document.getElementById('highlight-color');
 const brushSizeSlider = document.getElementById('brush-size');
 const clearHighlightsBtn = document.getElementById('clear-highlights-btn');
 let highlightCanvas, ctx, isDrawing = false, drawMode = 'highlight', lastX = 0, lastY = 0;
+
+// --- SEARCH VARIABLES ---
+const searchBtn = document.getElementById('searchBtn');
+const searchContainer = document.getElementById('searchContainer');
+const searchInput = document.getElementById('searchInput');
+const searchCloseBtn = document.getElementById('searchCloseBtn');
+const searchResults = document.getElementById('searchResults');
+if (searchBtn) searchBtn.disabled = true; // Disable initially until book text loads
 
 function getYoutubeEmbedUrl(url) {
     try {
@@ -179,6 +194,8 @@ function renderPage() {
     const hideBtn = document.getElementById('hideTranslateBtn');
     if (hideBtn) hideBtn.style.display = 'none';
 
+    // Close search box when navigating
+    closeSearchBox();
     preloadImages();
 }
 
@@ -311,11 +328,15 @@ document.addEventListener("click", e=>{
     if (indexMenu && indexToggle && indexMenu.style.display === "flex" && !indexMenu.contains(e.target) && !indexToggle.contains(e.target)) {
          closeIndexMenu();
     }
+    // Close search results if clicking outside the search area
+    if (searchContainer && searchContainer.style.display !== 'none' && !searchContainer.contains(e.target) && e.target !== searchBtn) {
+        closeSearchBox();
+    }
 });
 function goToPage(page){
     if (page >= 0 && page < images.length){
         currentPage = page;
-        renderPage();
+        renderPage(); // renderPage now also closes search
         closeIndexMenu();
     }
 }
@@ -396,7 +417,6 @@ function startDrawing(e) {
     const pos = getDrawPosition(e, highlightCanvas);
     [lastX, lastY] = [pos.x, pos.y];
 
-    // For the eraser, draw a starting dot for immediate feedback.
     if (drawMode === 'eraser') {
         ctx.beginPath();
         ctx.globalCompositeOperation = 'destination-out'; // Erase mode
@@ -409,8 +429,6 @@ function startDrawing(e) {
 function draw(e) {
     if (!isDrawing || !ctx) return;
     if (e.touches) e.preventDefault();
-
-    // Only draw freeform lines when erasing
     if (drawMode === 'eraser') {
         const pos = getDrawPosition(e, highlightCanvas);
         ctx.beginPath();
@@ -424,14 +442,12 @@ function draw(e) {
         ctx.stroke();
         [lastX, lastY] = [pos.x, pos.y];
     }
-    // For 'highlight' mode, do nothing during mouse/touch move
 }
 
 function stopDrawing(e) {
     if (!isDrawing) return;
     isDrawing = false; // Set drawing to false immediately
 
-    // Only draw the final line if in highlight mode
     if (drawMode === 'highlight') {
         const pos = getDrawPosition(e, highlightCanvas);
 
@@ -441,19 +457,15 @@ function stopDrawing(e) {
         ctx.lineWidth = brushSizeSlider.value;
         ctx.lineCap = 'butt'; // Use flat ends for highlighter effect
 
-        // Draw a straight horizontal line from start Y to end X, end Y
         ctx.moveTo(lastX, lastY);
         ctx.lineTo(pos.x, lastY); // Only change X, keep Y the same as start
         ctx.stroke();
     }
-
     saveHighlights(currentPage); // Save after drawing is complete
 }
 
-
 function setupDrawingListeners(canvas) {
     if (!canvas) return;
-    // Ensure old listeners are removed before adding new ones
     canvas.removeEventListener('mousedown', startDrawing);
     canvas.removeEventListener('mousemove', draw);
     canvas.removeEventListener('mouseup', stopDrawing);
@@ -462,11 +474,10 @@ function setupDrawingListeners(canvas) {
     canvas.removeEventListener('touchmove', draw);
     canvas.removeEventListener('touchend', stopDrawing);
 
-    // Add new listeners
     canvas.addEventListener('mousedown', startDrawing);
     canvas.addEventListener('mousemove', draw);
     canvas.addEventListener('mouseup', stopDrawing);
-    canvas.addEventListener('mouseleave', stopDrawing); // Important to stop drawing if mouse leaves canvas
+    canvas.addEventListener('mouseleave', stopDrawing);
     canvas.addEventListener('touchstart', startDrawing, { passive: false });
     canvas.addEventListener('touchmove', draw, { passive: false });
     canvas.addEventListener('touchend', stopDrawing);
@@ -474,15 +485,12 @@ function setupDrawingListeners(canvas) {
 
 function saveHighlights(pageNumber) {
     if (!highlightCanvas) return;
-    requestAnimationFrame(() => { // Ensure drawing is complete before saving
+    requestAnimationFrame(() => {
         try {
-            const dataUrl = highlightCanvas.toDataURL();
-            localStorage.setItem(`flipbook-highlights-page-${pageNumber}`, dataUrl);
+            localStorage.setItem(`flipbook-highlights-page-${pageNumber}`, highlightCanvas.toDataURL());
         } catch (e) {
             console.error("Failed to save highlights:", e);
-            if (e.name === 'QuotaExceededError') {
-                alert('Could not save highlights. Browser storage might be full.');
-            }
+            if (e.name === 'QuotaExceededError') alert('Could not save highlights. Browser storage is full.');
         }
     });
 }
@@ -490,15 +498,13 @@ function saveHighlights(pageNumber) {
 function loadHighlights(pageNumber) {
     if (!highlightCanvas || !ctx) return;
     const dataUrl = localStorage.getItem(`flipbook-highlights-page-${pageNumber}`);
-    ctx.clearRect(0, 0, highlightCanvas.width, highlightCanvas.height); // Clear canvas first
+    ctx.clearRect(0, 0, highlightCanvas.width, highlightCanvas.height);
     if (dataUrl) {
         const img = new Image();
-        img.onload = () => {
-            ctx.drawImage(img, 0, 0); // Draw saved highlights
-        };
+        img.onload = () => ctx.drawImage(img, 0, 0);
         img.onerror = () => {
-             console.error("Failed to load highlight image from localStorage for page", pageNumber);
-             localStorage.removeItem(`flipbook-highlights-page-${pageNumber}`); // Remove bad data
+             console.error("Failed to load highlight image for page", pageNumber);
+             localStorage.removeItem(`flipbook-highlights-page-${pageNumber}`);
         }
         img.src = dataUrl;
     }
@@ -515,17 +521,17 @@ function clearCurrentHighlights() {
 // Function to update cursor based on current state
 function updateCursor() {
     if (!highlightCanvas) return;
-    const isHighlightMode = document.body.classList.contains('highlight-mode');
+    const isHighlightModeActive = document.body.classList.contains('highlight-mode');
 
-    if (!isHighlightMode) {
+    if (!isHighlightModeActive) {
         highlightCanvas.style.cursor = 'default';
         highlightCanvas.classList.remove('highlight-cursor');
     } else {
         if (drawMode === 'highlight') {
-            highlightCanvas.style.cursor = ''; // Use CSS default
+            highlightCanvas.style.cursor = ''; // Use CSS default (which includes our custom cursor class)
             highlightCanvas.classList.add('highlight-cursor');
         } else { // Eraser mode
-            highlightCanvas.style.cursor = 'cell';
+            highlightCanvas.style.cursor = 'cell'; // Explicitly set eraser cursor
             highlightCanvas.classList.remove('highlight-cursor');
         }
     }
@@ -541,7 +547,7 @@ if (toggleDrawModeBtn) {
         toggleDrawModeBtn.classList.toggle('active', isActive);
 
         if (isActive) {
-            if(highlightToolBtn) highlightToolBtn.click(); // Default to highlight tool when turning on
+            if(highlightToolBtn) highlightToolBtn.click(); // Default to highlight tool
         }
         updateCursor(); // Update cursor when toggling draw mode
     });
@@ -562,7 +568,6 @@ if (eraserToolBtn) {
         updateCursor(); // Update cursor
     });
 }
-// When color is picked, ensure highlight tool is active
 if (colorPicker) {
     colorPicker.addEventListener('change', () => {
         if (highlightToolBtn) highlightToolBtn.click(); // Clicks highlight tool, which calls updateCursor
@@ -570,17 +575,90 @@ if (colorPicker) {
 }
 if (clearHighlightsBtn) clearHighlightsBtn.addEventListener('click', clearCurrentHighlights);
 
-// Ensure canvas resizes correctly and reloads highlights on window resize
 window.addEventListener('resize', () => {
     const img = document.querySelector('.page-image');
     if (img && highlightCanvas) {
-        // Use a small delay to allow layout to settle before resizing/reloading
-        setTimeout(() => {
-            sizeCanvasToImage(img, highlightCanvas);
-            loadHighlights(currentPage); // Reload highlights after resize
-        }, 150); // Adjust delay if needed
+        setTimeout(() => { sizeCanvasToImage(img, highlightCanvas); loadHighlights(currentPage); }, 150);
     }
 });
+
+// --- SEARCH LOGIC ---
+function toggleSearchBox() {
+    if (!searchContainer) return;
+    const isVisible = searchContainer.style.display !== 'none';
+    if (isVisible) {
+        closeSearchBox();
+    } else {
+        searchContainer.style.display = 'flex';
+        if (searchInput) searchInput.focus(); // Focus input when opening
+        if (searchResults) searchResults.innerHTML = ''; // Clear previous results
+    }
+}
+
+function closeSearchBox() {
+    if (!searchContainer) return;
+    searchContainer.style.display = 'none';
+    if (searchInput) searchInput.value = ''; // Clear input on close
+    if (searchResults) searchResults.innerHTML = ''; // Clear results on close
+}
+
+function performSearch() {
+    if (!searchInput || !searchResults || Object.keys(bookTextData).length === 0) return;
+    const searchTerm = searchInput.value.trim().toLowerCase();
+    searchResults.innerHTML = ''; // Clear previous results
+
+    if (searchTerm.length < 2) { // Require at least 2 characters to search
+        const noResultsDiv = document.createElement('div');
+        noResultsDiv.classList.add('no-results');
+        noResultsDiv.textContent = 'Please enter at least 2 characters.';
+        searchResults.appendChild(noResultsDiv);
+        return;
+    }
+
+    const foundPages = [];
+    // Iterate through the bookTextData object (page numbers are keys)
+    for (const pageNumStr in bookTextData) {
+        const pageText = bookTextData[pageNumStr];
+        if (pageText && pageText.toLowerCase().includes(searchTerm)) {
+            foundPages.push(parseInt(pageNumStr, 10)); // Store page number as integer
+        }
+    }
+
+    if (foundPages.length > 0) {
+        foundPages.sort((a, b) => a - b); // Sort page numbers numerically
+        foundPages.forEach(pageNum => {
+            const resultDiv = document.createElement('div');
+            resultDiv.textContent = `Page ${pageNum + 1}`; // Display 1-based page number
+            resultDiv.onclick = () => {
+                goToPage(pageNum); // goToPage uses 0-based index
+                closeSearchBox(); // Close search after clicking result
+            };
+            searchResults.appendChild(resultDiv);
+        });
+    } else {
+        const noResultsDiv = document.createElement('div');
+        noResultsDiv.classList.add('no-results');
+        noResultsDiv.textContent = 'No results found.';
+        searchResults.appendChild(noResultsDiv);
+    }
+}
+
+// Search Event Listeners
+if (searchBtn) searchBtn.addEventListener('click', toggleSearchBox);
+if (searchCloseBtn) searchCloseBtn.addEventListener('click', closeSearchBox);
+if (searchInput) {
+    searchInput.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') {
+            performSearch();
+            e.preventDefault(); // Prevent default form submission
+        }
+         if (e.key === 'Escape') {
+             closeSearchBox();
+             e.preventDefault();
+         }
+    });
+}
+
 
 // --- AI HELPER ---
 const aiModal = document.getElementById("aiHelperModal"),
@@ -605,9 +683,10 @@ if(hideTranslateBtn)hideTranslateBtn.addEventListener("click",()=>{const e=docum
 
 // --- Initial Setup ---
 document.addEventListener("DOMContentLoaded", () => {
-    loadBookText();
+    loadBookText(); // Start loading book text early
     const flipbookElement = document.getElementById('flipbook');
     if (flipbookElement) {
+        // Use non-passive listeners only if needed (for preventDefault with drawing)
         flipbookElement.addEventListener("touchstart", handleTouchStart, { passive: false });
         flipbookElement.addEventListener("touchend", handleTouchEnd, { passive: false });
     }
