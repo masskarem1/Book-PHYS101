@@ -85,23 +85,23 @@ const videoFrame = document.getElementById('videoFrame');
 
 // --- HIGHLIGHTING VARIABLES ---
 const toggleDrawModeBtn = document.getElementById('toggle-draw-mode-btn');
-const highlightSettingsBtn = document.getElementById('highlight-settings-btn'); // New button
+const highlightSettingsBtn = document.getElementById('highlight-settings-btn');
 const highlightPopup = document.getElementById('highlight-popup');
 const colorSwatchesContainer = document.querySelector('.color-swatches');
 const eraserToolBtnPopup = document.getElementById('eraser-tool-btn-popup');
 const brushSizeSliderPopup = document.getElementById('brush-size-popup');
 const clearHighlightsBtnPopup = document.getElementById('clear-highlights-btn-popup');
-let currentHighlightColor = 'rgba(255, 255, 0, 0.2)'; // Default highlight color
-let currentBrushSize = 40; // Default brush size
+let currentHighlightColor = 'rgba(255, 255, 0, 0.2)';
+let currentBrushSize = 40;
 let highlightCanvas, ctx, isDrawing = false, drawMode = 'highlight', lastX = 0, lastY = 0;
 
 // --- ZOOM/PAN VARIABLES ---
-let hammerManager = null; // To store Hammer instance
+let hammerManager = null;
 let currentScale = 1;
 let currentOffsetX = 0;
 let currentOffsetY = 0;
-let pinchStartScale = 1; // Store scale at the beginning of a pinch
-
+let pinchStartScale = 1;
+let isPinching = false;
 
 // --- SEARCH VARIABLES ---
 const searchBtn = document.getElementById('searchBtn');
@@ -109,7 +109,7 @@ const searchContainer = document.getElementById('searchContainer');
 const searchInput = document.getElementById('searchInput');
 const searchCloseBtn = document.getElementById('searchCloseBtn');
 const searchResults = document.getElementById('searchResults');
-if (searchBtn) searchBtn.disabled = true; // Disable initially until book text loads
+if (searchBtn) searchBtn.disabled = true;
 
 // --- AI HELPER VARIABLES ---
 const aiModal = document.getElementById("aiHelperModal");
@@ -118,10 +118,45 @@ const aiCloseBtn = document.getElementById("aiCloseBtn");
 const aiResponseEl = document.getElementById("aiResponse");
 const aiLoadingEl = document.getElementById("aiLoading");
 const aiChapterTitleEl = document.getElementById("aiChapterTitle");
-const translateAnalysisBtn = document.getElementById("translate-analysis-btn"); // New Button
+const translateAnalysisBtn = document.getElementById("translate-analysis-btn");
 const GEMINI_API_KEY = (typeof config !== 'undefined' && config.geminiApiKey) ? config.geminiApiKey : 'YOUR_API_KEY_HERE';
 
-// --- Functions ---
+// --- Utility Functions ---
+
+// Delay function for retries
+const delay = ms => new Promise(resolve => setTimeout(resolve, ms));
+
+// Fetch wrapper with exponential backoff retry
+async function fetchWithRetry(url, options, maxRetries = 3, initialDelay = 1000) {
+    let attempt = 0;
+    let currentDelay = initialDelay;
+    while (attempt < maxRetries) {
+        try {
+            const response = await fetch(url, options);
+            // Retry on 503 (Service Unavailable) or 429 (Too Many Requests)
+            if ([503, 429].includes(response.status) && attempt < maxRetries - 1) {
+                console.warn(`API request failed with status ${response.status}. Retrying in ${currentDelay / 1000}s...`);
+                await delay(currentDelay);
+                attempt++;
+                currentDelay *= 2; // Double the delay for next retry
+                continue; // Go to next attempt
+            }
+            return response; // Return successful response or non-retryable error response
+        } catch (error) {
+            console.error(`Fetch error on attempt ${attempt + 1}:`, error);
+            if (attempt < maxRetries - 1) {
+                await delay(currentDelay);
+                attempt++;
+                currentDelay *= 2;
+            } else {
+                throw error; // Throw error after max retries
+            }
+        }
+    }
+    // Should not reach here, but return a generic error if it does
+    throw new Error("API request failed after multiple retries.");
+}
+
 
 function getYoutubeEmbedUrl(url) {
     try {
@@ -136,11 +171,11 @@ function getYoutubeEmbedUrl(url) {
     return url;
 }
 
+// ---------- Render page ----------
 function renderPage() {
     if (!flipbook) return;
     flipbook.innerHTML = "";
-    const wrap = document.createElement("div");
-    wrap.className = "page-wrap"; wrap.id = "page-wrap-" + currentPage;
+    const wrap = document.createElement("div"); wrap.className = "page-wrap"; wrap.id = "page-wrap-" + currentPage;
     resetZoomPan(wrap);
     const img = document.createElement("img"); const canvas = document.createElement("canvas"); canvas.id = "highlight-canvas"; highlightCanvas = canvas;
     img.className = "page-image"; img.src = images[currentPage]; img.alt = `Page ${currentPage + 1}`; img.loading = "eager"; img.crossOrigin = "anonymous";
@@ -184,7 +219,7 @@ function goToPage(page){ if (page >= 0 && page < images.length){ currentPage = p
 window.goToPage = goToPage;
 
 // ---------- Input & touch (For SWIPING ONLY - Modified) ----------
-let touchStartX = 0, touchEndX = 0; const swipeThreshold = 50; let isPinching = false;
+let touchStartX = 0, touchEndX = 0; const swipeThreshold = 50;
 function handleTouchStartSwipe(e){ if (document.body.classList.contains('highlight-mode') || isPinching || e.touches.length > 1) { touchStartX = null; return; } touchStartX = e.touches[0].clientX; }
 function handleTouchEndSwipe(e){ if (document.body.classList.contains('highlight-mode') || isPinching || touchStartX === null || e.touches.length > 0) { touchStartX = null; return; } touchEndX = e.changedTouches[0].clientX; handleSwipeGesture(); }
 function handleSwipeGesture(){ if (touchStartX === null) return; const diff = touchEndX - touchStartX; if (Math.abs(diff) > swipeThreshold){ if(diff > 0){ prevPage(); } else { nextPage(); } } touchStartX = null; }
@@ -233,43 +268,10 @@ function clearCurrentHighlights() { if (!ctx) return; if (confirm("Erase all hig
 function updateCursor() { if (!highlightCanvas) return; const e = document.body.classList.contains("highlight-mode"); e ? "highlight" === drawMode ? (highlightCanvas.style.cursor = "", highlightCanvas.classList.add("highlight-cursor")) : (highlightCanvas.style.cursor = "cell", highlightCanvas.classList.remove("highlight-cursor")) : (highlightCanvas.style.cursor = "default", highlightCanvas.classList.remove("highlight-cursor")); }
 
 // --- Event Listeners for Highlight Buttons ---
-if (toggleDrawModeBtn) {
-    toggleDrawModeBtn.addEventListener('click', (e) => {
-        e.stopPropagation();
-        const isDrawModeActive = document.body.classList.contains('highlight-mode');
-        if (isDrawModeActive) {
-            document.body.classList.remove('highlight-mode');
-            toggleDrawModeBtn.classList.remove('active');
-            if (highlightSettingsBtn) highlightSettingsBtn.classList.remove('active'); // Deactivate settings button too
-            closeHighlightPopup();
-        } else {
-            document.body.classList.add('highlight-mode');
-            toggleDrawModeBtn.classList.add('active');
-            // Default to highlight tool when turning on
-            let activeSwatch = colorSwatchesContainer && colorSwatchesContainer.querySelector('.color-swatch.active');
-            if (!activeSwatch && colorSwatchesContainer) activeSwatch = colorSwatchesContainer.querySelector('.color-swatch');
-            setActiveColorSwatch(activeSwatch);
-            setDrawMode('highlight');
-        }
-        updateCursor();
-    });
-}
-
-if (highlightSettingsBtn) {
-    highlightSettingsBtn.addEventListener('click', (e) => {
-        e.stopPropagation();
-        const isVisible = highlightPopup && highlightPopup.classList.contains('visible');
-        if (isVisible) {
-            closeHighlightPopup();
-        } else {
-            openHighlightPopup();
-        }
-    });
-}
-
+if (toggleDrawModeBtn) { toggleDrawModeBtn.addEventListener('click', (e) => { e.stopPropagation(); const t = document.body.classList.contains("highlight-mode"); t ? (document.body.classList.remove("highlight-mode"), toggleDrawModeBtn.classList.remove("active"), highlightSettingsBtn && highlightSettingsBtn.classList.remove("active"), closeHighlightPopup()) : (document.body.classList.add("highlight-mode"), toggleDrawModeBtn.classList.add("active"), (() => { let t = colorSwatchesContainer && colorSwatchesContainer.querySelector(".color-swatch.active"); !t && colorSwatchesContainer && (t = colorSwatchesContainer.querySelector(".color-swatch")), setActiveColorSwatch(t); })(), setDrawMode("highlight")); updateCursor(); }); }
+if (highlightSettingsBtn) { highlightSettingsBtn.addEventListener('click', (e) => { e.stopPropagation(); const t = highlightPopup && highlightPopup.classList.contains("visible"); t ? closeHighlightPopup() : openHighlightPopup(); }); }
 function openHighlightPopup() { if(highlightPopup) highlightPopup.classList.add('visible'); if(highlightSettingsBtn) highlightSettingsBtn.classList.add('active'); }
 function closeHighlightPopup() { if(highlightPopup) highlightPopup.classList.remove('visible'); if(highlightSettingsBtn) highlightSettingsBtn.classList.remove('active'); }
-
 if (colorSwatchesContainer) { colorSwatchesContainer.addEventListener('click', (e) => { if (e.target.classList.contains('color-swatch')) { setActiveColorSwatch(e.target); setDrawMode('highlight'); closeHighlightPopup(); } }); }
 function setActiveColorSwatch(swatchElement) { if (!swatchElement || !colorSwatchesContainer) return; colorSwatchesContainer.querySelectorAll('.color-swatch').forEach(sw => sw.classList.remove('active')); swatchElement.classList.add('active'); currentHighlightColor = swatchElement.getAttribute('data-color'); }
 if (eraserToolBtnPopup) eraserToolBtnPopup.addEventListener('click', () => { setDrawMode('eraser'); closeHighlightPopup(); });
@@ -297,51 +299,64 @@ function getCurrentChapter(){ if(!config.chapters||0===config.chapters.length)re
 async function getAiHelp(e){
     if(!GEMINI_API_KEY||"YOUR_API_KEY_HERE"===GEMINI_API_KEY)return void(aiResponseEl&&(aiResponseEl.textContent="AI Helper not configured."));
     if(!aiLoadingEl||!aiResponseEl)return;
-    aiLoadingEl.style.display="block"; aiResponseEl.innerHTML=""; if(translateAnalysisBtn) translateAnalysisBtn.style.display = 'none'; // Hide button before new request
-    let t; const n=getCurrentChapter(),o=n?n.title:"this page";
+    aiLoadingEl.style.display="block"; aiResponseEl.innerHTML=""; if(translateAnalysisBtn) translateAnalysisBtn.style.display = 'none';
+    let requestBody; const currentChapterInfo=getCurrentChapter(), chapterTitle=currentChapterInfo?currentChapterInfo.title:"this page";
     try{
-        if("analyze_page"===e){let a=await getImageAsBase64FromCanvas();if(!a)return aiResponseEl.textContent="Could not process page image.",void(aiLoadingEl.style.display="none");t={contents:[{parts:[{text:`Analyze this physics page (from chapter "${o}"). Summarize concepts,explain formulas/diagrams,and give a takeaway for a life science student.`},{inline_data:{mime_type:"image/png",data:a}}]}]}}
-        else{let r;switch(e){case"explain":{const i=window.prompt(`Concept from "${o}" to explain?`,"Pascal's Principle");if(!i)return void(aiLoadingEl.style.display="none");r=`Explain "${i}" from "${o}" simply for life science students.`}break;case"quiz":r=`Generate 2 multiple-choice questions on "${o}". Explain the correct answer (bold it).`;break;case"relate":r=`Provide 2 examples of how "${o}" applies to biology or medicine.`;break;default:return void(aiLoadingEl.style.display="none")}t={contents:[{parts:[{text:r}]}]}}
-        const s=`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=${GEMINI_API_KEY}`;
-        const u=await fetch(s,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(t)});
-        if(!u.ok){let p=u.statusText;try{p=(await u.json()).error.message||p}catch(g){}throw new Error(`API error (${u.status}): ${p}`)}
-        const m=await u.json();
-        if(!m.candidates||0===m.candidates.length||!m.candidates[0].content||!m.candidates[0].content.parts||0===m.candidates[0].content.parts.length){let f="Unknown";if(m.candidates&&m.candidates[0]&&m.candidates[0].finishReason)f=m.candidates[0].finishReason;console.warn("AI response missing content. Reason:",f,m); aiResponseEl.textContent=`Response was blocked or empty. Reason: ${f}.`;}
-        else{
-            const y=m.candidates[0].content.parts[0].text;
-            "undefined"!=typeof marked?aiResponseEl.innerHTML=marked.parse(y):aiResponseEl.innerText=y; // Display result
-            if(translateAnalysisBtn && aiResponseEl.innerText.trim()) translateAnalysisBtn.style.display = 'block'; // Show translate button if response exists
-            window.MathJax&&MathJax.typesetPromise([aiResponseEl]).catch(b=>console.error("MathJax error:",b));
+        let apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=${GEMINI_API_KEY}`; // Default to text model
+        if("analyze_page"===e){
+             let imageData=await getImageAsBase64FromCanvas();
+             if(!imageData) return aiResponseEl.textContent="Could not process page image.", void(aiLoadingEl.style.display="none");
+             requestBody={contents:[{parts:[{text:`Analyze this physics page (from chapter "${chapterTitle}"). Summarize concepts,explain formulas/diagrams,and give a takeaway for a life science student.`},{inline_data:{mime_type:"image/png",data:imageData}}]}]};
+             // No change needed for API URL for vision model in this specific case as flash supports it
+        } else {
+             let promptText;
+             switch(e){
+                 case"explain": { const concept=window.prompt(`Concept from "${chapterTitle}" to explain?`,"Pascal's Principle"); if(!concept)return void(aiLoadingEl.style.display="none"); promptText=`Explain "${concept}" from "${chapterTitle}" simply for life science students.`; } break;
+                 case"quiz": promptText=`Generate 2 multiple-choice questions on "${chapterTitle}". Explain the correct answer (bold it).`; break;
+                 case"relate": promptText=`Provide 2 examples of how "${chapterTitle}" applies to biology or medicine.`; break;
+                 default: return void(aiLoadingEl.style.display="none");
+             }
+             requestBody={contents:[{parts:[{text:promptText}]}]};
         }
-    }catch(w){console.error("AI Helper Error:",w); aiResponseEl.textContent=`Error: ${w.message}`}
+
+        // Use fetchWithRetry for the API call
+        const response = await fetchWithRetry(apiUrl, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(requestBody) });
+
+        if(!response.ok){
+             let errorText = response.statusText;
+             try { errorText = (await response.json()).error.message || errorText; } catch(g){}
+             throw new Error(`API error (${response.status}): ${errorText}`);
+        }
+        const responseData = await response.json();
+        if(!responseData.candidates || responseData.candidates.length === 0 || !responseData.candidates[0].content || !responseData.candidates[0].content.parts || responseData.candidates[0].content.parts.length === 0){
+            let finishReason="Unknown"; if(responseData.candidates && responseData.candidates[0]) finishReason=responseData.candidates[0].finishReason;
+            console.warn("AI response missing content. Reason:", finishReason, responseData); aiResponseEl.textContent=`Response was blocked or empty. Reason: ${finishReason}.`;
+        } else {
+            const resultText = responseData.candidates[0].content.parts[0].text;
+            "undefined"!=typeof marked ? aiResponseEl.innerHTML = marked.parse(resultText) : aiResponseEl.innerText = resultText;
+            if(translateAnalysisBtn && aiResponseEl.innerText.trim()) translateAnalysisBtn.style.display = 'block';
+            window.MathJax && MathJax.typesetPromise([aiResponseEl]).catch(b=>console.error("MathJax error:",b));
+        }
+    }catch(w){ console.error("AI Helper Error:",w); aiResponseEl.textContent=`Error: ${w.message}` }
     finally{aiLoadingEl.style.display="none"}
 }
 
+
 // --- Translation Helper Function ---
 async function callTranslationAPI(textToTranslate) {
-    if (!textToTranslate || !textToTranslate.trim()) {
-        return { success: false, message: "No text provided for translation." };
-    }
-    if (!GEMINI_API_KEY || GEMINI_API_KEY === 'YOUR_API_KEY_HERE') {
-        return { success: false, message: "Translation unavailable: No API key." };
-    }
+    if (!textToTranslate || !textToTranslate.trim()) return { success: false, message: "No text provided for translation." };
+    if (!GEMINI_API_KEY || GEMINI_API_KEY === 'YOUR_API_KEY_HERE') return { success: false, message: "Translation unavailable: No API key." };
 
     try {
         const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=${GEMINI_API_KEY}`;
         const requestBody = { contents: [{ parts: [{ text:`Translate the following English text accurately into clear, educational Arabic suitable for university-level students. Preserve specific terminology and equations where appropriate. Focus only on translation.\n\n---START---\n${textToTranslate}\n---END---` }] }] };
-        const resp = await fetch(apiUrl, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(requestBody) });
 
-        if (!resp.ok) {
-            let errorText = resp.statusText;
-            try { errorText = (await resp.json()).error.message || errorText; } catch (e) {}
-            throw new Error(`API error (${resp.status}): ${errorText}`);
-        }
+        // Use fetchWithRetry
+        const resp = await fetchWithRetry(apiUrl, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(requestBody) });
+
+        if (!resp.ok) { let errorText = resp.statusText; try { errorText = (await resp.json()).error.message || errorText; } catch (e) {} throw new Error(`API error (${resp.status}): ${errorText}`); }
         const data = await resp.json();
-        if (!data.candidates || data.candidates.length === 0 || !data.candidates[0].content || !data.candidates[0].content.parts || data.candidates[0].content.parts.length === 0) {
-            let reason = data.candidates?.[0]?.finishReason || "Unknown reason";
-            console.warn("Translate response missing. Reason:", reason, data);
-            return { success: false, message: `Translation failed. Reason: ${reason}.` };
-        }
+        if (!data.candidates || data.candidates.length === 0 || !data.candidates[0].content || !data.candidates[0].content.parts || data.candidates[0].content.parts.length === 0) { let reason = data.candidates?.[0]?.finishReason || "Unknown reason"; console.warn("Translate response missing. Reason:", reason, data); return { success: false, message: `Translation failed. Reason: ${reason}.` }; }
         return { success: true, translatedText: data.candidates[0].content.parts[0].text };
     } catch (err) {
         console.error("Translate API error:", err);
@@ -351,9 +366,8 @@ async function callTranslationAPI(textToTranslate) {
 
 // --- Translate Page (from AI Modal) ---
 async function translateCurrentPage() {
-    if(aiModal) aiModal.style.display = 'none'; // Close AI modal
-    const overlay = document.getElementById("overlay-translation");
-    if (!overlay) return;
+    if(aiModal) aiModal.style.display = 'none';
+    const overlay = document.getElementById("overlay-translation"); if (!overlay) return;
     overlay.style.display = 'block'; overlay.textContent = '🔄 Loading text...';
     const pageKey = String(currentPage); const englishText = bookTextData[pageKey];
 
@@ -361,7 +375,7 @@ async function translateCurrentPage() {
     if (!englishText || !englishText.trim()) { overlay.textContent = 'ℹ️ No translatable text found.'; return; }
 
     overlay.textContent = '🌐 Translating to Arabic...';
-    const result = await callTranslationAPI(englishText); // Use helper
+    const result = await callTranslationAPI(englishText);
 
     if (result.success) {
         overlay.innerText = result.translatedText;
@@ -374,29 +388,23 @@ async function translateCurrentPage() {
 // --- Translate Analysis Results (from AI Modal) ---
 async function translateAnalysisResults() {
     if (!aiResponseEl || !aiLoadingEl) return;
-    const englishText = aiResponseEl.innerText; // Get text content
-    if (!englishText || !englishText.trim()) {
-        alert("No analysis text to translate.");
-        return;
-    }
+    const englishText = aiResponseEl.innerText;
+    if (!englishText || !englishText.trim()) { alert("No analysis text to translate."); return; }
 
-    aiLoadingEl.style.display = 'block'; // Show loading inside modal
-    if (translateAnalysisBtn) translateAnalysisBtn.style.display = 'none'; // Hide button while translating
+    aiLoadingEl.style.display = 'block';
+    if (translateAnalysisBtn) translateAnalysisBtn.style.display = 'none';
 
-    const result = await callTranslationAPI(englishText); // Use helper
+    const result = await callTranslationAPI(englishText);
 
     if (result.success) {
-        aiResponseEl.innerText = result.translatedText + "\n\n(Translated)"; // Replace text and add note
-        // Optionally re-run MathJax if analysis might contain math
+        aiResponseEl.innerText = result.translatedText + "\n\n(Translated)";
         window.MathJax && MathJax.typesetPromise([aiResponseEl]).catch(b=>console.error("MathJax error:",b));
     } else {
-        alert(result.message); // Show error in an alert
+        alert(result.message);
         if (translateAnalysisBtn) translateAnalysisBtn.style.display = 'block'; // Show button again on error
     }
-    aiLoadingEl.style.display = 'none'; // Hide loading
+    aiLoadingEl.style.display = 'none';
 }
-
-// Add listener for the new button
 if (translateAnalysisBtn) {
     translateAnalysisBtn.addEventListener('click', translateAnalysisResults);
 }
