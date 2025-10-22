@@ -117,7 +117,7 @@ body {
 }
 .toolbar-container {
     width: 100%;
-    max-width: 1200px;
+    max-width: 1200px; /* Match flipbook width */
     display: flex;
     flex-direction: column;
     align-items: center;
@@ -125,6 +125,10 @@ body {
     padding: 8px;
     box-sizing: border-box;
     border-bottom: 1px solid #ddd;
+    /* --- STICKY TOOLBAR --- */
+    position: sticky;
+    top: 0;
+    z-index: 1000; /* Ensure it stays above other content */
 }
 .toolbar {
     margin-bottom: 8px;
@@ -183,6 +187,71 @@ button:disabled {
 }
 /* --- END HIGHLIGHT TOOLBAR STYLES --- */
 
+/* --- SEARCH STYLES --- */
+#searchBtn {
+    font-size: 1.1rem; /* Make icon slightly larger */
+    padding: 0.4rem 0.6rem; /* Adjust padding */
+}
+#searchContainer {
+    width: 100%;
+    max-width: 1200px; /* Match flipbook width */
+    padding: 10px;
+    background-color: #e0e0e0;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+    box-sizing: border-box;
+    display: flex; /* Use flex for input and button */
+    gap: 5px;
+    position: relative; /* Needed for results absolute positioning */
+    z-index: 999; /* Below toolbar */
+}
+#searchInput {
+    flex-grow: 1; /* Input takes available space */
+    padding: 8px;
+    border-radius: 4px;
+    border: 1px solid #ccc;
+    font-size: 1rem;
+}
+#searchCloseBtn {
+    background-color: #dc3545; /* Red close button */
+    padding: 0.4rem 0.7rem;
+}
+#searchCloseBtn:hover {
+    background-color: #c82333;
+}
+#searchResults {
+    position: absolute;
+    top: 100%; /* Position below the input container */
+    left: 0;
+    right: 0;
+    max-height: 300px;
+    overflow-y: auto;
+    background-color: #fff;
+    border: 1px solid #ccc;
+    border-top: none;
+    box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+    z-index: 998; /* Below search input, above flipbook */
+    border-bottom-left-radius: 5px;
+    border-bottom-right-radius: 5px;
+}
+#searchResults div {
+    padding: 8px 12px;
+    cursor: pointer;
+    border-bottom: 1px solid #eee;
+    font-size: 0.95rem;
+}
+#searchResults div:last-child {
+    border-bottom: none;
+}
+#searchResults div:hover {
+    background-color: #f0f0f0;
+}
+#searchResults div.no-results {
+    font-style: italic;
+    color: #666;
+    cursor: default;
+}
+/* --- END SEARCH STYLES --- */
+
 #pageInput {
     width: 70px;
     padding: 0.3rem;
@@ -228,7 +297,9 @@ button:disabled {
     justify-content: space-between;
     padding: 0.5rem 1rem;
     box-sizing: border-box;
-    position: relative;
+    position: relative; /* Keep relative for index menu positioning */
+    background-color: #f0f0f0; /* Add background to footer if desired */
+    border-top: 1px solid #ddd;
 }
 .footer-left,
 .footer-right {
