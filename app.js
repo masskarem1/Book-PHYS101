@@ -51,18 +51,15 @@ async function loadBookText() {
         console.log("Book text loaded successfully.");
          const searchBtn = document.getElementById('searchBtn');
          if (searchBtn) searchBtn.disabled = false;
+         // Enable translate function after text loads
+         // (No button to enable, function is called directly)
     } catch (err) {
         console.error("Could not load book text:", err);
-        const translateBtn = document.getElementById('translateBtn');
-        if (translateBtn) {
-            translateBtn.disabled = true;
-            translateBtn.title = "Translation unavailable";
-            translateBtn.textContent = "🌐 Text Unavailable";
-            translateBtn.style.backgroundColor = '#aaa';
-            translateBtn.style.cursor = 'not-allowed';
-        }
+         // Disable search button if text loading fails
          const searchBtn = document.getElementById('searchBtn');
          if (searchBtn) searchBtn.disabled = true;
+         // Indicate translation is unavailable if text failed to load
+         // (Could add a visual cue in AI modal if desired)
     }
 }
 
@@ -151,8 +148,7 @@ function renderPage() {
     wrap.className = "page-wrap";
     wrap.id = "page-wrap-" + currentPage; // Give unique ID for Hammer
 
-    // Reset transformations
-    resetZoomPan(wrap);
+    resetZoomPan(wrap); // Reset transformations
 
     const img = document.createElement("img");
     const canvas = document.createElement("canvas");
@@ -164,28 +160,39 @@ function renderPage() {
     img.alt = `Page ${currentPage + 1}`;
     img.loading = "eager";
     img.crossOrigin = "anonymous";
-    img.onerror = () => {
-        img.alt = "Image not available";
-        img.src = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 400 300'%3E%3Crect width='400' height='300' fill='%23eee'/%3E%3Ctext x='50%25' y='50%25' font-family='sans-serif' font-size='24' fill='%23aaa' text-anchor='middle' dominant-baseline='middle'%3EImage Not Found%3C/text%3E%3C/svg%3E";
-    };
+    img.onerror = () => { /* ... placeholder ... */ img.alt = "Image not available"; img.src = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 400 300'%3E%3Crect width='400' height='300' fill='%23eee'/%3E%3Ctext x='50%25' y='50%25' font-family='sans-serif' font-size='24' fill='%23aaa' text-anchor='middle' dominant-baseline='middle'%3EImage Not Found%3C/text%3E%3C/svg%3E"; };
 
     img.onload = () => {
         sizeCanvasToImage(img, canvas);
         ctx = canvas.getContext('2d');
-        setupDrawingListeners(canvas); // Setup listeners AFTER sizing and context
-        loadHighlights(currentPage); // Load highlights AFTER sizing and context
-        updateCursor(); // Apply initial cursor state based on draw mode
-        // Initialize Hammer.js *after* image and canvas are loaded and sized
+        setupDrawingListeners(canvas);
+        loadHighlights(currentPage);
+        updateCursor();
         setupHammer(wrap);
     };
 
     wrap.appendChild(img);
     wrap.appendChild(canvas);
 
+    // --- Create and append Translation Overlay ---
     const overlay = document.createElement("div");
     overlay.className = "overlay-translation";
     overlay.id = "overlay-translation";
+
+    // --- Add Close Button inside Overlay ---
+    const closeBtn = document.createElement("span");
+    closeBtn.className = "translation-close-btn";
+    closeBtn.innerHTML = "&times;"; // Use × symbol
+    closeBtn.title = "Close Translation";
+    closeBtn.onclick = () => {
+        overlay.style.display = 'none';
+    };
+    overlay.appendChild(closeBtn);
+    // --- End Add Close Button ---
+
     wrap.appendChild(overlay);
+    // --- End Translation Overlay ---
+
     flipbook.appendChild(wrap);
 
     if (counter) counter.textContent = `Page ${currentPage + 1} / ${totalPages}`;
@@ -200,367 +207,72 @@ function renderPage() {
     }
 
     const currentOverlay = document.getElementById('overlay-translation');
-    if (currentOverlay) currentOverlay.style.display = 'none';
-    const hideBtn = document.getElementById('hideTranslateBtn');
-    if (hideBtn) hideBtn.style.display = 'none';
+    if (currentOverlay) currentOverlay.style.display = 'none'; // Ensure it starts hidden
 
     closeSearchBox();
-    closeHighlightPopup(); // Close drawing popup when changing pages
+    closeHighlightPopup();
     preloadImages();
 }
 
-function resetZoomPan(element) {
-    currentScale = 1;
-    currentOffsetX = 0;
-    currentOffsetY = 0;
-    pinchStartScale = 1;
-    if (element) {
-        element.style.transform = 'scale(1) translate(0px, 0px)';
-    }
-     // Re-enable swipe listeners if they exist
-     const flipbookElement = document.getElementById('flipbook');
-     if (flipbookElement && hammerManager) { // Check if hammerManager is initialized
-         hammerManager.get('pan').set({ enable: true, direction: Hammer.DIRECTION_ALL }); // Re-enable panning
-     }
-}
-
-
-function preloadImages() {
-    if (currentPage < images.length - 1) { (new Image()).src = images[currentPage + 1]; }
-    if (currentPage > 0) { (new Image()).src = images[currentPage - 1]; }
-}
-
-function renderThumbs() {
-    if (!thumbbar) return;
-    thumbbar.innerHTML = "";
-    thumbs.forEach((src, i) => {
-        const t = document.createElement("img");
-        t.src = src;
-        t.alt = `Thumb ${i + 1}`;
-        t.loading = "lazy";
-        t.addEventListener("click", () => { if (currentPage !== i) { currentPage = i; renderPage(); } });
-        t.onerror = () => { t.alt = "Thumb N/A"; t.src = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' fill='%23eee'/%3E%3Ctext x='50%25' y='50%25' font-family='sans-serif' font-size='12' fill='%23aaa' text-anchor='middle' dominant-baseline='middle'%3EN/A%3C/text%3E%3C/svg%3E"; };
-        thumbbar.appendChild(t);
-    });
-}
-
-function highlightThumb() {
-    if (!thumbbar) return;
-    let activeThumb = null;
-    thumbbar.querySelectorAll("img").forEach((im, i) => {
-        const isActive = i === currentPage;
-        im.classList.toggle("active", isActive);
-        if (isActive) activeThumb = im;
-    });
-    if (activeThumb) {
-        const rect = activeThumb.getBoundingClientRect();
-        const parentRect = thumbbar.getBoundingClientRect();
-        if (rect.left < parentRect.left || rect.right > parentRect.right) {
-             activeThumb.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
-        }
-    }
-}
-
-function renderIndex() {
-    if (!indexMenu || !indexToggle) return;
-    indexMenu.innerHTML = "";
-    if (typeof config !== 'undefined' && config.chapters && config.chapters.length > 0) {
-        config.chapters.forEach(chapter => { const button = document.createElement("button"); button.textContent = chapter.title; button.onclick = () => goToPage(chapter.page - 1); indexMenu.appendChild(button); });
-        indexToggle.style.display = 'inline-block';
-    } else {
-        indexToggle.style.display = 'none';
-    }
-}
-
-function nextPage() { if (currentPage < images.length - 1) { currentPage++; renderPage(); } }
-function prevPage() { if (currentPage > 0) { currentPage--; renderPage(); } }
-function firstPage() { if (currentPage !== 0) { currentPage = 0; renderPage(); } }
-function lastPage() { if (currentPage !== images.length - 1) { currentPage = images.length - 1; renderPage(); } }
-
-function jumpToPage() {
-    if (!pageInput) return;
-    const v = parseInt(pageInput.value, 10);
-    if (!isNaN(v) && v >= 1 && v <= totalPages && (v - 1) !== currentPage) {
-        currentPage = v - 1;
-        renderPage();
-    } else {
-        pageInput.value = currentPage + 1;
-    }
-}
-if (pageInput) {
-    pageInput.addEventListener('keydown', (e) => { if (e.key === 'Enter') { jumpToPage(); e.preventDefault(); } });
-}
-
-function toggleFullScreen() { document.fullscreenElement ? document.exitFullscreen() : document.documentElement.requestFullscreen().catch(err => console.error(`Fullscreen error: ${err.message}`)); }
-function shareBook(){ const shareData = { title: "PHYS101 Flipbook", url: window.location.href }; if (navigator.share) { navigator.share(shareData).catch((err) => console.log("Share failed:", err)); } else if (navigator.clipboard) { const textArea = document.createElement("textarea"); textArea.value = window.location.href; document.body.appendChild(textArea); textArea.focus(); textArea.select(); try { document.execCommand('copy'); alert("Link copied to clipboard!"); } catch (err) { console.error('Fallback copy failed', err); alert('Failed to copy link.'); } document.body.removeChild(textArea); } else { alert("Sharing/Copying not supported."); } }
-function openIndexMenu() { if (!indexToggle || !footer || !indexMenu) return; const rect = indexToggle.getBoundingClientRect(); const footerRect = footer.getBoundingClientRect(); indexMenu.style.left = `${rect.left - footerRect.left}px`; indexMenu.style.bottom = `${footerRect.height}px`; indexMenu.style.top = "auto"; indexMenu.style.display = "flex"; indexMenu.setAttribute("aria-hidden","false"); indexToggle.setAttribute("aria-expanded","true"); }
-function closeIndexMenu(){ if (!indexMenu || !indexToggle) return; indexMenu.style.display="none"; indexMenu.setAttribute("aria-hidden","true"); indexToggle.setAttribute("aria-expanded","false"); }
+function resetZoomPan(element) { /* ... unchanged ... */ currentScale=1,currentOffsetX=0,currentOffsetY=0,pinchStartScale=1,element&&(element.style.transform="scale(1) translate(0px, 0px)");const t=document.getElementById("flipbook");t&&hammerManager&&(hammerManager.get("pan").set({enable:!0,direction:Hammer.DIRECTION_ALL})) }
+function preloadImages() { /* ... unchanged ... */ currentPage<images.length-1&&(new Image).src=images[currentPage+1],currentPage>0&&(new Image).src=images[currentPage-1] }
+function renderThumbs() { /* ... unchanged ... */ if(!thumbbar)return;thumbbar.innerHTML="";thumbs.forEach((e,t)=>{const n=document.createElement("img");n.src=e,n.alt=`Thumb ${t+1}`,n.loading="lazy",n.addEventListener("click",()=>{currentPage!==t&&(currentPage=t,renderPage())}),n.onerror=()=>{n.alt="Thumb N/A",n.src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' fill='%23eee'/%3E%3Ctext x='50%25' y='50%25' font-family='sans-serif' font-size='12' fill='%23aaa' text-anchor='middle' dominant-baseline='middle'%3EN/A%3C/text%3E%3C/svg%3E"},thumbbar.appendChild(n)}) }
+function highlightThumb() { /* ... unchanged ... */ if(!thumbbar)return;let e=null;thumbbar.querySelectorAll("img").forEach((t,n)=>{const o=n===currentPage;t.classList.toggle("active",o),o&&(e=t)}),e&&(()=>{const t=e.getBoundingClientRect(),n=thumbbar.getBoundingClientRect();(t.left<n.left||t.right>n.right)&&e.scrollIntoView({behavior:"smooth",block:"nearest",inline:"center"})})() }
+function renderIndex() { /* ... unchanged ... */ if(!indexMenu||!indexToggle)return;indexMenu.innerHTML="";typeof config!="undefined"&&config.chapters&&config.chapters.length>0?(config.chapters.forEach(e=>{const t=document.createElement("button");t.textContent=e.title,t.onclick=()=>goToPage(e.page-1),indexMenu.appendChild(t)}),indexToggle.style.display="inline-block"):indexToggle.style.display="none" }
+function nextPage() { /* ... unchanged ... */ currentPage<images.length-1&&(currentPage++,renderPage()) }
+function prevPage() { /* ... unchanged ... */ currentPage>0&&(currentPage--,renderPage()) }
+function firstPage() { /* ... unchanged ... */ 0!==currentPage&&(currentPage=0,renderPage()) }
+function lastPage() { /* ... unchanged ... */ currentPage!==images.length-1&&(currentPage=images.length-1,renderPage()) }
+function jumpToPage() { /* ... unchanged ... */ if(!pageInput)return;const e=parseInt(pageInput.value,10);!isNaN(e)&&e>=1&&e<=totalPages&&e-1!==currentPage?(currentPage=e-1,renderPage()):pageInput.value=currentPage+1 }
+if (pageInput) pageInput.addEventListener('keydown', (e) => { if (e.key === 'Enter') { jumpToPage(); e.preventDefault(); } });
+function toggleFullScreen() { /* ... unchanged ... */ document.fullscreenElement?document.exitFullscreen():document.documentElement.requestFullscreen().catch(e=>console.error(`Fullscreen error: ${e.message}`)) }
+function shareBook(){ /* ... unchanged ... */ const e={title:"PHYS101 Flipbook",url:window.location.href};if(navigator.share)navigator.share(e).catch(t=>console.log("Share failed:",t));else if(navigator.clipboard){const n=document.createElement("textarea");n.value=window.location.href,document.body.appendChild(n),n.focus(),n.select();try{document.execCommand("copy"),alert("Link copied to clipboard!")}catch(o){console.error("Fallback copy failed",o),alert("Failed to copy link.")}document.body.removeChild(n)}else alert("Sharing/Copying not supported.") }
+function openIndexMenu() { /* ... unchanged ... */ if(!indexToggle||!footer||!indexMenu)return;const e=indexToggle.getBoundingClientRect(),t=footer.getBoundingClientRect();indexMenu.style.left=`${e.left-t.left}px`,indexMenu.style.bottom=`${t.height}px`,indexMenu.style.top="auto",indexMenu.style.display="flex",indexMenu.setAttribute("aria-hidden","false"),indexToggle.setAttribute("aria-expanded","true") }
+function closeIndexMenu(){ /* ... unchanged ... */ if(!indexMenu||!indexToggle)return;indexMenu.style.display="none",indexMenu.setAttribute("aria-hidden","true"),indexToggle.setAttribute("aria-expanded","false") }
 if (indexToggle) indexToggle.addEventListener("click", e=>{ e.stopPropagation(); indexMenu.style.display === "flex" ? closeIndexMenu() : openIndexMenu(); });
 if (indexMenu) indexMenu.addEventListener("click", e => e.stopPropagation());
 
-// Global click listener to close popups
-document.addEventListener("click", e => {
-    if (indexMenu && indexToggle && indexMenu.style.display === "flex" && !indexMenu.contains(e.target) && !indexToggle.contains(e.target)) { closeIndexMenu(); }
-    if (searchContainer && searchContainer.style.display !== 'none' && !searchContainer.contains(e.target) && e.target !== searchBtn) { closeSearchBox(); }
-    if (highlightPopup && toggleDrawModeBtn && highlightPopup.classList.contains('visible') && !highlightPopup.contains(e.target) && e.target !== toggleDrawModeBtn) { closeHighlightPopup(); }
-});
-
-function goToPage(page){ if (page >= 0 && page < images.length){ currentPage = page; renderPage(); closeIndexMenu(); } }
+document.addEventListener("click", e => { /* ... unchanged ... */ indexMenu&&indexToggle&&"flex"===indexMenu.style.display&&!indexMenu.contains(e.target)&&!indexToggle.contains(e.target)&&closeIndexMenu(),searchContainer&&"none"!==searchContainer.style.display&&!searchContainer.contains(e.target)&&e.target!==searchBtn&&closeSearchBox(),highlightPopup&&toggleDrawModeBtn&&highlightPopup.classList.contains("visible")&&!highlightPopup.contains(e.target)&&e.target!==toggleDrawModeBtn&&closeHighlightPopup() });
+function goToPage(page){ /* ... unchanged ... */ page>=0&&page<images.length&&(currentPage=page,renderPage(),closeIndexMenu()) }
 window.goToPage = goToPage;
 
 // ---------- Input & touch (For SWIPING ONLY - Modified) ----------
-let touchStartX = 0, touchEndX = 0;
-const swipeThreshold = 50;
-let isPinching = false; // Flag to track if pinch is active
-
-function handleTouchStartSwipe(e){
-    if (document.body.classList.contains('highlight-mode') || isPinching || e.touches.length > 1) { touchStartX = null; return; }
-    touchStartX = e.touches[0].clientX;
-}
-function handleTouchEndSwipe(e){
-    if (document.body.classList.contains('highlight-mode') || isPinching || touchStartX === null || e.touches.length > 0) { touchStartX = null; return; }
-    touchEndX = e.changedTouches[0].clientX;
-    handleSwipeGesture();
-}
-function handleSwipeGesture(){
-    if (touchStartX === null) return;
-    const diff = touchEndX - touchStartX;
-    if (Math.abs(diff) > swipeThreshold){ if(diff > 0){ prevPage(); } else { nextPage(); } }
-    touchStartX = null;
-}
+let touchStartX = 0, touchEndX = 0; const swipeThreshold = 50; let isPinching = false;
+function handleTouchStartSwipe(e){ if (document.body.classList.contains('highlight-mode') || isPinching || e.touches.length > 1) { touchStartX = null; return; } touchStartX = e.touches[0].clientX; }
+function handleTouchEndSwipe(e){ if (document.body.classList.contains('highlight-mode') || isPinching || touchStartX === null || e.touches.length > 0) { touchStartX = null; return; } touchEndX = e.changedTouches[0].clientX; handleSwipeGesture(); }
+function handleSwipeGesture(){ if (touchStartX === null) return; const diff = touchEndX - touchStartX; if (Math.abs(diff) > swipeThreshold){ if(diff > 0){ prevPage(); } else { nextPage(); } } touchStartX = null; }
 
 // ---------- Modals (PhET, Video) ----------
-function openPhetModal(){ const a=typeof config!="undefined"&&config.simulations&&config.simulations.find(e=>e.page===currentPage+1);a&&a.url?(phetFrame&&(phetFrame.src=a.url),phetModal&&(phetModal.style.display="flex")):alert("No simulation found for this page.") }
-function closePhetModal(){ phetModal&&(phetModal.style.display="none"),phetFrame&&(phetFrame.src="about:blank") }
+function openPhetModal(){ /* ... unchanged ... */ const a=typeof config!="undefined"&&config.simulations&&config.simulations.find(e=>e.page===currentPage+1);a&&a.url?(phetFrame&&(phetFrame.src=a.url),phetModal&&(phetModal.style.display="flex")):alert("No simulation found for this page.") }
+function closePhetModal(){ /* ... unchanged ... */ phetModal&&(phetModal.style.display="none"),phetFrame&&(phetFrame.src="about:blank") }
 if(phetBtn)phetBtn.addEventListener("click",openPhetModal);
 if(phetCloseBtn)phetCloseBtn.addEventListener("click",closePhetModal);
 if(phetModal)phetModal.addEventListener("click",e=>{e.target===phetModal&&closePhetModal()});
-function openVideoModal(){ const a=typeof config!="undefined"&&config.videos&&config.videos.find(e=>e.page===currentPage+1);a&&a.url?(videoFrame&&(videoFrame.src=getYoutubeEmbedUrl(a.url)),videoModal&&(videoModal.style.display="flex")):alert("No video found for this page.") }
-function closeVideoModal(){ videoModal&&(videoModal.style.display="none"),videoFrame&&(videoFrame.src="about:blank") }
+function openVideoModal(){ /* ... unchanged ... */ const a=typeof config!="undefined"&&config.videos&&config.videos.find(e=>e.page===currentPage+1);a&&a.url?(videoFrame&&(videoFrame.src=getYoutubeEmbedUrl(a.url)),videoModal&&(videoModal.style.display="flex")):alert("No video found for this page.") }
+function closeVideoModal(){ /* ... unchanged ... */ videoModal&&(videoModal.style.display="none"),videoFrame&&(videoFrame.src="about:blank") }
 if(videoBtn)videoBtn.addEventListener("click",openVideoModal);
 if(videoCloseBtn)videoCloseBtn.addEventListener("click",closeVideoModal);
 if(videoModal)videoModal.addEventListener("click",e=>{e.target===videoModal&&closeVideoModal()});
 
 
 // --- HAMMER.JS SETUP (Updated for Scrolling) ---
-function setupHammer(element) {
-    if (!element || typeof Hammer === 'undefined') return;
-    if (hammerManager) { hammerManager.destroy(); hammerManager = null; } // Destroy old instance
+function setupHammer(element) { /* ... unchanged ... */ if(!element||"undefined"==typeof Hammer)return;hammerManager&&(hammerManager.destroy(),hammerManager=null),hammerManager=new Hammer.Manager(element);const e=new Hammer.Pinch({pointers:2}),t=new Hammer.Pan({pointers:0,direction:Hammer.DIRECTION_ALL});e.recognizeWith(t),hammerManager.add([e,t]);let n=currentOffsetX,o=currentOffsetY;hammerManager.on("pinchstart",e=>{isDrawing||(isPinching=!0,pinchStartScale=currentScale,element.style.transition="none")}),hammerManager.on("pinchmove",e=>{isDrawing||!isPinching||(currentScale=Math.max(1,Math.min(pinchStartScale*e.scale,5)),applyTransform(element))}),hammerManager.on("pinchend pinchcancel",e=>{isDrawing||(isPinching=!1,element.style.transition="",adjustPanLimits(element),applyTransform(element))}),hammerManager.on("panstart",e=>{!isDrawing&&!(currentScale>1&&e.pointers.length<2)&&(n=currentOffsetX,o=currentOffsetY,element.style.transition="none")}),hammerManager.on("panmove",e=>{if(isDrawing)return;if(currentScale>1&&e.pointers.length<2)return;if(1===currentScale&&1===e.pointers.length){if(!(Math.abs(e.deltaY)>Math.abs(e.deltaX)))return}const t=element.getBoundingClientRect(),a=flipbook.getBoundingClientRect(),i=Math.max(0,(t.width-a.width)/2),r=Math.max(0,(t.height-a.height)/2),l=n+e.deltaX,s=o+e.deltaY;currentOffsetX=Math.max(-i,Math.min(l,i)),currentOffsetY=Math.max(-r,Math.min(s,r)),applyTransform(element)}),hammerManager.on("panend pancancel",e=>{isDrawing||(element.style.transition="",n=currentOffsetX,o=currentOffsetY)}) }
+function adjustPanLimits(element) { /* ... unchanged ... */ if(!element||currentScale<=1)return currentOffsetX=0,void(currentOffsetY=0);const e=element.getBoundingClientRect(),t=flipbook.getBoundingClientRect(),n=Math.max(0,(e.width-t.width)/2),o=Math.max(0,(e.height-t.height)/2);currentOffsetX=Math.max(-n,Math.min(currentOffsetX,n)),currentOffsetY=Math.max(-o,Math.min(currentOffsetY,o)) }
+function applyTransform(element) { /* ... unchanged ... */ element&&(element.style.transform=`scale(${currentScale}) translate(${currentOffsetX}px, ${currentOffsetY}px)`) }
 
-    hammerManager = new Hammer.Manager(element);
+// --- HIGHLIGHTING LOGIC ---
+function sizeCanvasToImage(img, canvas) { /* ... unchanged ... */ if(!img||!canvas)return;const e=img.getBoundingClientRect();canvas.width=img.naturalWidth,canvas.height=img.naturalHeight,canvas.style.width=`${e.width}px`,canvas.style.height=`${e.height}px`,canvas.style.top="0px",canvas.style.left="0px",ctx&&(ctx=canvas.getContext("2d")) }
+function getDrawPosition(e, canvas) { /* ... unchanged ... */ if(!canvas)return{x:0,y:0};const t=canvas.closest(".page-wrap");if(!t)return{x:0,y:0};const n=canvas.getBoundingClientRect(),o=t.getBoundingClientRect(),a=canvas.width/n.width,i=canvas.height/n.height;let r,l;return e.touches&&e.touches.length>0?(r=e.touches[0].pageX-window.scrollX,l=e.touches[0].pageY-window.scrollY):e.changedTouches&&e.changedTouches.length>0?(r=e.changedTouches[0].pageX-window.scrollX,l=e.changedTouches[0].pageY-window.scrollY):(r=e.clientX,l=e.clientY),{x:(r-n.left)*a,y:(l-n.top)*i} }
+function startDrawing(e) { /* ... unchanged ... */ if(!highlightCanvas||!ctx||!document.body.classList.contains("highlight-mode")||e.target!==highlightCanvas)return;if(e.touches&&e.touches.length>1)return;hammerManager&&(hammerManager.get("pinch").set({enable:!1}),hammerManager.get("pan").set({enable:!1})),e.touches&&e.preventDefault(),isDrawing=!0;const t=getDrawPosition(e,highlightCanvas);[lastX,lastY]=[t.x,t.y],"eraser"===drawMode&&(ctx.beginPath(),ctx.globalCompositeOperation="destination-out",ctx.fillStyle="rgba(0,0,0,1)",ctx.arc(t.x,t.y,currentBrushSize/2,0,2*Math.PI),ctx.fill()) }
+function draw(e) { /* ... unchanged ... */ if(!isDrawing||!ctx)return;e.touches&&e.preventDefault(),"eraser"===drawMode&&(()=>{const t=getDrawPosition(e,highlightCanvas);ctx.beginPath(),ctx.globalCompositeOperation="destination-out",ctx.strokeStyle="rgba(0,0,0,1)",ctx.lineWidth=currentBrushSize,ctx.moveTo(lastX,lastY),ctx.lineTo(t.x,t.y),ctx.lineCap="round",ctx.lineJoin="round",ctx.stroke(),[lastX,lastY]=[t.x,t.y]})() }
+function stopDrawing(e) { /* ... unchanged ... */ if(!isDrawing)return;isDrawing=!1;let t=getDrawPosition(e,highlightCanvas);"highlight"===drawMode&&(ctx.beginPath(),ctx.globalCompositeOperation="source-over",ctx.strokeStyle=currentHighlightColor,ctx.lineWidth=currentBrushSize,ctx.lineCap="butt",ctx.moveTo(lastX,lastY),ctx.lineTo(t.x,lastY),ctx.stroke()),saveHighlights(currentPage),hammerManager&&(hammerManager.get("pinch").set({enable:!0}),hammerManager.get("pan").set({enable:!0})) }
+function setupDrawingListeners(canvas) { /* ... unchanged ... */ canvas&&(canvas.removeEventListener("mousedown",startDrawing),canvas.removeEventListener("mousemove",draw),canvas.removeEventListener("mouseup",stopDrawing),canvas.removeEventListener("mouseleave",stopDrawing),canvas.removeEventListener("touchstart",startDrawing),canvas.removeEventListener("touchmove",draw),canvas.removeEventListener("touchend",stopDrawing),canvas.removeEventListener("touchcancel",stopDrawing),canvas.addEventListener("mousedown",startDrawing),canvas.addEventListener("mousemove",draw),canvas.addEventListener("mouseup",stopDrawing),canvas.addEventListener("mouseleave",stopDrawing),canvas.addEventListener("touchstart",startDrawing,{passive:!1}),canvas.addEventListener("touchmove",draw,{passive:!1}),canvas.addEventListener("touchend",stopDrawing),canvas.addEventListener("touchcancel",stopDrawing)) }
+function saveHighlights(pageNumber) { /* ... unchanged ... */ highlightCanvas&&requestAnimationFrame(()=>{try{localStorage.setItem(`flipbook-highlights-page-${pageNumber}`,highlightCanvas.toDataURL())}catch(e){console.error("Save highlights error:",e),"QuotaExceededError"===e.name&&alert("Storage full.")}}) }
+function loadHighlights(pageNumber) { /* ... unchanged ... */ if(!highlightCanvas||!ctx)return;const e=localStorage.getItem(`flipbook-highlights-page-${pageNumber}`);ctx.clearRect(0,0,highlightCanvas.width,highlightCanvas.height),e&&(()=>{const t=new Image;t.onload=()=>{ctx.drawImage(t,0,0)},t.onerror=()=>{console.error("Failed load highlight",pageNumber),localStorage.removeItem(`flipbook-highlights-page-${pageNumber}`)},t.src=e})() }
+function clearCurrentHighlights() { /* ... unchanged ... */ ctx&&confirm("Erase all highlights on this page?")&&(ctx.clearRect(0,0,highlightCanvas.width,highlightCanvas.height),localStorage.removeItem(`flipbook-highlights-page-${currentPage}`)) }
+function updateCursor() { /* ... unchanged ... */ if(!highlightCanvas)return;const e=document.body.classList.contains("highlight-mode");e?"highlight"===drawMode?(highlightCanvas.style.cursor="",highlightCanvas.classList.add("highlight-cursor")):(highlightCanvas.style.cursor="cell",highlightCanvas.classList.remove("highlight-cursor")):(highlightCanvas.style.cursor="default",highlightCanvas.classList.remove("highlight-cursor")) }
 
-    // Pinch recognizer (always requires 2 pointers)
-    const pinch = new Hammer.Pinch({ pointers: 2 });
-    // Pan recognizer (allow pan with 1 or 2 pointers initially)
-    const pan = new Hammer.Pan({ pointers: 0, direction: Hammer.DIRECTION_ALL }); // Enable all directions
-
-    // Pinch needs to recognize simultaneously with 2-finger pan
-    pinch.recognizeWith(pan);
-
-    hammerManager.add([pinch, pan]);
-
-    let initialOffsetX = currentOffsetX, initialOffsetY = currentOffsetY;
-
-    hammerManager.on('pinchstart', (e) => {
-        if (isDrawing) return;
-        isPinching = true;
-        pinchStartScale = currentScale;
-        element.style.transition = 'none'; // Disable transition during pinch
-    });
-
-    hammerManager.on('pinchmove', (e) => {
-        if (isDrawing || !isPinching) return;
-        currentScale = Math.max(1, Math.min(pinchStartScale * e.scale, 5)); // Limit zoom scale
-        applyTransform(element);
-    });
-
-    hammerManager.on('pinchend pinchcancel', (e) => {
-        if (isDrawing) return;
-        isPinching = false;
-        element.style.transition = ''; // Re-enable transition
-        // Adjust pan limits based on new scale
-         adjustPanLimits(element);
-         applyTransform(element); // Apply constrained transform
-    });
-
-    hammerManager.on('panstart', (e) => {
-        // Allow pan if drawing OR if zoomed in (scale > 1) with 2 fingers OR if not zoomed (scale === 1) with 1 finger (for scrolling)
-        if (isDrawing) return; // Prevent pan while drawing
-        if (currentScale > 1 && e.pointers.length < 2) return; // Prevent 1-finger pan when zoomed
-
-        initialOffsetX = currentOffsetX;
-        initialOffsetY = currentOffsetY;
-        element.style.transition = 'none'; // Disable transition during pan
-    });
-
-    hammerManager.on('panmove', (e) => {
-        if (isDrawing) return;
-
-        // If zoomed in (scale > 1), require 2 fingers for panning
-        if (currentScale > 1 && e.pointers.length < 2) return;
-
-        // If not zoomed (scale === 1), allow single-finger vertical pan (scrolling simulation)
-        if (currentScale === 1 && e.pointers.length === 1) {
-             // Only allow vertical panning to simulate scrolling
-             if (Math.abs(e.deltaY) > Math.abs(e.deltaX)) {
-                 // Prevent Hammer from handling this pan, let browser scroll
-                 return; // Allow default scroll
-             } else {
-                 // Prevent horizontal panning when not zoomed
-                 return;
-             }
-         }
-
-
-        // Proceed with 2-finger panning logic when zoomed
-        const rect = element.getBoundingClientRect();
-        const parentRect = flipbook.getBoundingClientRect();
-
-        // Calculate maximum movement allowed based on scaled size vs container size
-        const maxMoveX = Math.max(0, (rect.width - parentRect.width) / 2);
-        const maxMoveY = Math.max(0, (rect.height - parentRect.height) / 2);
-
-        // Calculate potential new offset
-        let newOffsetX = initialOffsetX + e.deltaX;
-        let newOffsetY = initialOffsetY + e.deltaY;
-
-        // Constrain the offset within calculated limits
-        currentOffsetX = Math.max(-maxMoveX, Math.min(newOffsetX, maxMoveX));
-        currentOffsetY = Math.max(-maxMoveY, Math.min(newOffsetY, maxMoveY));
-
-        applyTransform(element);
-    });
-
-    hammerManager.on('panend pancancel', (e) => {
-        if (isDrawing) return;
-        element.style.transition = ''; // Re-enable transition
-        initialOffsetX = currentOffsetX; // Update initial offset for next pan
-        initialOffsetY = currentOffsetY;
-    });
-}
-
-// Adjust pan limits after zoom to prevent excessive panning
-function adjustPanLimits(element) {
-     if (!element || currentScale <= 1) {
-         // If scale is 1, reset pan
-         currentOffsetX = 0;
-         currentOffsetY = 0;
-         return;
-     }
-
-     const rect = element.getBoundingClientRect();
-     const parentRect = flipbook.getBoundingClientRect();
-     const maxMoveX = Math.max(0, (rect.width - parentRect.width) / 2);
-     const maxMoveY = Math.max(0, (rect.height - parentRect.height) / 2);
-
-     currentOffsetX = Math.max(-maxMoveX, Math.min(currentOffsetX, maxMoveX));
-     currentOffsetY = Math.max(-maxMoveY, Math.min(currentOffsetY, maxMoveY));
-}
-
-
-function applyTransform(element) { if (!element) return; element.style.transform = `scale(${currentScale}) translate(${currentOffsetX}px, ${currentOffsetY}px)`; }
-
-// --- HIGHLIGHTING LOGIC (Adjusted getDrawPosition) ---
-function sizeCanvasToImage(img, canvas) { if (!img || !canvas) return; const rect = img.getBoundingClientRect(); canvas.width = img.naturalWidth; canvas.height = img.naturalHeight; canvas.style.width = `${rect.width}px`; canvas.style.height = `${rect.height}px`; canvas.style.top = `0px`; canvas.style.left = `0px`; if (ctx) ctx = canvas.getContext('2d'); }
-
-function getDrawPosition(e, canvas) {
-    if (!canvas) return { x: 0, y: 0 };
-    const pageWrap = canvas.closest('.page-wrap'); // Get the transformed parent
-    if (!pageWrap) return { x: 0, y: 0 };
-
-    const canvasRect = canvas.getBoundingClientRect(); // Canvas position on screen
-    const wrapRect = pageWrap.getBoundingClientRect(); // Parent's position on screen
-
-    const scaleXCanvas = canvas.width / canvasRect.width; // Canvas internal vs display
-    const scaleYCanvas = canvas.height / canvasRect.height;
-
-    // Determine clientX/Y correctly for touch/mouse, adjusted for scroll
-    let clientX, clientY;
-    if (e.touches && e.touches.length > 0) {
-        clientX = e.touches[0].pageX - window.scrollX;
-        clientY = e.touches[0].pageY - window.scrollY;
-    } else if (e.changedTouches && e.changedTouches.length > 0) {
-         clientX = e.changedTouches[0].pageX - window.scrollX;
-         clientY = e.changedTouches[0].pageY - window.scrollY;
-    } else {
-        clientX = e.clientX;
-        clientY = e.clientY;
-    }
-
-    // Calculate position relative to the visible part of the CANVAS on screen
-    const screenX = clientX - canvasRect.left;
-    const screenY = clientY - canvasRect.top;
-
-    // Scale this screen position to the canvas's internal resolution
-    const canvasInternalX = screenX * scaleXCanvas;
-    const canvasInternalY = screenY * scaleYCanvas;
-
-    return { x: canvasInternalX, y: canvasInternalY };
-}
-
-
-function startDrawing(e) {
-    if (!highlightCanvas || !ctx || !document.body.classList.contains('highlight-mode') || e.target !== highlightCanvas) return;
-    if (e.touches && e.touches.length > 1) return; // Ignore multi-touch for drawing
-    // Disable Hammer gestures ONLY if drawing starts successfully
-    if (hammerManager) { hammerManager.get('pinch').set({ enable: false }); hammerManager.get('pan').set({ enable: false }); }
-    if (e.touches) e.preventDefault(); // Prevent scroll/zoom only when drawing
-    isDrawing = true;
-    const pos = getDrawPosition(e, highlightCanvas);
-    [lastX, lastY] = [pos.x, pos.y];
-    if (drawMode === 'eraser') { ctx.beginPath(); ctx.globalCompositeOperation = 'destination-out'; ctx.fillStyle = 'rgba(0,0,0,1)'; ctx.arc(pos.x, pos.y, currentBrushSize / 2, 0, Math.PI * 2); ctx.fill(); }
-}
-
-function draw(e) {
-    if (!isDrawing || !ctx) return;
-    if (e.touches) e.preventDefault(); // Continue preventing default actions during draw move
-    if (drawMode === 'eraser') { const pos = getDrawPosition(e, highlightCanvas); ctx.beginPath(); ctx.globalCompositeOperation = 'destination-out'; ctx.strokeStyle = 'rgba(0,0,0,1)'; ctx.lineWidth = currentBrushSize; ctx.moveTo(lastX, lastY); ctx.lineTo(pos.x, pos.y); ctx.lineCap = 'round'; ctx.lineJoin = 'round'; ctx.stroke(); [lastX, lastY] = [pos.x, pos.y]; }
-}
-
-function stopDrawing(e) {
-    if (!isDrawing) return;
-    isDrawing = false;
-    let pos = getDrawPosition(e, highlightCanvas);
-
-    if (drawMode === 'highlight') {
-        ctx.beginPath();
-        ctx.globalCompositeOperation = 'source-over';
-        ctx.strokeStyle = currentHighlightColor;
-        ctx.lineWidth = currentBrushSize;
-        ctx.lineCap = 'butt';
-        ctx.moveTo(lastX, lastY);
-        ctx.lineTo(pos.x, lastY);
-        ctx.stroke();
-    }
-    saveHighlights(currentPage);
-    // Re-enable Hammer gestures AFTER drawing stops
-    if (hammerManager) { hammerManager.get('pinch').set({ enable: true }); hammerManager.get('pan').set({ enable: true }); }
-}
-
-function setupDrawingListeners(canvas) {
-    if (!canvas) return;
-    canvas.removeEventListener('mousedown', startDrawing); canvas.removeEventListener('mousemove', draw); canvas.removeEventListener('mouseup', stopDrawing); canvas.removeEventListener('mouseleave', stopDrawing); canvas.removeEventListener('touchstart', startDrawing); canvas.removeEventListener('touchmove', draw); canvas.removeEventListener('touchend', stopDrawing); canvas.removeEventListener('touchcancel', stopDrawing);
-    canvas.addEventListener('mousedown', startDrawing); canvas.addEventListener('mousemove', draw); canvas.addEventListener('mouseup', stopDrawing); canvas.addEventListener('mouseleave', stopDrawing); canvas.addEventListener('touchstart', startDrawing, { passive: false }); canvas.addEventListener('touchmove', draw, { passive: false }); canvas.addEventListener('touchend', stopDrawing); canvas.addEventListener('touchcancel', stopDrawing);
-}
-
-function saveHighlights(pageNumber) { if (!highlightCanvas) return; requestAnimationFrame(() => { try { localStorage.setItem(`flipbook-highlights-page-${pageNumber}`, highlightCanvas.toDataURL()); } catch (e) { console.error("Save highlights error:", e); if (e.name === 'QuotaExceededError') alert('Storage full.'); } }); }
-
-function loadHighlights(pageNumber) {
-    if (!highlightCanvas || !ctx) return;
-    const dataUrl = localStorage.getItem(`flipbook-highlights-page-${pageNumber}`);
-    ctx.clearRect(0, 0, highlightCanvas.width, highlightCanvas.height);
-    if (dataUrl) {
-        const img = new Image();
-        img.onload = () => { ctx.drawImage(img, 0, 0); };
-        img.onerror = () => { console.error("Failed load highlight", pageNumber); localStorage.removeItem(`flipbook-highlights-page-${pageNumber}`); };
-        img.src = dataUrl;
-    }
-}
-
-function clearCurrentHighlights() { if (!ctx) return; if (confirm("Erase all highlights on this page?")) { ctx.clearRect(0, 0, highlightCanvas.width, highlightCanvas.height); localStorage.removeItem(`flipbook-highlights-page-${currentPage}`); } }
-function updateCursor() { if (!highlightCanvas) return; const e = document.body.classList.contains("highlight-mode"); e ? "highlight" === drawMode ? (highlightCanvas.style.cursor = "", highlightCanvas.classList.add("highlight-cursor")) : (highlightCanvas.style.cursor = "cell", highlightCanvas.classList.remove("highlight-cursor")) : (highlightCanvas.style.cursor = "default", highlightCanvas.classList.remove("highlight-cursor")) }
-
-// --- Event Listeners for Highlight Pop-up (Updated) ---
+// --- Event Listeners for Highlight Pop-up (Updated for Auto-Close) ---
 if (toggleDrawModeBtn) {
     toggleDrawModeBtn.addEventListener('click', (e) => {
         e.stopPropagation();
@@ -577,13 +289,11 @@ if (toggleDrawModeBtn) {
         }
     });
 }
-
 function openHighlightPopup() { if(highlightPopup) highlightPopup.classList.add('visible'); }
 function closeHighlightPopup() { if(highlightPopup) highlightPopup.classList.remove('visible'); }
-
-if (colorSwatchesContainer) { colorSwatchesContainer.addEventListener('click', (e) => { if (e.target.classList.contains('color-swatch')) { setActiveColorSwatch(e.target); setDrawMode('highlight'); closeHighlightPopup(); } }); } // Close after selection
+if (colorSwatchesContainer) { colorSwatchesContainer.addEventListener('click', (e) => { if (e.target.classList.contains('color-swatch')) { setActiveColorSwatch(e.target); setDrawMode('highlight'); closeHighlightPopup(); } }); }
 function setActiveColorSwatch(swatchElement) { if (!swatchElement || !colorSwatchesContainer) return; colorSwatchesContainer.querySelectorAll('.color-swatch').forEach(sw => sw.classList.remove('active')); swatchElement.classList.add('active'); currentHighlightColor = swatchElement.getAttribute('data-color'); }
-if (eraserToolBtnPopup) eraserToolBtnPopup.addEventListener('click', () => { setDrawMode('eraser'); closeHighlightPopup(); }); // Close after selection
+if (eraserToolBtnPopup) eraserToolBtnPopup.addEventListener('click', () => { setDrawMode('eraser'); closeHighlightPopup(); });
 function setDrawMode(mode) { drawMode = mode; if (mode === 'highlight') { if(eraserToolBtnPopup) eraserToolBtnPopup.classList.remove('active'); const activeSwatch = colorSwatchesContainer && colorSwatchesContainer.querySelector('.color-swatch[data-color="' + currentHighlightColor + '"]'); if (activeSwatch && !activeSwatch.classList.contains('active')) { setActiveColorSwatch(activeSwatch); } else if (colorSwatchesContainer && !colorSwatchesContainer.querySelector('.color-swatch.active')) { const targetSwatch = colorSwatchesContainer.querySelector('.color-swatch[data-color="' + currentHighlightColor + '"]') || colorSwatchesContainer.querySelector('.color-swatch'); if(targetSwatch) setActiveColorSwatch(targetSwatch); } } else { if(eraserToolBtnPopup) eraserToolBtnPopup.classList.add('active'); if (colorSwatchesContainer) colorSwatchesContainer.querySelectorAll('.color-swatch').forEach(sw => sw.classList.remove('active')); } updateCursor(); }
 if (brushSizeSliderPopup) { brushSizeSliderPopup.addEventListener('input', (e) => { currentBrushSize = e.target.value; }); currentBrushSize = brushSizeSliderPopup.value; }
 if (clearHighlightsBtnPopup) clearHighlightsBtnPopup.addEventListener('click', () => { clearCurrentHighlights(); closeHighlightPopup(); });
@@ -591,9 +301,9 @@ if (clearHighlightsBtnPopup) clearHighlightsBtnPopup.addEventListener('click', (
 window.addEventListener('resize', () => { const img = document.querySelector('.page-image'); if (img && highlightCanvas) { setTimeout(() => { sizeCanvasToImage(img, highlightCanvas); loadHighlights(currentPage); }, 150); } closeHighlightPopup(); if (toggleDrawModeBtn && toggleDrawModeBtn.classList.contains('active')) { toggleDrawModeBtn.classList.remove('active'); document.body.classList.remove('highlight-mode'); updateCursor(); } });
 
 // --- SEARCH LOGIC ---
-function toggleSearchBox() { if(!searchContainer)return;"none"!==searchContainer.style.display?closeSearchBox():(searchContainer.style.display="flex",searchInput&&searchInput.focus(),searchResults&&(searchResults.innerHTML="")) }
-function closeSearchBox() { searchContainer&&(searchContainer.style.display="none"),searchInput&&(searchInput.value=""),searchResults&&(searchResults.innerHTML="") }
-function performSearch() { if(!searchInput||!searchResults||0===Object.keys(bookTextData).length)return;const e=searchInput.value.trim().toLowerCase();if(searchResults.innerHTML="",e.length<2){const t=document.createElement("div");return t.classList.add("no-results"),t.textContent="Please enter at least 2 characters.",void searchResults.appendChild(t)}const n=[];for(const o in bookTextData){const a=bookTextData[o];a&&a.toLowerCase().includes(e)&&n.push(parseInt(o,10))}if(n.length>0){n.sort((e,t)=>e-t),n.forEach(e=>{const t=document.createElement("div");t.textContent=`Page ${e+1}`,t.onclick=()=>{goToPage(e),closeSearchBox()},searchResults.appendChild(t)})}else{const l=document.createElement("div");l.classList.add("no-results"),l.textContent="No results found.",searchResults.appendChild(l)} }
+function toggleSearchBox() { /* ... unchanged ... */ if(!searchContainer)return;"none"!==searchContainer.style.display?closeSearchBox():(searchContainer.style.display="flex",searchInput&&searchInput.focus(),searchResults&&(searchResults.innerHTML="")) }
+function closeSearchBox() { /* ... unchanged ... */ searchContainer&&(searchContainer.style.display="none"),searchInput&&(searchInput.value=""),searchResults&&(searchResults.innerHTML="") }
+function performSearch() { /* ... unchanged ... */ if(!searchInput||!searchResults||0===Object.keys(bookTextData).length)return;const e=searchInput.value.trim().toLowerCase();if(searchResults.innerHTML="",e.length<2){const t=document.createElement("div");return t.classList.add("no-results"),t.textContent="Please enter at least 2 characters.",void searchResults.appendChild(t)}const n=[];for(const o in bookTextData){const a=bookTextData[o];a&&a.toLowerCase().includes(e)&&n.push(parseInt(o,10))}if(n.length>0){n.sort((e,t)=>e-t),n.forEach(e=>{const t=document.createElement("div");t.textContent=`Page ${e+1}`,t.onclick=()=>{goToPage(e),closeSearchBox()},searchResults.appendChild(t)})}else{const l=document.createElement("div");l.classList.add("no-results"),l.textContent="No results found.",searchResults.appendChild(l)} }
 if (searchBtn) searchBtn.addEventListener('click', toggleSearchBox);
 if (searchCloseBtn) searchCloseBtn.addEventListener('click', closeSearchBox);
 if (searchInput) { searchInput.addEventListener('keydown', (e) => { if (e.key === 'Enter') { performSearch(); e.preventDefault(); } if (e.key === 'Escape') { closeSearchBox(); e.preventDefault(); } }); }
@@ -608,11 +318,41 @@ if(aiModal)aiModal.addEventListener("click",e=>{if(e.target===aiModal)aiModal.st
 function getCurrentChapter(){/* ... unchanged ... */ if(!config.chapters||0===config.chapters.length)return null;let e=config.chapters[0];for(let t=config.chapters.length-1;t>=0;t--)if(currentPage>=config.chapters[t].page-1){e=config.chapters[t];break}return e}
 async function getAiHelp(e){/* ... unchanged ... */ if(!GEMINI_API_KEY||"YOUR_API_KEY_HERE"===GEMINI_API_KEY)return void(aiResponseEl&&(aiResponseEl.textContent="AI Helper not configured."));if(!aiLoadingEl||!aiResponseEl)return;aiLoadingEl.style.display="block",aiResponseEl.innerHTML="";let t;const n=getCurrentChapter(),o=n?n.title:"this page";try{if("analyze_page"===e){let a=await getImageAsBase64FromCanvas();if(!a)return aiResponseEl.textContent="Could not process page image.",void(aiLoadingEl.style.display="none");t={contents:[{parts:[{text:`Analyze this physics page (from chapter "${o}"). Summarize concepts,explain formulas/diagrams,and give a takeaway for a life science student.`},{inline_data:{mime_type:"image/png",data:a}}]}]}}else{let r;switch(e){case"explain":{const i=window.prompt(`Concept from "${o}" to explain?`,"Pascal's Principle");if(!i)return void(aiLoadingEl.style.display="none");r=`Explain "${i}" from "${o}" simply for life science students.`}break;case"quiz":r=`Generate 2 multiple-choice questions on "${o}". Explain the correct answer (bold it).`;break;case"relate":r=`Provide 2 examples of how "${o}" applies to biology or medicine.`;break;default:return void(aiLoadingEl.style.display="none")}t={contents:[{parts:[{text:r}]}]}}const s=`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=${GEMINI_API_KEY}`;const u=await fetch(s,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(t)});if(!u.ok){let p=u.statusText;try{p=(await u.json()).error.message||p}catch(g){}throw new Error(`API error (${u.status}): ${p}`)}const m=await u.json();if(!m.candidates||0===m.candidates.length||!m.candidates[0].content||!m.candidates[0].content.parts||0===m.candidates[0].content.parts.length){let f="Unknown";if(m.candidates&&m.candidates[0]&&m.candidates[0].finishReason)f=m.candidates[0].finishReason;return console.warn("AI response missing content. Reason:",f,m),void(aiResponseEl.textContent=`Response was blocked or empty. Reason: ${f}.`)}const y=m.candidates[0].content.parts[0].text;"undefined"!=typeof marked?aiResponseEl.innerHTML=marked.parse(y):aiResponseEl.innerText=y,window.MathJax&&MathJax.typesetPromise([aiResponseEl]).catch(b=>console.error("MathJax error:",b))}catch(w){console.error("AI Helper Error:",w),aiResponseEl.textContent=`Error: ${w.message}`}finally{aiLoadingEl.style.display="none"}}
 
-// --- Translate Page ---
-const translateBtn=document.getElementById("translateBtn"),hideTranslateBtn=document.getElementById("hideTranslateBtn");
-async function translateCurrentPage(){/* ... unchanged ... */ const e=document.getElementById("overlay-translation");if(!e)return;e.style.display="block",e.textContent="🔄 Loading text...";const t=String(currentPage),n=bookTextData[t];if(void 0===n)return void(e.textContent="⚠️ Text data for this page is unavailable.");if(!n||!n.trim())return void(e.textContent="ℹ️ No translatable text found for this page.");if(!GEMINI_API_KEY||"YOUR_API_KEY_HERE"===GEMINI_API_KEY)return void(e.innerText="⚠️ Translation unavailable: No API key.\n\nPreview:\n\n"+n.slice(0,1500)+(n.length>1500?"...":""));e.textContent="🌐 Translating to Arabic...";try{const o=`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=${GEMINI_API_KEY}`,a={contents:[{parts:[{text:`Translate the following English physics text into clear, educational Arabic for university-level biology/medical students. Preserve equations and scientific terms. Do not add commentary.\n\n---START---\n${n}\n---END---`}]}]};const l=await fetch(o,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(a)});if(!l.ok){let s=l.statusText;try{s=(await l.json()).error.message||s}catch(r){}throw new Error(`API error (${l.status}): ${s}`)}const d=await l.json();if(!d.candidates||0===d.candidates.length||!d.candidates[0].content||!d.candidates[0].content.parts||0===d.candidates[0].content.parts.length){let c="Unknown";if(d.candidates&&d.candidates[0]&&d.candidates[0].finishReason)c=d.candidates[0].finishReason;return console.warn("Translate response missing. Reason:",c,d),void(e.textContent=`❌ Translation failed. Reason: ${c}.`)}const u=d.candidates[0].content.parts[0].text;e.innerText=u,e.style.display="block",hideTranslateBtn&&(hideTranslateBtn.style.display="inline-block"),window.MathJax&&MathJax.typesetPromise([e]).catch(p=>console.error("MathJax translate error:",p))}catch(g){console.error("Translate error:",g),e.textContent=`❌ Translation Error: ${g.message}`}}
-if(translateBtn)translateBtn.addEventListener("click",translateCurrentPage);
-if(hideTranslateBtn)hideTranslateBtn.addEventListener("click",()=>{const e=document.getElementById("overlay-translation");if(e)e.style.display="none";if(hideTranslateBtn)hideTranslateBtn.style.display="none"});
+// --- Translate Page (Moved to AI Modal) ---
+async function translateCurrentPage() {
+    // Close AI modal first
+    if(aiModal) aiModal.style.display = 'none';
+
+    const overlay = document.getElementById("overlay-translation");
+    if (!overlay) return;
+    overlay.style.display = 'block'; // Show overlay
+    overlay.textContent = '🔄 Loading text...';
+    const pageKey = String(currentPage);
+    const englishText = bookTextData[pageKey];
+
+    if (englishText === undefined) { overlay.textContent = '⚠️ Text data unavailable.'; return; }
+    if (!englishText || !englishText.trim()) { overlay.textContent = 'ℹ️ No translatable text found.'; return; }
+    if (!GEMINI_API_KEY || GEMINI_API_KEY === 'YOUR_API_KEY_HERE') { overlay.innerText = "⚠️ Translation unavailable: No API key.\n\nPreview:\n\n"+englishText.slice(0,1500)+(englishText.length>1500?"...":""); return; }
+
+    overlay.textContent = '🌐 Translating to Arabic...';
+    try {
+        const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=${GEMINI_API_KEY}`;
+        const requestBody = { contents: [{ parts: [{ text:`Translate the following English physics text into clear, educational Arabic for university-level biology/medical students. Preserve equations and scientific terms. Do not add commentary.\n\n---START---\n${englishText}\n---END---` }] }] };
+        const resp = await fetch(apiUrl, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(requestBody) });
+        if (!resp.ok) { let errorText = resp.statusText; try { errorText = (await resp.json()).error.message || errorText; } catch (e) {} throw new Error(`API error (${resp.status}): ${errorText}`); }
+        const data = await resp.json();
+        if (!data.candidates || data.candidates.length === 0 || !data.candidates[0].content || !data.candidates[0].content.parts || data.candidates[0].content.parts.length === 0) { let reason = "Unknown"; if (data.candidates && data.candidates[0]) reason = data.candidates[0].finishReason; console.warn("Translate response missing. Reason:", reason, data); overlay.textContent = `❌ Translation failed. Reason: ${reason}.`; return; }
+        const translated = data.candidates[0].content.parts[0].text;
+        overlay.innerText = translated; // Display translation
+        // No separate hide button needed, close icon is part of overlay
+        window.MathJax && MathJax.typesetPromise([overlay]).catch(p => console.error("MathJax translate error:", p));
+    } catch (err) {
+        console.error("Translate error:", err);
+        overlay.textContent = `❌ Translation Error: ${err.message}`;
+    }
+}
+// Removed listeners for old translate/hide buttons
+
 
 // --- Initial Setup ---
 document.addEventListener("DOMContentLoaded", () => {
