@@ -89,6 +89,7 @@ const videoFrame = document.getElementById('videoFrame');
 
 // --- HIGHLIGHTING VARIABLES ---
 const toggleDrawModeBtn = document.getElementById('toggle-draw-mode-btn');
+const highlightSettingsBtn = document.getElementById('highlight-settings-btn'); // New button
 const highlightPopup = document.getElementById('highlight-popup');
 const colorSwatchesContainer = document.querySelector('.color-swatches');
 const eraserToolBtnPopup = document.getElementById('eraser-tool-btn-popup');
@@ -210,7 +211,7 @@ function renderPage() {
     if (currentOverlay) currentOverlay.style.display = 'none'; // Ensure it starts hidden
 
     closeSearchBox();
-    closeHighlightPopup();
+    closeHighlightPopup(); // Ensure popup is closed on page change
     preloadImages();
 }
 
@@ -232,7 +233,10 @@ function closeIndexMenu(){ /* ... unchanged ... */ if(!indexMenu||!indexToggle)r
 if (indexToggle) indexToggle.addEventListener("click", e=>{ e.stopPropagation(); indexMenu.style.display === "flex" ? closeIndexMenu() : openIndexMenu(); });
 if (indexMenu) indexMenu.addEventListener("click", e => e.stopPropagation());
 
-document.addEventListener("click", e => { /* ... unchanged ... */ indexMenu&&indexToggle&&"flex"===indexMenu.style.display&&!indexMenu.contains(e.target)&&!indexToggle.contains(e.target)&&closeIndexMenu(),searchContainer&&"none"!==searchContainer.style.display&&!searchContainer.contains(e.target)&&e.target!==searchBtn&&closeSearchBox(),highlightPopup&&toggleDrawModeBtn&&highlightPopup.classList.contains("visible")&&!highlightPopup.contains(e.target)&&e.target!==toggleDrawModeBtn&&closeHighlightPopup() });
+document.addEventListener("click", e => { /* ... unchanged ... */ indexMenu&&indexToggle&&"flex"===indexMenu.style.display&&!indexMenu.contains(e.target)&&!indexToggle.contains(e.target)&&closeIndexMenu(),searchContainer&&"none"!==searchContainer.style.display&&!searchContainer.contains(e.target)&&e.target!==searchBtn&&closeSearchBox(),
+    // Updated highlight popup auto-close logic
+    highlightPopup && (highlightPopup.classList.contains('visible') && !highlightPopup.contains(e.target) && e.target !== highlightSettingsBtn && closeHighlightPopup())
+});
 function goToPage(page){ /* ... unchanged ... */ page>=0&&page<images.length&&(currentPage=page,renderPage(),closeIndexMenu()) }
 window.goToPage = goToPage;
 
@@ -272,33 +276,119 @@ function loadHighlights(pageNumber) { /* ... unchanged ... */ if(!highlightCanva
 function clearCurrentHighlights() { /* ... unchanged ... */ ctx&&confirm("Erase all highlights on this page?")&&(ctx.clearRect(0,0,highlightCanvas.width,highlightCanvas.height),localStorage.removeItem(`flipbook-highlights-page-${currentPage}`)) }
 function updateCursor() { /* ... unchanged ... */ if(!highlightCanvas)return;const e=document.body.classList.contains("highlight-mode");e?"highlight"===drawMode?(highlightCanvas.style.cursor="",highlightCanvas.classList.add("highlight-cursor")):(highlightCanvas.style.cursor="cell",highlightCanvas.classList.remove("highlight-cursor")):(highlightCanvas.style.cursor="default",highlightCanvas.classList.remove("highlight-cursor")) }
 
-// --- Event Listeners for Highlight Pop-up (Updated for Auto-Close) ---
+// --- Event Listeners for Highlight Buttons ---
 if (toggleDrawModeBtn) {
     toggleDrawModeBtn.addEventListener('click', (e) => {
         e.stopPropagation();
-        if (highlightPopup) {
-            const isVisible = highlightPopup.classList.contains('visible');
-            if (isVisible) {
-                closeHighlightPopup(); document.body.classList.remove('highlight-mode'); toggleDrawModeBtn.classList.remove('active'); updateCursor();
-            } else {
-                openHighlightPopup(); document.body.classList.add('highlight-mode'); toggleDrawModeBtn.classList.add('active');
-                let activeSwatch = colorSwatchesContainer && colorSwatchesContainer.querySelector('.color-swatch.active');
-                if (!activeSwatch && colorSwatchesContainer) activeSwatch = colorSwatchesContainer.querySelector('.color-swatch');
-                setActiveColorSwatch(activeSwatch); setDrawMode('highlight');
-            }
+        // Toggle draw mode ON/OFF
+        const isDrawModeActive = document.body.classList.contains('highlight-mode');
+        if (isDrawModeActive) {
+            document.body.classList.remove('highlight-mode');
+            toggleDrawModeBtn.classList.remove('active');
+            highlightSettingsBtn.classList.remove('active'); // Also deactivate settings button
+            closeHighlightPopup(); // Close popup when turning off draw mode
+        } else {
+            document.body.classList.add('highlight-mode');
+            toggleDrawModeBtn.classList.add('active');
+            // When turning on draw mode, ensure correct tool is selected
+            let activeSwatch = colorSwatchesContainer && colorSwatchesContainer.querySelector('.color-swatch.active');
+            if (!activeSwatch && colorSwatchesContainer) activeSwatch = colorSwatchesContainer.querySelector('.color-swatch');
+            setActiveColorSwatch(activeSwatch);
+            setDrawMode('highlight'); // Default to highlight mode
+        }
+        updateCursor();
+    });
+}
+
+if (highlightSettingsBtn) {
+    highlightSettingsBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        // Toggle settings popup visibility
+        const isVisible = highlightPopup && highlightPopup.classList.contains('visible');
+        if (isVisible) {
+            closeHighlightPopup();
+        } else {
+            openHighlightPopup();
         }
     });
 }
-function openHighlightPopup() { if(highlightPopup) highlightPopup.classList.add('visible'); }
-function closeHighlightPopup() { if(highlightPopup) highlightPopup.classList.remove('visible'); }
-if (colorSwatchesContainer) { colorSwatchesContainer.addEventListener('click', (e) => { if (e.target.classList.contains('color-swatch')) { setActiveColorSwatch(e.target); setDrawMode('highlight'); closeHighlightPopup(); } }); }
-function setActiveColorSwatch(swatchElement) { if (!swatchElement || !colorSwatchesContainer) return; colorSwatchesContainer.querySelectorAll('.color-swatch').forEach(sw => sw.classList.remove('active')); swatchElement.classList.add('active'); currentHighlightColor = swatchElement.getAttribute('data-color'); }
-if (eraserToolBtnPopup) eraserToolBtnPopup.addEventListener('click', () => { setDrawMode('eraser'); closeHighlightPopup(); });
-function setDrawMode(mode) { drawMode = mode; if (mode === 'highlight') { if(eraserToolBtnPopup) eraserToolBtnPopup.classList.remove('active'); const activeSwatch = colorSwatchesContainer && colorSwatchesContainer.querySelector('.color-swatch[data-color="' + currentHighlightColor + '"]'); if (activeSwatch && !activeSwatch.classList.contains('active')) { setActiveColorSwatch(activeSwatch); } else if (colorSwatchesContainer && !colorSwatchesContainer.querySelector('.color-swatch.active')) { const targetSwatch = colorSwatchesContainer.querySelector('.color-swatch[data-color="' + currentHighlightColor + '"]') || colorSwatchesContainer.querySelector('.color-swatch'); if(targetSwatch) setActiveColorSwatch(targetSwatch); } } else { if(eraserToolBtnPopup) eraserToolBtnPopup.classList.add('active'); if (colorSwatchesContainer) colorSwatchesContainer.querySelectorAll('.color-swatch').forEach(sw => sw.classList.remove('active')); } updateCursor(); }
-if (brushSizeSliderPopup) { brushSizeSliderPopup.addEventListener('input', (e) => { currentBrushSize = e.target.value; }); currentBrushSize = brushSizeSliderPopup.value; }
-if (clearHighlightsBtnPopup) clearHighlightsBtnPopup.addEventListener('click', () => { clearCurrentHighlights(); closeHighlightPopup(); });
 
-window.addEventListener('resize', () => { const img = document.querySelector('.page-image'); if (img && highlightCanvas) { setTimeout(() => { sizeCanvasToImage(img, highlightCanvas); loadHighlights(currentPage); }, 150); } closeHighlightPopup(); if (toggleDrawModeBtn && toggleDrawModeBtn.classList.contains('active')) { toggleDrawModeBtn.classList.remove('active'); document.body.classList.remove('highlight-mode'); updateCursor(); } });
+function openHighlightPopup() {
+    if(highlightPopup) highlightPopup.classList.add('visible');
+    if(highlightSettingsBtn) highlightSettingsBtn.classList.add('active'); // Activate settings button when popup is open
+}
+function closeHighlightPopup() {
+    if(highlightPopup) highlightPopup.classList.remove('visible');
+    if(highlightSettingsBtn) highlightSettingsBtn.classList.remove('active'); // Deactivate settings button when popup is closed
+}
+
+if (colorSwatchesContainer) {
+    colorSwatchesContainer.addEventListener('click', (e) => {
+        if (e.target.classList.contains('color-swatch')) {
+            setActiveColorSwatch(e.target);
+            setDrawMode('highlight');
+            closeHighlightPopup(); // Close popup after selecting color
+        }
+    });
+}
+
+function setActiveColorSwatch(swatchElement) {
+    if (!swatchElement || !colorSwatchesContainer) return;
+    colorSwatchesContainer.querySelectorAll('.color-swatch').forEach(sw => sw.classList.remove('active'));
+    swatchElement.classList.add('active');
+    currentHighlightColor = swatchElement.getAttribute('data-color');
+}
+
+if (eraserToolBtnPopup) {
+    eraserToolBtnPopup.addEventListener('click', () => {
+        setDrawMode('eraser');
+        closeHighlightPopup(); // Close popup after selecting eraser
+    });
+}
+
+function setDrawMode(mode) {
+    drawMode = mode;
+    if (mode === 'highlight') {
+        if(eraserToolBtnPopup) eraserToolBtnPopup.classList.remove('active');
+        const activeSwatch = colorSwatchesContainer && colorSwatchesContainer.querySelector('.color-swatch[data-color="' + currentHighlightColor + '"]');
+        if (activeSwatch && !activeSwatch.classList.contains('active')) {
+            setActiveColorSwatch(activeSwatch);
+        } else if (colorSwatchesContainer && !colorSwatchesContainer.querySelector('.color-swatch.active')) {
+            const targetSwatch = colorSwatchesContainer.querySelector('.color-swatch[data-color="' + currentHighlightColor + '"]') || colorSwatchesContainer.querySelector('.color-swatch');
+            if(targetSwatch) setActiveColorSwatch(targetSwatch);
+        }
+    } else {
+        if(eraserToolBtnPopup) eraserToolBtnPopup.classList.add('active');
+        if (colorSwatchesContainer) colorSwatchesContainer.querySelectorAll('.color-swatch').forEach(sw => sw.classList.remove('active'));
+    }
+    updateCursor();
+}
+
+if (brushSizeSliderPopup) {
+    brushSizeSliderPopup.addEventListener('input', (e) => {
+        currentBrushSize = e.target.value;
+    });
+    currentBrushSize = brushSizeSliderPopup.value;
+}
+
+if (clearHighlightsBtnPopup) {
+    clearHighlightsBtnPopup.addEventListener('click', () => {
+        clearCurrentHighlights();
+        closeHighlightPopup(); // Close popup after clearing highlights
+    });
+}
+
+window.addEventListener('resize', () => {
+    const img = document.querySelector('.page-image');
+    if (img && highlightCanvas) {
+        setTimeout(() => {
+            sizeCanvasToImage(img, highlightCanvas);
+            loadHighlights(currentPage);
+        }, 150);
+    }
+    // Only close popup, do not deactivate draw mode on resize
+    closeHighlightPopup();
+});
 
 // --- SEARCH LOGIC ---
 function toggleSearchBox() { /* ... unchanged ... */ if(!searchContainer)return;"none"!==searchContainer.style.display?closeSearchBox():(searchContainer.style.display="flex",searchInput&&searchInput.focus(),searchResults&&(searchResults.innerHTML="")) }
@@ -341,37 +431,5 @@ async function translateCurrentPage() {
         const resp = await fetch(apiUrl, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(requestBody) });
         if (!resp.ok) { let errorText = resp.statusText; try { errorText = (await resp.json()).error.message || errorText; } catch (e) {} throw new Error(`API error (${resp.status}): ${errorText}`); }
         const data = await resp.json();
-        if (!data.candidates || data.candidates.length === 0 || !data.candidates[0].content || !data.candidates[0].content.parts || data.candidates[0].content.parts.length === 0) { let reason = "Unknown"; if (data.candidates && data.candidates[0]) reason = data.candidates[0].finishReason; console.warn("Translate response missing. Reason:", reason, data); overlay.textContent = `❌ Translation failed. Reason: ${reason}.`; return; }
-        const translated = data.candidates[0].content.parts[0].text;
-        overlay.innerText = translated; // Display translation
-        // No separate hide button needed, close icon is part of overlay
-        window.MathJax && MathJax.typesetPromise([overlay]).catch(p => console.error("MathJax translate error:", p));
-    } catch (err) {
-        console.error("Translate error:", err);
-        overlay.textContent = `❌ Translation Error: ${err.message}`;
-    }
-}
-// Removed listeners for old translate/hide buttons
-
-
-// --- Initial Setup ---
-document.addEventListener("DOMContentLoaded", () => {
-    loadBookText();
-    const flipbookElement = document.getElementById('flipbook');
-    if (flipbookElement) {
-        // Attach SWIPE listeners
-        flipbookElement.addEventListener("touchstart", handleTouchStartSwipe, { passive: true });
-        flipbookElement.addEventListener("touchend", handleTouchEndSwipe, { passive: true });
-    }
-    const pageCounterEl = document.getElementById('pageCounter');
-    const pageInputEl = document.getElementById('pageInput');
-    if (pageCounterEl) pageCounterEl.textContent = `Page ${currentPage + 1} / ${totalPages}`;
-    if (pageInputEl) {
-        pageInputEl.max = totalPages;
-        pageInputEl.value = currentPage + 1;
-    }
-    renderThumbs();
-    renderIndex();
-    renderPage(); // Calls setupDrawingListeners, loadHighlights, and setupHammer internally
-});
+        if (!data.candidates || data.candidates.length === 0 || !data.candidates[0].content || !data.candidates[0].content.parts || data.candidates[0].content.parts.length === 0
 
