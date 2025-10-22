@@ -51,8 +51,6 @@ async function loadBookText() {
         console.log("Book text loaded successfully.");
          const searchBtn = document.getElementById('searchBtn');
          if (searchBtn) searchBtn.disabled = false;
-         // Enable translate function after text loads
-         // (No button to enable, function is called directly)
     } catch (err) {
         console.error("Could not load book text:", err);
          // Disable search button if text loading fails
@@ -211,7 +209,7 @@ function renderPage() {
     if (currentOverlay) currentOverlay.style.display = 'none'; // Ensure it starts hidden
 
     closeSearchBox();
-    closeHighlightPopup(); // Ensure popup is closed on page change
+    closeHighlightPopup();
     preloadImages();
 }
 
@@ -233,10 +231,7 @@ function closeIndexMenu(){ /* ... unchanged ... */ if(!indexMenu||!indexToggle)r
 if (indexToggle) indexToggle.addEventListener("click", e=>{ e.stopPropagation(); indexMenu.style.display === "flex" ? closeIndexMenu() : openIndexMenu(); });
 if (indexMenu) indexMenu.addEventListener("click", e => e.stopPropagation());
 
-document.addEventListener("click", e => { /* ... unchanged ... */ indexMenu&&indexToggle&&"flex"===indexMenu.style.display&&!indexMenu.contains(e.target)&&!indexToggle.contains(e.target)&&closeIndexMenu(),searchContainer&&"none"!==searchContainer.style.display&&!searchContainer.contains(e.target)&&e.target!==searchBtn&&closeSearchBox(),
-    // Updated highlight popup auto-close logic
-    highlightPopup && (highlightPopup.classList.contains('visible') && !highlightPopup.contains(e.target) && e.target !== highlightSettingsBtn && closeHighlightPopup())
-});
+document.addEventListener("click", e => { /* ... unchanged ... */ indexMenu&&indexToggle&&"flex"===indexMenu.style.display&&!indexMenu.contains(e.target)&&!indexToggle.contains(e.target)&&closeIndexMenu(),searchContainer&&"none"!==searchContainer.style.display&&!searchContainer.contains(e.target)&&e.target!==searchBtn&&closeSearchBox(),highlightPopup&&highlightSettingsBtn&&highlightPopup.classList.contains("visible")&&!highlightPopup.contains(e.target)&&e.target!==highlightSettingsBtn&&closeHighlightPopup() });
 function goToPage(page){ /* ... unchanged ... */ page>=0&&page<images.length&&(currentPage=page,renderPage(),closeIndexMenu()) }
 window.goToPage = goToPage;
 
@@ -272,7 +267,26 @@ function draw(e) { /* ... unchanged ... */ if(!isDrawing||!ctx)return;e.touches&
 function stopDrawing(e) { /* ... unchanged ... */ if(!isDrawing)return;isDrawing=!1;let t=getDrawPosition(e,highlightCanvas);"highlight"===drawMode&&(ctx.beginPath(),ctx.globalCompositeOperation="source-over",ctx.strokeStyle=currentHighlightColor,ctx.lineWidth=currentBrushSize,ctx.lineCap="butt",ctx.moveTo(lastX,lastY),ctx.lineTo(t.x,lastY),ctx.stroke()),saveHighlights(currentPage),hammerManager&&(hammerManager.get("pinch").set({enable:!0}),hammerManager.get("pan").set({enable:!0})) }
 function setupDrawingListeners(canvas) { /* ... unchanged ... */ canvas&&(canvas.removeEventListener("mousedown",startDrawing),canvas.removeEventListener("mousemove",draw),canvas.removeEventListener("mouseup",stopDrawing),canvas.removeEventListener("mouseleave",stopDrawing),canvas.removeEventListener("touchstart",startDrawing),canvas.removeEventListener("touchmove",draw),canvas.removeEventListener("touchend",stopDrawing),canvas.removeEventListener("touchcancel",stopDrawing),canvas.addEventListener("mousedown",startDrawing),canvas.addEventListener("mousemove",draw),canvas.addEventListener("mouseup",stopDrawing),canvas.addEventListener("mouseleave",stopDrawing),canvas.addEventListener("touchstart",startDrawing,{passive:!1}),canvas.addEventListener("touchmove",draw,{passive:!1}),canvas.addEventListener("touchend",stopDrawing),canvas.addEventListener("touchcancel",stopDrawing)) }
 function saveHighlights(pageNumber) { /* ... unchanged ... */ highlightCanvas&&requestAnimationFrame(()=>{try{localStorage.setItem(`flipbook-highlights-page-${pageNumber}`,highlightCanvas.toDataURL())}catch(e){console.error("Save highlights error:",e),"QuotaExceededError"===e.name&&alert("Storage full.")}}) }
-function loadHighlights(pageNumber) { /* ... unchanged ... */ if(!highlightCanvas||!ctx)return;const e=localStorage.getItem(`flipbook-highlights-page-${pageNumber}`);ctx.clearRect(0,0,highlightCanvas.width,highlightCanvas.height),e&&(()=>{const t=new Image;t.onload=()=>{ctx.drawImage(t,0,0)},t.onerror=()=>{console.error("Failed load highlight",pageNumber),localStorage.removeItem(`flipbook-highlights-page-${pageNumber}`)},t.src=e})() }
+
+// Corrected loadHighlights function - Ensure braces and parentheses match
+function loadHighlights(pageNumber) {
+    if (!highlightCanvas || !ctx) return;
+    const dataUrl = localStorage.getItem(`flipbook-highlights-page-${pageNumber}`);
+    ctx.clearRect(0, 0, highlightCanvas.width, highlightCanvas.height); // Clear canvas first
+    if (dataUrl) {
+        const img = new Image(); // Create a new Image object
+        img.onload = () => { // Define what happens when the image data is loaded
+            ctx.drawImage(img, 0, 0); // Draw the saved image onto the canvas
+        };
+        img.onerror = () => { // Define what happens if the image data fails to load
+             console.error("Failed load highlight image for page", pageNumber);
+             localStorage.removeItem(`flipbook-highlights-page-${pageNumber}`); // Remove potentially corrupted data
+        }; // Corrected: Added missing closing parenthesis
+        img.src = dataUrl; // Set the source of the image object to the saved data URL
+    } // Corrected: Added missing closing curly brace
+} // Corrected: Added missing closing curly brace
+
+
 function clearCurrentHighlights() { /* ... unchanged ... */ ctx&&confirm("Erase all highlights on this page?")&&(ctx.clearRect(0,0,highlightCanvas.width,highlightCanvas.height),localStorage.removeItem(`flipbook-highlights-page-${currentPage}`)) }
 function updateCursor() { /* ... unchanged ... */ if(!highlightCanvas)return;const e=document.body.classList.contains("highlight-mode");e?"highlight"===drawMode?(highlightCanvas.style.cursor="",highlightCanvas.classList.add("highlight-cursor")):(highlightCanvas.style.cursor="cell",highlightCanvas.classList.remove("highlight-cursor")):(highlightCanvas.style.cursor="default",highlightCanvas.classList.remove("highlight-cursor")) }
 
@@ -280,21 +294,19 @@ function updateCursor() { /* ... unchanged ... */ if(!highlightCanvas)return;con
 if (toggleDrawModeBtn) {
     toggleDrawModeBtn.addEventListener('click', (e) => {
         e.stopPropagation();
-        // Toggle draw mode ON/OFF
         const isDrawModeActive = document.body.classList.contains('highlight-mode');
         if (isDrawModeActive) {
             document.body.classList.remove('highlight-mode');
             toggleDrawModeBtn.classList.remove('active');
-            highlightSettingsBtn.classList.remove('active'); // Also deactivate settings button
-            closeHighlightPopup(); // Close popup when turning off draw mode
+            if (highlightSettingsBtn) highlightSettingsBtn.classList.remove('active');
+            closeHighlightPopup();
         } else {
             document.body.classList.add('highlight-mode');
             toggleDrawModeBtn.classList.add('active');
-            // When turning on draw mode, ensure correct tool is selected
             let activeSwatch = colorSwatchesContainer && colorSwatchesContainer.querySelector('.color-swatch.active');
             if (!activeSwatch && colorSwatchesContainer) activeSwatch = colorSwatchesContainer.querySelector('.color-swatch');
             setActiveColorSwatch(activeSwatch);
-            setDrawMode('highlight'); // Default to highlight mode
+            setDrawMode('highlight');
         }
         updateCursor();
     });
@@ -303,7 +315,6 @@ if (toggleDrawModeBtn) {
 if (highlightSettingsBtn) {
     highlightSettingsBtn.addEventListener('click', (e) => {
         e.stopPropagation();
-        // Toggle settings popup visibility
         const isVisible = highlightPopup && highlightPopup.classList.contains('visible');
         if (isVisible) {
             closeHighlightPopup();
@@ -313,82 +324,17 @@ if (highlightSettingsBtn) {
     });
 }
 
-function openHighlightPopup() {
-    if(highlightPopup) highlightPopup.classList.add('visible');
-    if(highlightSettingsBtn) highlightSettingsBtn.classList.add('active'); // Activate settings button when popup is open
-}
-function closeHighlightPopup() {
-    if(highlightPopup) highlightPopup.classList.remove('visible');
-    if(highlightSettingsBtn) highlightSettingsBtn.classList.remove('active'); // Deactivate settings button when popup is closed
-}
 
-if (colorSwatchesContainer) {
-    colorSwatchesContainer.addEventListener('click', (e) => {
-        if (e.target.classList.contains('color-swatch')) {
-            setActiveColorSwatch(e.target);
-            setDrawMode('highlight');
-            closeHighlightPopup(); // Close popup after selecting color
-        }
-    });
-}
+function openHighlightPopup() { if(highlightPopup) highlightPopup.classList.add('visible'); if(highlightSettingsBtn) highlightSettingsBtn.classList.add('active'); }
+function closeHighlightPopup() { if(highlightPopup) highlightPopup.classList.remove('visible'); if(highlightSettingsBtn) highlightSettingsBtn.classList.remove('active'); }
+if (colorSwatchesContainer) { colorSwatchesContainer.addEventListener('click', (e) => { if (e.target.classList.contains('color-swatch')) { setActiveColorSwatch(e.target); setDrawMode('highlight'); closeHighlightPopup(); } }); }
+function setActiveColorSwatch(swatchElement) { if (!swatchElement || !colorSwatchesContainer) return; colorSwatchesContainer.querySelectorAll('.color-swatch').forEach(sw => sw.classList.remove('active')); swatchElement.classList.add('active'); currentHighlightColor = swatchElement.getAttribute('data-color'); }
+if (eraserToolBtnPopup) eraserToolBtnPopup.addEventListener('click', () => { setDrawMode('eraser'); closeHighlightPopup(); });
+function setDrawMode(mode) { drawMode = mode; if (mode === 'highlight') { if(eraserToolBtnPopup) eraserToolBtnPopup.classList.remove('active'); const activeSwatch = colorSwatchesContainer && colorSwatchesContainer.querySelector('.color-swatch[data-color="' + currentHighlightColor + '"]'); if (activeSwatch && !activeSwatch.classList.contains('active')) { setActiveColorSwatch(activeSwatch); } else if (colorSwatchesContainer && !colorSwatchesContainer.querySelector('.color-swatch.active')) { const targetSwatch = colorSwatchesContainer.querySelector('.color-swatch[data-color="' + currentHighlightColor + '"]') || colorSwatchesContainer.querySelector('.color-swatch'); if(targetSwatch) setActiveColorSwatch(targetSwatch); } } else { if(eraserToolBtnPopup) eraserToolBtnPopup.classList.add('active'); if (colorSwatchesContainer) colorSwatchesContainer.querySelectorAll('.color-swatch').forEach(sw => sw.classList.remove('active')); } updateCursor(); }
+if (brushSizeSliderPopup) { brushSizeSliderPopup.addEventListener('input', (e) => { currentBrushSize = e.target.value; }); currentBrushSize = brushSizeSliderPopup.value; }
+if (clearHighlightsBtnPopup) clearHighlightsBtnPopup.addEventListener('click', () => { clearCurrentHighlights(); closeHighlightPopup(); });
 
-function setActiveColorSwatch(swatchElement) {
-    if (!swatchElement || !colorSwatchesContainer) return;
-    colorSwatchesContainer.querySelectorAll('.color-swatch').forEach(sw => sw.classList.remove('active'));
-    swatchElement.classList.add('active');
-    currentHighlightColor = swatchElement.getAttribute('data-color');
-}
-
-if (eraserToolBtnPopup) {
-    eraserToolBtnPopup.addEventListener('click', () => {
-        setDrawMode('eraser');
-        closeHighlightPopup(); // Close popup after selecting eraser
-    });
-}
-
-function setDrawMode(mode) {
-    drawMode = mode;
-    if (mode === 'highlight') {
-        if(eraserToolBtnPopup) eraserToolBtnPopup.classList.remove('active');
-        const activeSwatch = colorSwatchesContainer && colorSwatchesContainer.querySelector('.color-swatch[data-color="' + currentHighlightColor + '"]');
-        if (activeSwatch && !activeSwatch.classList.contains('active')) {
-            setActiveColorSwatch(activeSwatch);
-        } else if (colorSwatchesContainer && !colorSwatchesContainer.querySelector('.color-swatch.active')) {
-            const targetSwatch = colorSwatchesContainer.querySelector('.color-swatch[data-color="' + currentHighlightColor + '"]') || colorSwatchesContainer.querySelector('.color-swatch');
-            if(targetSwatch) setActiveColorSwatch(targetSwatch);
-        }
-    } else {
-        if(eraserToolBtnPopup) eraserToolBtnPopup.classList.add('active');
-        if (colorSwatchesContainer) colorSwatchesContainer.querySelectorAll('.color-swatch').forEach(sw => sw.classList.remove('active'));
-    }
-    updateCursor();
-}
-
-if (brushSizeSliderPopup) {
-    brushSizeSliderPopup.addEventListener('input', (e) => {
-        currentBrushSize = e.target.value;
-    });
-    currentBrushSize = brushSizeSliderPopup.value;
-}
-
-if (clearHighlightsBtnPopup) {
-    clearHighlightsBtnPopup.addEventListener('click', () => {
-        clearCurrentHighlights();
-        closeHighlightPopup(); // Close popup after clearing highlights
-    });
-}
-
-window.addEventListener('resize', () => {
-    const img = document.querySelector('.page-image');
-    if (img && highlightCanvas) {
-        setTimeout(() => {
-            sizeCanvasToImage(img, highlightCanvas);
-            loadHighlights(currentPage);
-        }, 150);
-    }
-    // Only close popup, do not deactivate draw mode on resize
-    closeHighlightPopup();
-});
+window.addEventListener('resize', () => { const img = document.querySelector('.page-image'); if (img && highlightCanvas) { setTimeout(() => { sizeCanvasToImage(img, highlightCanvas); loadHighlights(currentPage); }, 150); } closeHighlightPopup(); if (toggleDrawModeBtn && toggleDrawModeBtn.classList.contains('active')) { toggleDrawModeBtn.classList.remove('active'); document.body.classList.remove('highlight-mode'); updateCursor(); } });
 
 // --- SEARCH LOGIC ---
 function toggleSearchBox() { /* ... unchanged ... */ if(!searchContainer)return;"none"!==searchContainer.style.display?closeSearchBox():(searchContainer.style.display="flex",searchInput&&searchInput.focus(),searchResults&&(searchResults.innerHTML="")) }
@@ -409,27 +355,26 @@ function getCurrentChapter(){/* ... unchanged ... */ if(!config.chapters||0===co
 async function getAiHelp(e){/* ... unchanged ... */ if(!GEMINI_API_KEY||"YOUR_API_KEY_HERE"===GEMINI_API_KEY)return void(aiResponseEl&&(aiResponseEl.textContent="AI Helper not configured."));if(!aiLoadingEl||!aiResponseEl)return;aiLoadingEl.style.display="block",aiResponseEl.innerHTML="";let t;const n=getCurrentChapter(),o=n?n.title:"this page";try{if("analyze_page"===e){let a=await getImageAsBase64FromCanvas();if(!a)return aiResponseEl.textContent="Could not process page image.",void(aiLoadingEl.style.display="none");t={contents:[{parts:[{text:`Analyze this physics page (from chapter "${o}"). Summarize concepts,explain formulas/diagrams,and give a takeaway for a life science student.`},{inline_data:{mime_type:"image/png",data:a}}]}]}}else{let r;switch(e){case"explain":{const i=window.prompt(`Concept from "${o}" to explain?`,"Pascal's Principle");if(!i)return void(aiLoadingEl.style.display="none");r=`Explain "${i}" from "${o}" simply for life science students.`}break;case"quiz":r=`Generate 2 multiple-choice questions on "${o}". Explain the correct answer (bold it).`;break;case"relate":r=`Provide 2 examples of how "${o}" applies to biology or medicine.`;break;default:return void(aiLoadingEl.style.display="none")}t={contents:[{parts:[{text:r}]}]}}const s=`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=${GEMINI_API_KEY}`;const u=await fetch(s,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(t)});if(!u.ok){let p=u.statusText;try{p=(await u.json()).error.message||p}catch(g){}throw new Error(`API error (${u.status}): ${p}`)}const m=await u.json();if(!m.candidates||0===m.candidates.length||!m.candidates[0].content||!m.candidates[0].content.parts||0===m.candidates[0].content.parts.length){let f="Unknown";if(m.candidates&&m.candidates[0]&&m.candidates[0].finishReason)f=m.candidates[0].finishReason;return console.warn("AI response missing content. Reason:",f,m),void(aiResponseEl.textContent=`Response was blocked or empty. Reason: ${f}.`)}const y=m.candidates[0].content.parts[0].text;"undefined"!=typeof marked?aiResponseEl.innerHTML=marked.parse(y):aiResponseEl.innerText=y,window.MathJax&&MathJax.typesetPromise([aiResponseEl]).catch(b=>console.error("MathJax error:",b))}catch(w){console.error("AI Helper Error:",w),aiResponseEl.textContent=`Error: ${w.message}`}finally{aiLoadingEl.style.display="none"}}
 
 // --- Translate Page (Moved to AI Modal) ---
-async function translateCurrentPage() {
-    // Close AI modal first
-    if(aiModal) aiModal.style.display = 'none';
+async function translateCurrentPage() { /* ... unchanged ... */ aiModal&&aiModal.style.display!="none"&&(aiModal.style.display="none");const e=document.getElementById("overlay-translation");if(!e)return;e.style.display="block",e.textContent="🔄 Loading text...";const t=String(currentPage),n=bookTextData[t];if(void 0===n)return void(e.textContent="⚠️ Text data unavailable.");if(!n||!n.trim())return void(e.textContent="ℹ️ No translatable text found.");if(!GEMINI_API_KEY||"YOUR_API_KEY_HERE"===GEMINI_API_KEY)return void(e.innerText="⚠️ Translation unavailable: No API key.\n\nPreview:\n\n"+n.slice(0,1500)+(n.length>1500?"...":""));e.textContent="🌐 Translating to Arabic...";try{const o=`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=${GEMINI_API_KEY}`,a={contents:[{parts:[{text:`Translate the following English physics text into clear, educational Arabic for university-level biology/medical students. Preserve equations and scientific terms. Do not add commentary.\n\n---START---\n${n}\n---END---`}]}]};const l=await fetch(o,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(a)});if(!l.ok){let s=l.statusText;try{s=(await l.json()).error.message||s}catch(r){}throw new Error(`API error (${l.status}): ${s}`)}const d=await l.json();if(!d.candidates||0===d.candidates.length||!d.candidates[0].content||!d.candidates[0].content.parts||0===d.candidates[0].content.parts.length){let c="Unknown";if(d.candidates&&d.candidates[0])c=d.candidates[0].finishReason;return console.warn("Translate response missing. Reason:",c,d),void(e.textContent=`❌ Translation failed. Reason: ${c}.`)}const u=d.candidates[0].content.parts[0].text;e.innerText=u,window.MathJax&&MathJax.typesetPromise([e]).catch(p=>console.error("MathJax translate error:",p))}catch(g){console.error("Translate error:",g),e.textContent=`❌ Translation Error: ${g.message}`}}
 
-    const overlay = document.getElementById("overlay-translation");
-    if (!overlay) return;
-    overlay.style.display = 'block'; // Show overlay
-    overlay.textContent = '🔄 Loading text...';
-    const pageKey = String(currentPage);
-    const englishText = bookTextData[pageKey];
-
-    if (englishText === undefined) { overlay.textContent = '⚠️ Text data unavailable.'; return; }
-    if (!englishText || !englishText.trim()) { overlay.textContent = 'ℹ️ No translatable text found.'; return; }
-    if (!GEMINI_API_KEY || GEMINI_API_KEY === 'YOUR_API_KEY_HERE') { overlay.innerText = "⚠️ Translation unavailable: No API key.\n\nPreview:\n\n"+englishText.slice(0,1500)+(englishText.length>1500?"...":""); return; }
-
-    overlay.textContent = '🌐 Translating to Arabic...';
-    try {
-        const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=${GEMINI_API_KEY}`;
-        const requestBody = { contents: [{ parts: [{ text:`Translate the following English physics text into clear, educational Arabic for university-level biology/medical students. Preserve equations and scientific terms. Do not add commentary.\n\n---START---\n${englishText}\n---END---` }] }] };
-        const resp = await fetch(apiUrl, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(requestBody) });
-        if (!resp.ok) { let errorText = resp.statusText; try { errorText = (await resp.json()).error.message || errorText; } catch (e) {} throw new Error(`API error (${resp.status}): ${errorText}`); }
-        const data = await resp.json();
-        if (!data.candidates || data.candidates.length === 0 || !data.candidates[0].content || !data.candidates[0].content.parts || data.candidates[0].content.parts.length === 0
+// --- Initial Setup ---
+document.addEventListener("DOMContentLoaded", () => {
+    loadBookText();
+    const flipbookElement = document.getElementById('flipbook');
+    if (flipbookElement) {
+        // Attach SWIPE listeners
+        flipbookElement.addEventListener("touchstart", handleTouchStartSwipe, { passive: true });
+        flipbookElement.addEventListener("touchend", handleTouchEndSwipe, { passive: true });
+    }
+    const pageCounterEl = document.getElementById('pageCounter');
+    const pageInputEl = document.getElementById('pageInput');
+    if (pageCounterEl) pageCounterEl.textContent = `Page ${currentPage + 1} / ${totalPages}`;
+    if (pageInputEl) {
+        pageInputEl.max = totalPages;
+        pageInputEl.value = currentPage + 1;
+    }
+    renderThumbs();
+    renderIndex();
+    renderPage(); // Calls setupDrawingListeners, loadHighlights, and setupHammer internally
+});
 
