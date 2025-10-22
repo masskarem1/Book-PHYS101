@@ -1,1 +1,249 @@
+body {
+    margin: 0;
+    font-family: sans-serif;
+    background: #f4f4f4;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    user-select: none; /* Prevent text selection */
+    /* Prevent default browser pinch zoom/pan on body */
+    touch-action: manipulation; /* Allows scrolling but prevents default zoom */
+}
+#flipbook {
+    width: 100%;
+    max-width: 1200px;
+    margin: auto;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    background: #fff;
+    padding: 8px 0;
+    /* --- ADD OVERFLOW HIDDEN --- */
+    overflow: hidden; /* Clip zoomed content */
+    position: relative; /* Needed if page-wrap uses absolute positioning for transform */
+}
+.page-image {
+    width: 100%;
+    height: auto;
+    max-width: 100%;
+    object-fit: contain;
+    display: block;
+    margin: 0 auto;
+    border-radius: 6px;
+    /* Prevent browser dragging image */
+    user-select: none;
+    -webkit-user-drag: none;
+}
+.page-wrap {
+    position: relative;
+    width: 100%;
+    max-width: 100%;
+    display: flex;
+    justify-content: center;
+    line-height: 0; /* Prevent extra space under image */
+    /* Ensure transforms originate from center */
+    transform-origin: center center;
+    /* Prevent default browser gestures on the specific element being transformed */
+    touch-action: none;
+}
+.overlay-translation {
+    position: absolute;
+    top: 4%;
+    left: 8%;
+    width: 84%;
+    max-height: 92%;
+    overflow-y: auto;
+    background: rgba(255, 255, 255, 0.9);
+    border-radius: 8px;
+    padding: 18px;
+    box-sizing: border-box;
+    display: none;
+    direction: rtl;
+    text-align: right;
+    line-height: 1.7;
+    font-size: 1.1rem;
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.15);
+    z-index: 2500;
+    white-space: pre-wrap;
+    /* Prevent interaction when hidden */
+     pointer-events: none;
+}
+.overlay-translation[style*="display: block"] {
+     pointer-events: auto; /* Allow interaction only when visible */
+}
+
+
+/* --- HIGHLIGHT CANVAS STYLES --- */
+#highlight-canvas {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%; /* Will be sized by JS */
+    height: 100%; /* Will be sized by JS */
+    cursor: default; /* Default cursor */
+    touch-action: none; /* Crucial for preventing scroll interference */
+    pointer-events: none; /* Disabled by default */
+}
+.highlight-mode #highlight-canvas {
+    pointer-events: auto; /* Enable drawing only in highlight mode */
+}
+#highlight-canvas.highlight-cursor {
+    cursor: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"><rect x="9" y="2" width="6" height="20" fill="none" stroke="black" stroke-width="1.5" stroke-dasharray="4 2"/></svg>') 12 12, crosshair;
+}
+/* --- END HIGHLIGHT CANVAS STYLES --- */
+
+/* ... (rest of CSS remains the same: lockScreen, toolbars, popups, search, footer, modals etc.) ... */
+
+
+#lockScreen {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.6);
+    display: none;
+    justify-content: center;
+    align-items: center;
+    z-index: 3000;
+}
+.lock-box {
+    background: #fff;
+    padding: 2rem;
+    border-radius: 8px;
+    text-align: center;
+    max-width: 300px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.25);
+}
+.lock-box input { width: 90%; padding: 0.5rem; font-size: 1rem; margin: 0.5rem 0; }
+.lock-box button { padding: 0.5rem 1rem; background: #007acc; color: #fff; border: none; border-radius: 6px; cursor: pointer; }
+.lock-box button:hover { background: #005fa3; }
+
+.toolbar-container {
+    width: 100%;
+    max-width: 1200px; /* Match flipbook width */
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    background-color: #f0f0f0;
+    padding: 8px;
+    box-sizing: border-box;
+    border-bottom: 1px solid #ddd;
+    position: sticky;
+    top: 0;
+    z-index: 1000;
+    position: relative; /* Changed back to relative if pop-up positioning is complex */
+}
+.toolbar {
+    display: flex;
+    justify-content: center;
+    gap: 0.6rem;
+    flex-wrap: wrap;
+    width: 100%;
+}
+button {
+    padding: 0.45rem 0.9rem;
+    border: none;
+    border-radius: 8px;
+    background: #007acc;
+    color: white;
+    font-size: 0.95rem;
+    cursor: pointer;
+    transition: background 0.18s, box-shadow 0.18s;
+    touch-action: manipulation; /* Prevent zoom on button double tap */
+}
+button:hover { background: #005fa3; }
+button:disabled { background-color: #aaa; cursor: not-allowed; }
+
+/* --- HIGHLIGHT POPUP STYLES --- */
+.highlight-popup {
+    display: none;
+    position: absolute;
+    top: 100%;
+    left: 50%;
+    transform: translateX(-50%);
+    background-color: #ffffff;
+    border: 1px solid #ccc;
+    border-radius: 8px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    padding: 10px 15px;
+    z-index: 1001;
+    width: auto;
+    min-width: 280px;
+    max-width: 90%;
+    box-sizing: border-box;
+}
+.highlight-popup.visible { display: block; }
+
+.popup-section { margin-bottom: 10px; display: flex; align-items: center; flex-wrap: wrap; gap: 8px; }
+.popup-section:last-child { margin-bottom: 0; }
+.popup-label { font-size: 0.9rem; font-weight: bold; margin-right: 5px; }
+
+.color-swatches { display: flex; gap: 8px; align-items: center; }
+.color-swatch { width: 24px; height: 24px; border-radius: 50%; cursor: pointer; border: 2px solid #ccc; transition: transform 0.1s ease-out, border-color 0.1s; }
+.color-swatch:hover { transform: scale(1.1); }
+.color-swatch.active { border: 2px solid #000000; transform: scale(1.1); }
+.popup-tools { justify-content: space-around; }
+.highlight-popup .tool-btn, .highlight-popup button { padding: 5px 10px; font-size: 0.9rem; margin: 2px; }
+.highlight-popup #eraser-tool-btn-popup.active { box-shadow: 0 0 0 3px #ffc107; background-color: #005fa3; }
+#clear-highlights-btn-popup { background-color: #dc3545; }
+#clear-highlights-btn-popup:hover { background-color: #c82333; }
+
+#brush-size-popup { flex-grow: 1; margin-left: 5px; }
+
+#toggle-draw-mode-btn.active { box-shadow: 0 0 0 3px #ffc107; background-color: #005fa3; }
+/* --- END HIGHLIGHT POPUP STYLES --- */
+
+/* --- SEARCH STYLES --- */
+#searchBtn { font-size: 1.1rem; padding: 0.4rem 0.6rem; }
+#searchContainer { width: 100%; max-width: 1200px; padding: 10px; background-color: #e0e0e0; box-shadow: 0 2px 5px rgba(0,0,0,0.1); box-sizing: border-box; display: none; gap: 5px; position: relative; z-index: 999; }
+#searchInput { flex-grow: 1; padding: 8px; border-radius: 4px; border: 1px solid #ccc; font-size: 1rem; }
+#searchCloseBtn { background-color: #dc3545; padding: 0.4rem 0.7rem; }
+#searchCloseBtn:hover { background-color: #c82333; }
+#searchResults { position: absolute; top: 100%; left: 0; right: 0; max-height: 300px; overflow-y: auto; background-color: #fff; border: 1px solid #ccc; border-top: none; box-shadow: 0 4px 8px rgba(0,0,0,0.1); z-index: 998; border-bottom-left-radius: 5px; border-bottom-right-radius: 5px; }
+#searchResults div { padding: 8px 12px; cursor: pointer; border-bottom: 1px solid #eee; font-size: 0.95rem; }
+#searchResults div:last-child { border-bottom: none; }
+#searchResults div:hover { background-color: #f0f0f0; }
+#searchResults div.no-results { font-style: italic; color: #666; cursor: default; }
+/* --- END SEARCH STYLES --- */
+
+#pageInput { width: 70px; padding: 0.3rem; font-size: 1rem; text-align: center; }
+.thumbbar { display: flex; overflow-x: auto; padding: 0.45rem; background: #fff; border-top: 1px solid #ccc; border-bottom: 1px solid #ccc; gap: 6px; width: 100%; max-width: 1200px; }
+.thumbbar img { height: 80px; cursor: pointer; border: 2px solid transparent; transition: border 0.18s; border-radius: 4px; }
+.thumbbar img.active { border: 2px solid #007acc; }
+
+@media (max-width: 768px) {
+    .thumbbar img { height: 60px; }
+    .overlay-translation { left: 4%; width: 92%; top: 3%; }
+    .toolbar { gap: 0.4rem; }
+    .highlight-popup { min-width: 200px; padding: 8px; }
+    .color-swatch { width: 20px; height: 20px; }
+    .popup-section { gap: 5px; }
+}
+
+#footer { width: 100%; max-width: 1200px; display: flex; align-items: center; justify-content: space-between; padding: 0.5rem 1rem; box-sizing: border-box; position: relative; background-color: #f0f0f0; border-top: 1px solid #ddd; }
+.footer-left, .footer-right { display: flex; align-items: center; gap: 0.6rem; }
+#pageCounter { font-size: 1rem; color: #333; }
+#indexToggle, #fullBtn, #shareBtn { padding: 0.4rem 0.8rem; font-size: 0.9rem; border: none; border-radius: 4px; background: #007acc; color: white; cursor: pointer; }
+#indexMenu { position: absolute; display: none; flex-direction: column; background: rgba(250, 250, 250, 0.9); border: 1px solid rgba(0, 0, 0, 0.15); border-radius: 6px; box-shadow: 0 6px 18px rgba(0, 0, 0, 0.2); padding: 0.4rem; width: max-content; max-width: 90vw; white-space: nowrap; overflow-x: auto; z-index: 1200; }
+#indexMenu button { background: none; border: none; text-align: left; padding: 0.35rem 0.5rem; font-size: 0.95rem; cursor: pointer; width: 100%; color: #000; }
+#indexMenu button:hover { background: rgba(0, 122, 204, 0.1); }
+#aiHelperToggle { position: fixed; bottom: 20px; right: 20px; width: 50px; height: 50px; border-radius: 50%; font-size: 1.5rem; z-index: 2000; box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2); }
+#aiHelperModal { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0, 0, 0, 0.5); display: none; justify-content: center; align-items: center; z-index: 2500; }
+.ai-content { background: #fff; padding: 1.5rem; border-radius: 12px; width: 90%; max-width: 500px; max-height: 90vh; overflow-y: auto; position: relative; box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3); }
+#aiCloseBtn { position: absolute; top: 10px; right: 10px; background: #eee; color: #333; border-radius: 50%; width: 30px; height: 30px; padding: 0; line-height: 30px; text-align: center; cursor: pointer; }
+.ai-buttons { display: flex; gap: 10px; margin: 1rem 0; flex-wrap: wrap; justify-content: center; }
+.ai-response { margin-top: 1rem; padding-top: 1rem; border-top: 1px solid #eee; white-space: pre-wrap; line-height: 1.6; }
+#phetModal { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0, 0, 0, 0.6); display: none; justify-content: center; align-items: center; z-index: 2600; }
+.phet-content { background: #fff; border-radius: 12px; width: 90%; height: 90vh; max-width: 1100px; position: relative; box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3); display: flex; flex-direction: column; }
+#phetCloseBtn { position: absolute; top: -15px; right: -15px; background: #333; color: #fff; border-radius: 50%; width: 35px; height: 35px; padding: 0; line-height: 35px; text-align: center; cursor: pointer; font-size: 1.2rem; border: 2px solid #fff; z-index: 10; }
+#phetFrame { width: 100%; height: 100%; border: none; border-radius: 12px; }
+#phetBtn { background: #d9534f; }
+#phetBtn:hover { background: #c9302c; }
+#videoModal { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0, 0, 0, 0.7); display: none; justify-content: center; align-items: center; z-index: 2600; }
+.video-content { background: #000; border-radius: 12px; width: 90%; max-width: 1000px; aspect-ratio: 16 / 9; position: relative; box-shadow: 0 5px 20px rgba(0, 0, 0, 0.4); display: flex; flex-direction: column; }
+#videoCloseBtn { position: absolute; top: -15px; right: -15px; background: #eee; color: #333; border-radius: 50%; width: 35px; height: 35px; padding: 0; line-height: 35px; text-align: center; cursor: pointer; font-size: 1.2rem; border: 2px solid #fff; z-index: 10; }
+#videoFrame { width: 100%; height: 100%; border: none; border-radius: 12px; }
+#videoBtn { background: #28a745; }
+#videoBtn:hover { background: #218838; }
 
