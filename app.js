@@ -199,7 +199,7 @@ function renderPage() {
     img.onload = () => { sizeCanvasToImage(img, canvas); ctx = canvas.getContext('2d'); setupDrawingListeners(canvas); loadHighlights(currentPage); updateCursor(); setupHammer(wrap); };
     wrap.appendChild(img); wrap.appendChild(canvas);
     
-    // NEW: Get overlay from HTML instead of creating it
+    // Get overlay from HTML instead of creating it
     const overlay = document.getElementById("translationOverlay");
     if (overlay) {
         wrap.appendChild(overlay); // Move the existing overlay into the wrap
@@ -332,7 +332,8 @@ function setDrawMode(mode) {
     
     if (colorSwatchesContainer) colorSwatchesContainer.querySelectorAll('.color-swatch').forEach(sw => sw.classList.remove('active'));
     
-    const activeSwatch = colorSwatchesContainer && (colorSwatchesContainer.querySelector(`.color-swatch[data-pen-color="${localStorage.getItem('flipbook-lastColor')}"]`) || colorSwatchesContainer.querySelector('.color-swatch'));
+    let savedColor = localStorage.getItem('flipbook-lastColor');
+    const activeSwatch = colorSwatchesContainer && (colorSwatchesContainer.querySelector(`.color-swatch[data-pen-color="${savedColor}"]`) || colorSwatchesContainer.querySelector('.color-swatch'));
 
     if (mode === 'highlight') {
         if (highlightToolBtn) highlightToolBtn.classList.add('active');
@@ -352,10 +353,10 @@ function updateCurrentColor() {
     if (!activeSwatch) {
          const firstSwatch = colorSwatchesContainer && colorSwatchesContainer.querySelector('.color-swatch');
          if (firstSwatch) {
-             setActiveColorSwatch(firstSwatch); // This will re-call updateCurrentColor
-             return; // Exit recursion
+             setActiveColorSwatch(firstSwatch);
+             return;
          }
-         return; // No swatches found
+         return;
     }
     if (drawMode === 'pen') { currentHighlightColor = activeSwatch.dataset.penColor; }
     else if (drawMode === 'highlight') { currentHighlightColor = activeSwatch.dataset.highlightColor; }
@@ -423,6 +424,7 @@ async function getAiHelp(e){
     }catch(w){ console.error("AI Helper Error:",w); aiResponseEl.textContent=`Error: ${w.message}` }
     finally{aiLoadingEl.style.display="none"}
 }
+
 
 // --- Translation Helper Function ---
 async function callTranslationAPI(textToTranslate) {
@@ -613,7 +615,6 @@ if (staticTranslationCloseBtn) {
         }
     });
 }
-
 
 document.addEventListener("DOMContentLoaded", async () => {
     loadPreferences();
