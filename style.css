@@ -63,7 +63,9 @@ body {
 body.highlight-mode #highlight-canvas {
     pointer-events: auto;
 }
+/* Custom Cursor for Highlighter */
 #highlight-canvas.highlight-cursor {
+    /* SVG Cursor: Vertical dashed rectangle */
     cursor: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="20" height="32" viewBox="0 0 20 32"><rect x="1" y="1" width="18" height="30" fill="none" stroke="black" stroke-width="2" stroke-dasharray="4 2"/></svg>') 10 16, crosshair;
 }
 
@@ -78,40 +80,40 @@ body.highlight-mode #highlight-canvas {
     background: rgba(255, 255, 255, 0.9);
     border: 1px solid #ccc;
     border-radius: 8px;
-    padding: 20px 20px 20px 50px;
+    padding: 20px 20px 20px 50px; /* Make space for close button on left */
     box-sizing: border-box;
     display: none;
-    direction: rtl;
+    direction: rtl; /* Right-to-left for Arabic */
     text-align: right;
     line-height: 1.7;
     font-size: 1.1rem;
     box-shadow: 0 4px 15px rgba(0,0,0,0.15);
     z-index: 2500;
-    white-space: pre-wrap;
+    white-space: pre-wrap; /* Preserve line breaks */
 }
 
 /* --- Translation Close Button --- */
 .translation-close-btn {
     position: absolute;
     top: 5px;
-    left: 10px;
+    left: 10px; /* Positioned on the left */
     width: 30px;
     height: 30px;
     line-height: 30px;
     text-align: center;
-    font-size: 1.8rem;
+    font-size: 1.8rem; /* Make 'x' bigger */
     font-weight: bold;
     color: #aaa;
-    background-color: transparent;
+    background-color: transparent; /* Make background transparent */
     border-radius: 50%;
     cursor: pointer;
     transition: color 0.2s;
-    z-index: 2501;
-    padding: 0;
-    border: none;
+    z-index: 2501; /* Above overlay content */
+    padding: 0; /* Override button padding */
+    border: none; /* Override button border */
 }
 .translation-close-btn:hover {
-    color: #333;
+    color: #333; /* Darken 'x' on hover */
 }
 
 /* --- Lock Screen --- */
@@ -131,8 +133,6 @@ body.highlight-mode #highlight-canvas {
     background-color: #f0f0f0; padding: 8px; box-sizing: border-box;
     border-bottom: 1px solid #ddd; box-shadow: 0 2px 5px rgba(0,0,0,0.1);
     display: flex; flex-direction: column; align-items: center;
-    /* --- TEMP DEBUG: Remove background --- */
-    /* background-color: rgba(255, 165, 0, 0.3) !important; */
 }
 
 /* --- Main Toolbar --- */
@@ -193,12 +193,7 @@ button.active { box-shadow: 0 0 0 3px #ffc107 inset; background-color: #005fa3; 
     display: flex; overflow-x: auto; padding: 8px; background: #eee;
     border-top: 1px solid #ccc; border-bottom: 1px solid #ccc; gap: 8px;
     width: 100%; max-width: 1200px; box-sizing: border-box;
-    /* --- FIX: Keep position and z-index --- */
-    position: relative;
-    z-index: 499 !important; /* Keep below flipbook/footer */
-    min-height: 80px; /* Ensure visibility */
-    /* --- TEMP DEBUG: Remove background --- */
-    /* background-color: rgba(0, 255, 0, 0.3) !important; */
+    position: relative; z-index: 499 !important; min-height: 80px;
 }
 .thumbbar img { height: 70px; cursor: pointer; border: 3px solid transparent; transition: border 0.18s; border-radius: 4px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
 .thumbbar img.active { border: 3px solid #007acc; }
@@ -208,10 +203,7 @@ button.active { box-shadow: 0 0 0 3px #ffc107 inset; background-color: #005fa3; 
     width: 100%; max-width: 1200px; display: flex; align-items: center;
     justify-content: space-between; padding: 8px 16px; box-sizing: border-box;
     position: relative; border-top: 1px solid #ddd; background-color: #f8f8f8;
-    /* --- FIX: Keep position and z-index --- */
-    z-index: 500 !important; /* Keep above thumbbar context */
-    /* --- TEMP DEBUG: Remove background --- */
-    /* background-color: rgba(0, 0, 255, 0.3) !important; */
+    z-index: 500 !important;
 }
 .footer-left, .footer-right { display: flex; align-items: center; gap: 10px; }
 #pageCounter { font-size: 1rem; color: #333; }
@@ -232,7 +224,13 @@ button.active { box-shadow: 0 0 0 3px #ffc107 inset; background-color: #005fa3; 
 .ai-buttons { display: flex; gap: 10px; margin: 1rem 0; flex-wrap: wrap; justify-content: center; }
 .ai-buttons button { background-color: #f0f0f0; color: #333; font-size: 0.85rem; }
 .ai-buttons button:hover { background-color: #ddd; }
-.ai-response { margin-top: 1rem; padding-top: 1rem; border-top: 1px solid #eee; white-space: pre-wrap; line-height: 1.6; font-size: 0.95rem; }
+.ai-response {
+    margin-top: 1rem; padding-top: 1rem; border-top: 1px solid #eee;
+    white-space: pre-wrap; line-height: 1.6; font-size: 0.95rem;
+    /* --- FIX: Added RTL for AI Response --- */
+    direction: rtl;
+    text-align: right;
+}
 #translate-analysis-btn { background-color: #e0f0ff; color: #005fa3; border: 1px solid #007acc; margin-top: 10px;}
 #translate-analysis-btn:hover { background-color: #cce4ff; }
 
