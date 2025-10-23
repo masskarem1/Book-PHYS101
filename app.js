@@ -58,6 +58,20 @@ async function loadBookText() {
     }
 }
 
+// --- NEW: Function to load chapters from JSON ---
+async function loadChapters() {
+    try {
+        const res = await fetch("./chapters.json");
+        if (!res.ok) throw new Error("chapters.json not found");
+        config.chapters = await res.json(); // Load data directly into the config object
+        console.log("Chapters loaded successfully.");
+    } catch (err) {
+        console.error("Could not load chapters:", err);
+        config.chapters = []; // Default to empty array on failure
+    }
+}
+
+
 // ---------- Flipbook data ----------
 const totalPages = (typeof config !== 'undefined' && config.totalPages) ? config.totalPages : 1;
 const imagePath = (typeof config !== 'undefined' && config.imagePath) ? config.imagePath : './images/page_';
@@ -92,7 +106,7 @@ const highlightToolBtn = document.getElementById('highlight-tool-btn');
 const eraserToolBtnPopup = document.getElementById('eraser-tool-btn-popup');
 const brushSizeSliderPopup = document.getElementById('brush-size-popup');
 const clearHighlightsBtnPopup = document.getElementById('clear-highlights-btn-popup');
-let currentHighlightColor = 'rgba(255, 255, 0, 0.2)'; // Default: transparent yellow
+let currentHighlightColor = 'rgba(255, 255, 0, 0.2)'; // Default
 let currentBrushSize = 40; // Default
 let highlightCanvas, ctx, isDrawing = false, drawMode = 'highlight', lastX = 0, lastY = 0; // Defaults
 
@@ -124,8 +138,8 @@ const translateAnalysisBtn = document.getElementById("translate-analysis-btn");
 // --- KEYBOARD SHORTCUT VARIABLES ---
 let pageInputTimer = null;
 
-// --- Use Apps Script Proxy URL ---
-const APPS_SCRIPT_PROXY_URL = 'https://script.google.com/macros/s/AKfycbxzKK4RKp0rpCZcznOYPyV4aWMhBZLqYSn_ZFyNe3EO6_MxPWHZ3laF1QGL6zk6E4-h/exec';
+// --- Get Apps Script Proxy URL from config.js ---
+const APPS_SCRIPT_PROXY_URL = (typeof config !== 'undefined' && config.appsScriptProxyUrl) ? config.appsScriptProxyUrl : '';
 
 // --- Utility Functions ---
 const delay = ms => new Promise(resolve => setTimeout(resolve, ms));
@@ -199,7 +213,7 @@ function resetZoomPan(element) { currentScale=1; currentOffsetX=0; currentOffset
 function preloadImages() { if (currentPage<images.length-1) (new Image).src=images[currentPage+1]; if (currentPage>0) (new Image).src=images[currentPage-1]; }
 function renderThumbs() { if(!thumbbar)return; thumbbar.innerHTML=""; thumbs.forEach((src, i) => { const t = document.createElement("img"); t.src = src; t.alt = `Thumb ${i + 1}`; t.loading = "lazy"; t.addEventListener("click", () => { if (currentPage !== i) { currentPage = i; renderPage(); } }); t.onerror = () => { t.alt = "Thumb N/A"; t.src = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' fill='%23eee'/%3E%3Ctext x='50%25' y='50%25' font-family='sans-serif' font-size='12' fill='%23aaa' text-anchor='middle' dominant-baseline='middle'%3EN/A%3C/text%3E%3C/svg%3E"; }; thumbbar.appendChild(t); }); }
 function highlightThumb() { if(!thumbbar)return; let activeThumb = null; thumbbar.querySelectorAll("img").forEach((im, i) => { const isActive = i === currentPage; im.classList.toggle("active", isActive); if (isActive) activeThumb = im; }); if (activeThumb) { const rect = activeThumb.getBoundingClientRect(), parentRect = thumbbar.getBoundingClientRect(); if (rect.left < parentRect.left || rect.right > parentRect.right) activeThumb.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' }); } }
-function renderIndex() { if(!indexMenu || !indexToggle)return; indexMenu.innerHTML=""; if (typeof config !== 'undefined' && config.chapters && config.chapters.length > 0) { config.chapters.forEach(chapter => { const button = document.createElement("button"); button.textContent = chapter.title; button.onclick = () => goToPage(chapter.page - 1); indexMenu.appendChild(button); }); indexToggle.style.display = 'inline-block'; } else indexToggle.style.display = 'none'; }
+function renderIndex() { if(!indexMenu || !indexToggle)return; indexMenu.innerHTML=""; if (typeof config !== 'undefined' && config.chapters && config.chapters.length > 0) { config.chapters.forEach(chapter => { const button = document.createElement("button"); button.textContent = chapter.title; button.onclick = () => goToPage(chapter.page - 1); indexMenu.appendChild(button); }); indexToggle.style.display = 'inline-block'; } else { indexToggle.style.display = 'none'; } }
 function nextPage() { if (currentPage < images.length - 1) { currentPage++; renderPage(); } }
 function prevPage() { if (currentPage > 0) { currentPage--; renderPage(); } }
 function firstPage() { if (currentPage !== 0) { currentPage = 0; renderPage(); } }
@@ -250,7 +264,6 @@ if(videoBtn)videoBtn.addEventListener("click",openVideoModal);
 if(videoCloseBtn)videoCloseBtn.addEventListener("click",closeVideoModal);
 if(videoModal)videoModal.addEventListener("click",e=>{e.target===videoModal&&closeVideoModal()});
 
-
 // --- HAMMER.JS SETUP (Updated for Scrolling) ---
 function setupHammer(element) {
     if (!element || typeof Hammer === 'undefined') { console.warn("Hammer.js not found or element missing."); return; }
@@ -272,250 +285,55 @@ function applyTransform(element) { if (!element) return; element.style.transform
 // --- HIGHLIGHTING LOGIC ---
 function sizeCanvasToImage(img, canvas) { if (!img || !canvas) return; const rect = img.getBoundingClientRect(); canvas.width = img.naturalWidth; canvas.height = img.naturalHeight; canvas.style.width = `${rect.width}px`; canvas.style.height = `${rect.height}px`; canvas.style.top = `0px`; canvas.style.left = `0px`; if (ctx) ctx = canvas.getContext('2d'); }
 function getDrawPosition(e, canvas) { if (!canvas) return { x: 0, y: 0 }; const pageWrap = canvas.closest('.page-wrap'); if (!pageWrap) return { x: 0, y: 0 }; const canvasRect = canvas.getBoundingClientRect(); const scaleXCanvas = canvas.width / canvasRect.width; const scaleYCanvas = canvas.height / canvasRect.height; let clientX, clientY; if (e.touches && e.touches.length > 0) { clientX = e.touches[0].pageX - window.scrollX; clientY = e.touches[0].pageY - window.scrollY; } else if (e.changedTouches && e.changedTouches.length > 0) { clientX = e.changedTouches[0].pageX - window.scrollX; clientY = e.changedTouches[0].pageY - window.scrollY; } else { clientX = e.clientX; clientY = e.clientY; } const screenX = clientX - canvasRect.left; const screenY = clientY - canvasRect.top; return { x: screenX * scaleXCanvas, y: screenY * scaleYCanvas }; }
-
-function startDrawing(e) {
-    if (!highlightCanvas || !ctx || !document.body.classList.contains("highlight-mode") || e.target !== highlightCanvas || (e.touches && e.touches.length > 1)) return;
-    if (hammerManager) { hammerManager.get("pinch").set({ enable: !1 }); hammerManager.get("pan").set({ enable: !1 }); }
-    e.touches && e.preventDefault();
-    isDrawing = true;
-    const t = getDrawPosition(e, highlightCanvas);
-    [lastX, lastY] = [t.x, t.y];
-
-    ctx.lineCap = 'round';
-    ctx.lineJoin = 'round';
-    
-    if (drawMode === "eraser") {
-        ctx.beginPath();
-        ctx.globalCompositeOperation = "destination-out";
-        ctx.fillStyle = "rgba(0,0,0,1)";
-        ctx.arc(t.x, t.y, currentBrushSize / 2, 0, 2 * Math.PI);
-        ctx.fill();
-    } else if (drawMode === "pen") {
-        ctx.beginPath();
-        ctx.globalCompositeOperation = "source-over";
-        ctx.strokeStyle = currentHighlightColor; // Use selected color (opaque)
-        ctx.lineWidth = currentBrushSize / 10; // Pen is much thinner
-        ctx.moveTo(lastX, lastY);
-    }
-}
-
-function draw(e) {
-    if (!isDrawing || !ctx) return;
-    e.touches && e.preventDefault();
-    const t = getDrawPosition(e, highlightCanvas);
-    
-    if (drawMode === "eraser") {
-        ctx.beginPath();
-        ctx.globalCompositeOperation = "destination-out";
-        ctx.strokeStyle = "rgba(0,0,0,1)";
-        ctx.lineWidth = currentBrushSize;
-        ctx.moveTo(lastX, lastY);
-        ctx.lineTo(t.x, t.y);
-        ctx.stroke();
-        [lastX, lastY] = [t.x, t.y];
-    } else if (drawMode === "pen") {
-        ctx.beginPath();
-        ctx.globalCompositeOperation = "source-over";
-        ctx.strokeStyle = currentHighlightColor;
-        ctx.lineWidth = currentBrushSize / 10;
-        ctx.moveTo(lastX, lastY);
-        ctx.lineTo(t.x, t.y);
-        ctx.stroke();
-        [lastX, lastY] = [t.x, t.y];
-    }
-}
-
-function stopDrawing(e) {
-    if (!isDrawing) return;
-    isDrawing = false;
-    let t = getDrawPosition(e, highlightCanvas);
-    
-    if (drawMode === "highlight") {
-        ctx.beginPath();
-        ctx.globalCompositeOperation = "source-over";
-        ctx.fillStyle = currentHighlightColor; // This is the RGBA(..., 0.2)
-        const rectX = Math.min(lastX, t.x);
-        const rectWidth = Math.abs(t.x - lastX);
-        const rectY = lastY - (currentBrushSize / 2);
-        const rectHeight = currentBrushSize;
-        ctx.fillRect(rectX, rectY, rectWidth, rectHeight);
-    }
-    
-    saveHighlights(currentPage);
-    if (hammerManager) {
-        hammerManager.get("pinch").set({ enable: true });
-        hammerManager.get("pan").set({ enable: true });
-    }
-}
+function startDrawing(e) { if (!highlightCanvas || !ctx || !document.body.classList.contains("highlight-mode") || e.target !== highlightCanvas || (e.touches && e.touches.length > 1)) return; if (hammerManager) { hammerManager.get("pinch").set({ enable: !1 }); hammerManager.get("pan").set({ enable: !1 }); } e.touches && e.preventDefault(); isDrawing = true; const t = getDrawPosition(e, highlightCanvas); [lastX, lastY] = [t.x, t.y]; ctx.lineCap = 'round'; ctx.lineJoin = 'round'; if ("eraser" === drawMode) { ctx.beginPath(); ctx.globalCompositeOperation = "destination-out"; ctx.fillStyle = "rgba(0,0,0,1)"; ctx.arc(t.x, t.y, currentBrushSize / 2, 0, 2 * Math.PI); ctx.fill(); } else if ("pen" === drawMode) { ctx.beginPath(); ctx.globalCompositeOperation = "source-over"; ctx.strokeStyle = currentHighlightColor; ctx.lineWidth = currentBrushSize / 10; ctx.moveTo(lastX, lastY); } }
+function draw(e) { if (!isDrawing || !ctx) return; e.touches && e.preventDefault(); const t = getDrawPosition(e, highlightCanvas); if ("eraser" === drawMode) { ctx.beginPath(); ctx.globalCompositeOperation = "destination-out"; ctx.strokeStyle = "rgba(0,0,0,1)"; ctx.lineWidth = currentBrushSize; ctx.moveTo(lastX, lastY); ctx.lineTo(t.x, t.y); ctx.stroke(); [lastX, lastY] = [t.x, t.y]; } else if ("pen" === drawMode) { ctx.beginPath(); ctx.globalCompositeOperation = "source-over"; ctx.strokeStyle = currentHighlightColor; ctx.lineWidth = currentBrushSize / 10; ctx.moveTo(lastX, lastY); ctx.lineTo(t.x, t.y); ctx.stroke(); [lastX, lastY] = [t.x, t.y]; } }
+function stopDrawing(e) { if (!isDrawing) return; isDrawing = false; let t = getDrawPosition(e, highlightCanvas); if ("highlight" === drawMode) { ctx.beginPath(); ctx.globalCompositeOperation = "source-over"; ctx.fillStyle = currentHighlightColor; const rectX = Math.min(lastX, t.x); const rectWidth = Math.abs(t.x - lastX); const rectY = lastY - (currentBrushSize / 2); const rectHeight = currentBrushSize; ctx.fillRect(rectX, rectY, rectWidth, rectHeight); } saveHighlights(currentPage); if (hammerManager) { hammerManager.get("pinch").set({ enable: true }); hammerManager.get("pan").set({ enable: true }); } }
 function setupDrawingListeners(canvas) { if (!canvas) return; canvas.removeEventListener("mousedown", startDrawing); canvas.removeEventListener("mousemove", draw); canvas.removeEventListener("mouseup", stopDrawing); canvas.removeEventListener("mouseleave", stopDrawing); canvas.removeEventListener("touchstart", startDrawing); canvas.removeEventListener("touchmove", draw); canvas.removeEventListener("touchend", stopDrawing); canvas.removeEventListener("touchcancel", stopDrawing); canvas.addEventListener("mousedown", startDrawing); canvas.addEventListener("mousemove", draw); canvas.addEventListener("mouseup", stopDrawing); canvas.addEventListener("mouseleave", stopDrawing); canvas.addEventListener("touchstart", startDrawing, { passive: !1 }); canvas.addEventListener("touchmove", draw, { passive: !1 }); canvas.addEventListener("touchend", stopDrawing); canvas.addEventListener("touchcancel", stopDrawing); }
 function saveHighlights(pageNumber) { if (!highlightCanvas) return; requestAnimationFrame(() => { try { localStorage.setItem(`flipbook-highlights-page-${pageNumber}`, highlightCanvas.toDataURL()); } catch (e) { console.error("Save highlights error:", e); if (e.name === "QuotaExceededError") alert("Storage full."); } }); }
-function loadHighlights(pageNumber) {
-    if (!highlightCanvas || !ctx) return;
-    const dataUrl = localStorage.getItem(`flipbook-highlights-page-${pageNumber}`);
-    ctx.clearRect(0, 0, highlightCanvas.width, highlightCanvas.height);
-    if (dataUrl) {
-        const img = new Image();
-        img.onload = () => { ctx.drawImage(img, 0, 0); };
-        img.onerror = () => { console.error("Failed load highlight image for page", pageNumber); localStorage.removeItem(`flipbook-highlights-page-${pageNumber}`); };
-        img.src = dataUrl;
-    }
-}
+function loadHighlights(pageNumber) { if (!highlightCanvas || !ctx) return; const dataUrl = localStorage.getItem(`flipbook-highlights-page-${pageNumber}`); ctx.clearRect(0, 0, highlightCanvas.width, highlightCanvas.height); if (dataUrl) { const img = new Image(); img.onload = () => { ctx.drawImage(img, 0, 0); }; img.onerror = () => { console.error("Failed load highlight image for page", pageNumber); localStorage.removeItem(`flipbook-highlights-page-${pageNumber}`); }; img.src = dataUrl; } }
 function clearCurrentHighlights() { if (!ctx) return; if (confirm("Erase all highlights on this page?")) { ctx.clearRect(0, 0, highlightCanvas.width, highlightCanvas.height); localStorage.removeItem(`flipbook-highlights-page-${currentPage}`); } }
-function updateCursor() {
-    if (!highlightCanvas) return;
-    const e = document.body.classList.contains("highlight-mode");
-    if (e) {
-        if (drawMode === 'highlight') {
-            highlightCanvas.style.cursor = "";
-            highlightCanvas.classList.add("highlight-cursor");
-        } else if (drawMode === 'pen') {
-            highlightCanvas.style.cursor = "crosshair";
-            highlightCanvas.classList.remove("highlight-cursor");
-        } else { // Eraser
-            highlightCanvas.style.cursor = "cell";
-            highlightCanvas.classList.remove("highlight-cursor");
-        }
-    } else {
-        highlightCanvas.style.cursor = "default";
-        highlightCanvas.classList.remove("highlight-cursor");
-    }
-}
+function updateCursor() { if (!highlightCanvas) return; const e = document.body.classList.contains("highlight-mode"); if (e) { if (drawMode === 'highlight') { highlightCanvas.style.cursor = ""; highlightCanvas.classList.add("highlight-cursor"); } else if (drawMode === 'pen') { highlightCanvas.style.cursor = "crosshair"; highlightCanvas.classList.remove("highlight-cursor"); } else { highlightCanvas.style.cursor = "cell"; highlightCanvas.classList.remove("highlight-cursor"); } } else { highlightCanvas.style.cursor = "default"; highlightCanvas.classList.remove("highlight-cursor"); } }
 
 // --- Event Listeners for Highlight Buttons ---
-if (toggleDrawModeBtn) {
-    toggleDrawModeBtn.addEventListener('click', (e) => {
-        e.stopPropagation();
-        const t = document.body.classList.contains("highlight-mode");
-        if (t) {
-            document.body.classList.remove("highlight-mode");
-            toggleDrawModeBtn.classList.remove("active");
-            if (highlightSettingsBtn) highlightSettingsBtn.classList.remove("active");
-            closeHighlightPopup();
-        } else {
-            document.body.classList.add("highlight-mode");
-            toggleDrawModeBtn.classList.add("active");
-            setDrawMode(drawMode); // Set to last used mode
-            // Find and set the active color swatch based on the (possibly loaded) current color
-            let activeSwatch = colorSwatchesContainer && (colorSwatchesContainer.querySelector(`.color-swatch[data-pen-color="${currentHighlightColor}"]`) || colorSwatchesContainer.querySelector(`.color-swatch[data-highlight-color="${currentHighlightColor}"]`));
-            if (!activeSwatch && colorSwatchesContainer) activeSwatch = colorSwatchesContainer.querySelector('.color-swatch'); // Fallback to first
-            setActiveColorSwatch(activeSwatch);
-        }
-        updateCursor();
-    });
-}
-if (highlightSettingsBtn) {
-    highlightSettingsBtn.addEventListener('click', (e) => {
-        e.stopPropagation();
-        const t = highlightPopup && highlightPopup.classList.contains("visible");
-        t ? closeHighlightPopup() : openHighlightPopup();
-    });
-}
+if (toggleDrawModeBtn) { toggleDrawModeBtn.addEventListener('click', (e) => { e.stopPropagation(); const t = document.body.classList.contains("highlight-mode"); t ? (document.body.classList.remove("highlight-mode"), toggleDrawModeBtn.classList.remove("active"), highlightSettingsBtn && highlightSettingsBtn.classList.remove("active"), closeHighlightPopup()) : (document.body.classList.add("highlight-mode"), toggleDrawModeBtn.classList.add("active"), setDrawMode(drawMode), setActiveColorSwatch(colorSwatchesContainer.querySelector(`.color-swatch[data-pen-color="${localStorage.getItem('flipbook-lastColor')}"]`) || colorSwatchesContainer.querySelector('.color-swatch'))); updateCursor(); }); }
+if (highlightSettingsBtn) { highlightSettingsBtn.addEventListener('click', (e) => { e.stopPropagation(); const t = highlightPopup && highlightPopup.classList.contains("visible"); t ? closeHighlightPopup() : openHighlightPopup(); }); }
 function openHighlightPopup() { if(highlightPopup) highlightPopup.classList.add('visible'); if(highlightSettingsBtn) highlightSettingsBtn.classList.add('active'); }
 function closeHighlightPopup() { if(highlightPopup) highlightPopup.classList.remove('visible'); if(highlightSettingsBtn) highlightSettingsBtn.classList.remove('active'); }
-
-if (colorSwatchesContainer) {
-    colorSwatchesContainer.addEventListener('click', (e) => {
-        const swatch = e.target.closest('.color-swatch');
-        if (swatch) {
-            setActiveColorSwatch(swatch);
-            // If eraser was active, switch to pen or highlight. Default to highlight.
-            if (drawMode === 'eraser') {
-                setDrawMode('highlight');
-            } else {
-                 setDrawMode(drawMode); // Re-apply current mode to update color
-            }
-            closeHighlightPopup();
-        }
-    });
-}
-
-function setActiveColorSwatch(swatchElement) {
-    if (!swatchElement || !colorSwatchesContainer) return;
-    colorSwatchesContainer.querySelectorAll('.color-swatch').forEach(sw => sw.classList.remove('active'));
-    swatchElement.classList.add('active');
-    // Update color based on current mode
-    updateCurrentColor();
-    // Save last *base* color (e.g., pen color)
-    try { localStorage.setItem('flipbook-lastColor', swatchElement.dataset.penColor); } catch(e) { console.warn("Could not save color pref:", e); }
-}
-
-if (penToolBtnPopup) {
-    penToolBtnPopup.addEventListener('click', () => {
-        setDrawMode('pen');
-        closeHighlightPopup();
-    });
-}
-if (highlightToolBtn) {
-    highlightToolBtn.addEventListener('click', () => {
-        setDrawMode('highlight');
-        closeHighlightPopup();
-    });
-}
-if (eraserToolBtnPopup) {
-    eraserToolBtnPopup.addEventListener('click', () => {
-        setDrawMode('eraser');
-        closeHighlightPopup();
-    });
-}
+if (colorSwatchesContainer) { colorSwatchesContainer.addEventListener('click', (e) => { const swatch = e.target.closest('.color-swatch'); if (swatch) { setActiveColorSwatch(swatch); if (drawMode === 'eraser') setDrawMode('pen'); else updateCurrentColor(); closeHighlightPopup(); } }); }
+function setActiveColorSwatch(swatchElement) { if (!swatchElement || !colorSwatchesContainer) return; colorSwatchesContainer.querySelectorAll('.color-swatch').forEach(sw => sw.classList.remove('active')); swatchElement.classList.add('active'); updateCurrentColor(); try { localStorage.setItem('flipbook-lastColor', swatchElement.dataset.penColor); } catch(e) { console.warn("Could not save color pref:", e); } }
+if (penToolBtnPopup) { penToolBtnPopup.addEventListener('click', () => { setDrawMode('pen'); closeHighlightPopup(); }); }
+if (highlightToolBtn) { highlightToolBtn.addEventListener('click', () => { setDrawMode('highlight'); closeHighlightPopup(); }); }
+if (eraserToolBtnPopup) { eraserToolBtnPopup.addEventListener('click', () => { setDrawMode('eraser'); closeHighlightPopup(); }); }
 
 function setDrawMode(mode) {
     drawMode = mode;
-    // Deactivate all tool buttons first
     if (penToolBtnPopup) penToolBtnPopup.classList.remove('active');
     if (eraserToolBtnPopup) eraserToolBtnPopup.classList.remove('active');
     if (highlightToolBtn) highlightToolBtn.classList.remove('active');
-    
-    // Deactivate all color swatches (will be reactivated if 'pen' or 'highlight')
-    if (colorSwatchesContainer) colorSwatchesContainer.querySelectorAll('.color-swatch').forEach(sw => sw.classList.remove('active'));
-
-    const activeSwatch = colorSwatchesContainer && (colorSwatchesContainer.querySelector(`.color-swatch[data-pen-color="${currentHighlightColor}"]`) || colorSwatchesContainer.querySelector(`.color-swatch[data-highlight-color="${currentHighlightColor}"]`));
-    
-    if (mode === 'highlight') {
-        if (highlightToolBtn) highlightToolBtn.classList.add('active');
-        if (activeSwatch) activeSwatch.classList.add('active');
-    } else if (mode === 'pen') {
-        if (penToolBtnPopup) penToolBtnPopup.classList.add('active');
-        if (activeSwatch) activeSwatch.classList.add('active'); // Pen also uses color
-    } else { // Eraser
-        if (eraserToolBtnPopup) eraserToolBtnPopup.classList.add('active');
-    }
-    
-    updateCurrentColor(); // Set the correct color string for the tool
-    updateCursor();
+    if (mode === 'highlight') { if (highlightToolBtn) highlightToolBtn.classList.add('active'); }
+    else if (mode === 'pen') { if (penToolBtnPopup) penToolBtnPopup.classList.add('active'); }
+    else { if (eraserToolBtnPopup) eraserToolBtnPopup.classList.add('active'); }
+    updateCurrentColor(); updateCursor();
     try { localStorage.setItem('flipbook-lastDrawMode', drawMode); } catch(e) { console.warn("Could not save draw mode:", e); }
 }
 
-// New function to set the correct color string based on the active tool and swatch
 function updateCurrentColor() {
     const activeSwatch = colorSwatchesContainer && colorSwatchesContainer.querySelector('.color-swatch.active');
     if (!activeSwatch) {
-        // If no swatch is active, try to find one based on saved color or default
-        let savedColor = localStorage.getItem('flipbook-lastColor') || '#FFFF00'; // Default to yellow base
-        const targetSwatch = colorSwatchesContainer.querySelector(`.color-swatch[data-pen-color="${savedColor}"]`) || colorSwatchesContainer.querySelector('.color-swatch');
-        setActiveColorSwatch(targetSwatch); // This will call updateCurrentColor() again
-        return;
+         const firstSwatch = colorSwatchesContainer && colorSwatchesContainer.querySelector('.color-swatch');
+         if (firstSwatch) setActiveColorSwatch(firstSwatch);
+         return;
     }
-
-    if (drawMode === 'pen') {
-        currentHighlightColor = activeSwatch.dataset.penColor;
-    } else if (drawMode === 'highlight') {
-        currentHighlightColor = activeSwatch.dataset.highlightColor;
-    }
-    // Eraser mode doesn't need a color
+    if (drawMode === 'pen') { currentHighlightColor = activeSwatch.dataset.penColor; }
+    else if (drawMode === 'highlight') { currentHighlightColor = activeSwatch.dataset.highlightColor; }
 }
-
 
 if (brushSizeSliderPopup) {
     brushSizeSliderPopup.addEventListener('input', (e) => { currentBrushSize = e.target.value; });
     brushSizeSliderPopup.addEventListener('mouseup', () => { try { localStorage.setItem('flipbook-lastBrushSize', currentBrushSize); } catch(e) { console.warn("Could not save brush size:", e); } });
     brushSizeSliderPopup.addEventListener('touchend', () => { try { localStorage.setItem('flipbook-lastBrushSize', currentBrushSize); } catch(e) { console.warn("Could not save brush size:", e); } });
 }
-if (clearHighlightsBtnPopup) {
-    clearHighlightsBtnPopup.addEventListener('click', () => {
-        clearCurrentHighlights();
-        closeHighlightPopup();
-    });
-}
+if (clearHighlightsBtnPopup) { clearHighlightsBtnPopup.addEventListener('click', () => { clearCurrentHighlights(); closeHighlightPopup(); }); }
 
 window.addEventListener('resize', () => { const img = document.querySelector('.page-image'); if (img && highlightCanvas) { setTimeout(() => { sizeCanvasToImage(img, highlightCanvas); loadHighlights(currentPage); }, 150); } closeHighlightPopup(); });
 
@@ -535,6 +353,7 @@ if(aiModal)aiModal.addEventListener("click",e=>{if(e.target===aiModal)aiModal.st
 function getCurrentChapter(){ if(!config.chapters||0===config.chapters.length)return null;let e=config.chapters[0];for(let t=config.chapters.length-1;t>=0;t--)if(currentPage>=config.chapters[t].page-1){e=config.chapters[t];break}return e}
 
 async function getAiHelp(e){
+    if(!APPS_SCRIPT_PROXY_URL) { if(aiResponseEl) aiResponseEl.textContent="AI Helper not configured: Proxy URL missing."; return; }
     if(!aiLoadingEl||!aiResponseEl)return;
     aiLoadingEl.style.display="block"; aiResponseEl.innerHTML=""; aiResponseEl.classList.remove('rtl-text'); if(translateAnalysisBtn) translateAnalysisBtn.style.display = 'none';
     let originalRequestBody; const n=getCurrentChapter(),o=n?n.title:"this page";
@@ -575,6 +394,7 @@ async function getAiHelp(e){
 
 // --- Translation Helper Function ---
 async function callTranslationAPI(textToTranslate) {
+    if (!APPS_SCRIPT_PROXY_URL) return { success: false, message: "AI proxy URL not configured." };
     if (!textToTranslate || !textToTranslate.trim()) return { success: false, message: "No text provided for translation." };
     try {
         const originalRequestBody = { contents: [{ parts: [{ text:`Translate the following English text accurately into clear, educational Arabic suitable for university-level students. Preserve specific terminology and equations where appropriate. Focus only on translation.\n\n---START---\n${textToTranslate}\n---END---` }] }] };
@@ -639,21 +459,23 @@ function loadPreferences() {
         const savedPage = localStorage.getItem('flipbook-lastPage');
         if (savedPage) {
             let pageNum = parseInt(savedPage, 10);
-            if (pageNum >= 0 && pageNum < totalPages) {
+            if (!isNaN(pageNum) && pageNum >= 0 && pageNum < totalPages) {
                 currentPage = pageNum;
             }
         }
         
-        // Load color as the *opaque* pen color
-        const savedColor = localStorage.getItem('flipbook-lastColor');
+        const savedColor = localStorage.getItem('flipbook-lastColor'); // This is the PEN color
         if (savedColor) {
-             // Find the swatch that has this pen color and set its highlight color as default if needed
+             // Find the swatch that has this pen color
              const matchingSwatch = colorSwatchesContainer && colorSwatchesContainer.querySelector(`.color-swatch[data-pen-color="${savedColor}"]`);
              if (matchingSwatch) {
-                 currentHighlightColor = matchingSwatch.dataset.highlightColor; // Default to its highlight version
-             } else {
-                 // Fallback if saved color isn't in swatches
-                 currentHighlightColor = 'rgba(255, 255, 0, 0.2)';
+                 // Set the current color based on the *saved mode*
+                 const savedMode = localStorage.getItem('flipbook-lastDrawMode') || 'highlight';
+                 if (savedMode === 'pen') {
+                    currentHighlightColor = matchingSwatch.dataset.penColor;
+                 } else {
+                    currentHighlightColor = matchingSwatch.dataset.highlightColor;
+                 }
              }
         }
 
@@ -748,9 +570,13 @@ function handleGlobalKeys(e) {
     }
 }
 
-document.addEventListener("DOMContentLoaded", () => {
+document.addEventListener("DOMContentLoaded", async () => { // Make async
     loadPreferences(); // Load saved page and settings first
-    loadBookText();
+    
+    // Await critical data
+    await loadBookText();
+    await loadChapters();
+    
     const flipbookElement = document.getElementById('flipbook');
     if (flipbookElement) {
         flipbookElement.addEventListener("touchstart", handleTouchStartSwipe, { passive: true });
@@ -763,20 +589,19 @@ document.addEventListener("DOMContentLoaded", () => {
     
     document.addEventListener("keydown", handleGlobalKeys);
 
-    // Apply loaded preferences
+    // Apply loaded preferences to UI
     if (brushSizeSliderPopup) brushSizeSliderPopup.value = currentBrushSize;
-    
-    // Find the swatch matching the loaded *pen* color, or default to first
     let savedColor = localStorage.getItem('flipbook-lastColor');
     let activeSwatch = colorSwatchesContainer && colorSwatchesContainer.querySelector(`.color-swatch[data-pen-color="${savedColor}"]`);
     if (!activeSwatch && colorSwatchesContainer) {
         activeSwatch = colorSwatchesContainer.querySelector('.color-swatch'); // Fallback to first
     }
     setActiveColorSwatch(activeSwatch); // Set the active swatch
-    setDrawMode(drawMode); // Set the initial tool (which also sets the correct color variable)
+    setDrawMode(drawMode); // Set the initial tool (which also sets the correct color)
 
+    // Render components that depend on data
     renderThumbs();
-    renderIndex();
+    renderIndex(); // Now runs after chapters are loaded
     renderPage(); // Render the loaded page
 });
 
