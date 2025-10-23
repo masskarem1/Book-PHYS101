@@ -425,7 +425,6 @@ async function getAiHelp(e){
     finally{aiLoadingEl.style.display="none"}
 }
 
-
 // --- Translation Helper Function ---
 async function callTranslationAPI(textToTranslate) {
     if (!APPS_SCRIPT_PROXY_URL) return { success: false, message: "AI proxy URL not configured." };
