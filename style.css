@@ -79,7 +79,7 @@ body.highlight-mode #highlight-canvas {
     background: rgba(255, 255, 255, 0.9);
     border: 1px solid #ccc;
     border-radius: 8px;
-    padding: 20px 20px 20px 50px; /* Make space for close button on left */
+    padding: 20px 25px; /* Equal left/right padding */
     box-sizing: border-box;
     display: none;
     direction: rtl; /* Right-to-left for Arabic */
@@ -95,24 +95,26 @@ body.highlight-mode #highlight-canvas {
 .translation-close-btn {
     position: absolute;
     top: 5px;
-    left: 10px; /* Positioned on the left */
+    left: 50%; /* Position center */
+    transform: translateX(-50%); /* Adjust for center */
     width: 30px;
     height: 30px;
     line-height: 30px;
     text-align: center;
     font-size: 1.8rem; /* Make 'x' bigger */
     font-weight: bold;
-    color: #aaa;
+    color: #e63946; /* Red color */
     background-color: transparent; /* Make background transparent */
     border-radius: 50%;
     cursor: pointer;
-    transition: color 0.2s;
+    transition: color 0.2s, background-color 0.2s;
     z-index: 2501; /* Above overlay content */
     padding: 0; /* Override button padding */
     border: none; /* Override button border */
 }
 .translation-close-btn:hover {
-    color: #333; /* Darken 'x' on hover */
+    color: #fff; /* White 'x' on hover */
+    background-color: #e63946; /* Red background on hover */
 }
 
 /* --- Lock Screen --- */
@@ -142,7 +144,11 @@ button { padding: 5px 12px; border: none; border-radius: 6px; background: #007ac
 button:hover { background: #005fa3; }
 button:disabled { background-color: #b0b0b0; cursor: not-allowed; opacity: 0.7; }
 button:active { transform: translateY(1px); }
-button.active { box-shadow: 0 0 0 3px #ffc107 inset; background-color: #005fa3; }
+button.active {
+    /* Yellow shadow glow for active draw button */
+    box-shadow: 0 0 8px 2px #ffc107;
+    background-color: #005fa3;
+}
 
 /* --- Page Input --- */
 #pageInput { width: 60px; padding: 4px; font-size: 0.9rem; text-align: center; border: 1px solid #ccc; border-radius: 4px; }
@@ -158,20 +164,26 @@ button.active { box-shadow: 0 0 0 3px #ffc107 inset; background-color: #005fa3; 
 .highlight-buttons-group button { border-radius: 0; margin: 0; border-left: 1px solid #bbb; padding: 5px 10px; }
 .highlight-buttons-group button:first-child { border-left: none; border-top-left-radius: 5px; border-bottom-left-radius: 5px; }
 .highlight-buttons-group button:last-child { border-top-right-radius: 5px; border-bottom-right-radius: 5px; }
-.highlight-buttons-group button.active { box-shadow: none; background-color: #005fa3; }
+.highlight-buttons-group button.active {
+    box-shadow: 0 0 6px 2px #ffc107 inset; /* Inner glow for active button in group */
+    background-color: #005fa3;
+}
 #highlight-settings-btn { font-size: 1.1rem; padding: 5px 6px; }
+#highlight-settings-btn.active {
+    box-shadow: 0 0 6px 2px #ffc107 inset; /* Also glow settings btn when popup is open */
+}
 
 /* --- Highlight Pop-up Menu --- */
 .highlight-popup { display: none; position: absolute; top: 100%; margin-top: 5px; background-color: #ffffff; border: 1px solid #ccc; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.15); padding: 10px; z-index: 1100; flex-direction: column; gap: 10px; opacity: 0; transform: translateY(-10px); transition: opacity 0.2s ease-out, transform 0.2s ease-out, visibility 0s linear 0.2s; visibility: hidden; min-width: 200px; }
 .highlight-popup.visible { display: flex; opacity: 1; transform: translateY(0); visibility: visible; transition-delay: 0s; }
-.popup-section { display: flex; align-items: center; gap: 8px; padding-bottom: 8px; border-bottom: 1px solid #eee; }
+.popup-section { display: flex; align-items: center; gap: 8px; padding-bottom: 8px; border-bottom: 1px solid #eee; flex-wrap: wrap; } /* Allow wrapping */
 .popup-section:last-child { border-bottom: none; padding-bottom: 0; }
 .popup-section label { font-size: 0.9rem; color: #555; min-width: 40px; }
 .popup-section input[type="range"] { flex-grow: 1; }
 .popup-section button { background-color: #f0f0f0; color: #333; padding: 4px 10px; font-size: 0.85rem; }
 .popup-section button:hover { background-color: #ddd; }
 .popup-section button.tool-btn.active { background-color: #007acc; color: white; box-shadow: none; }
-.color-swatches { display: flex; gap: 8px; }
+.color-swatches { display: flex; gap: 8px; flex-wrap: wrap; } /* Allow wrapping */
 .color-swatch { width: 24px; height: 24px; border-radius: 50%; border: 2px solid #ccc; cursor: pointer; transition: transform 0.1s ease-out, border-color 0.1s; }
 .color-swatch:hover { transform: scale(1.1); }
 .color-swatch.active { border-color: #000; box-shadow: 0 0 0 2px white, 0 0 0 4px #000; }
