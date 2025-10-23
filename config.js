@@ -4,7 +4,6 @@ requireLogin: false, // <-- student login by id (set to true or false)
 totalPages: 292,
 imagePath: './images/Book_PHYS101_',
 thumbPath: './thumbs/Book_PHYS101_',
-geminiApiKey: 'AIzaSyAntGKIXHhHIWkYT7R6rPlpBk0tZuLtlD8',        
 chapters: [
         { title: "CHAPTER 1 – Physics and Measurements", page: 9 },
         { title: "CHAPTER 2 – Solids and Elasticity", page: 41 },
