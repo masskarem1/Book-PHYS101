@@ -25,9 +25,8 @@ body {
     overflow: hidden; /* Important for containing zoomed content */
     margin-top: 10px; /* Space below sticky toolbar */
     margin-bottom: 10px; /* Space above footer */
-    /* --- FIX: Keep position and z-index --- */
     position: relative;
-    z-index: 500 !important; /* Keep above thumbbar context */
+    z-index: 500; /* Keep above thumbbar context */
 }
 
 /* --- Page Wrapper (for image, canvas, overlay, zooming) --- */
@@ -193,7 +192,7 @@ button.active { box-shadow: 0 0 0 3px #ffc107 inset; background-color: #005fa3; 
     display: flex; overflow-x: auto; padding: 8px; background: #eee;
     border-top: 1px solid #ccc; border-bottom: 1px solid #ccc; gap: 8px;
     width: 100%; max-width: 1200px; box-sizing: border-box;
-    position: relative; z-index: 499 !important; min-height: 80px;
+    position: relative; z-index: 499; min-height: 80px;
 }
 .thumbbar img { height: 70px; cursor: pointer; border: 3px solid transparent; transition: border 0.18s; border-radius: 4px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
 .thumbbar img.active { border: 3px solid #007acc; }
@@ -203,7 +202,7 @@ button.active { box-shadow: 0 0 0 3px #ffc107 inset; background-color: #005fa3; 
     width: 100%; max-width: 1200px; display: flex; align-items: center;
     justify-content: space-between; padding: 8px 16px; box-sizing: border-box;
     position: relative; border-top: 1px solid #ddd; background-color: #f8f8f8;
-    z-index: 500 !important;
+    z-index: 500;
 }
 .footer-left, .footer-right { display: flex; align-items: center; gap: 10px; }
 #pageCounter { font-size: 1rem; color: #333; }
@@ -227,7 +226,12 @@ button.active { box-shadow: 0 0 0 3px #ffc107 inset; background-color: #005fa3; 
 .ai-response {
     margin-top: 1rem; padding-top: 1rem; border-top: 1px solid #eee;
     white-space: pre-wrap; line-height: 1.6; font-size: 0.95rem;
-    /* --- FIX: Added RTL for AI Response --- */
+    /* Default LTR */
+    direction: ltr;
+    text-align: left;
+}
+/* Class added by JS for RTL content */
+#aiResponse.rtl-text {
     direction: rtl;
     text-align: right;
 }
