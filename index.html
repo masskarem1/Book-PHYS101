@@ -105,7 +105,17 @@
 
 <!-- Main Flipbook Content Area -->
 <div id="flipbook">
-    <!-- Page content (image, canvas, overlay) will be loaded here by JavaScript -->
+    <!-- Page content (image, canvas) will be loaded here by JavaScript -->
+    
+    <!-- 
+      NEW: Translation Overlay is now part of the HTML,
+      but stays hidden until activated.
+    -->
+    <div id="translationOverlay">
+        <span id="translationCloseBtn" title="Close Translation">&times;</span>
+        <div id="translationContent"></div>
+    </div>
+    
 </div>
 
 <!-- Footer -->
