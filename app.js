@@ -12,7 +12,6 @@ async function loadIDs() {
     }
 }
 
-// Check config.js to enable/disable login
 if (typeof config !== 'undefined' && config.requireLogin === true) {
     loadIDs();
     const lockScreen = document.getElementById('lockScreen');
@@ -375,7 +374,6 @@ async function getAiHelp(e){
     finally{aiLoadingEl.style.display="none"}
 }
 
-
 // --- Translation Helper Function ---
 async function callTranslationAPI(textToTranslate) {
     if (!textToTranslate || !textToTranslate.trim()) return { success: false, message: "No text provided for translation." };
@@ -436,52 +434,39 @@ if (translateAnalysisBtn) {
     translateAnalysisBtn.addEventListener('click', translateAnalysisResults);
 }
 
-
 // --- Initial Setup & Global Key Listener ---
-
-// Resets the page input buffer if user stops typing
 function resetPageInputTimer() {
     if (pageInputTimer) clearTimeout(pageInputTimer);
     pageInputTimer = setTimeout(() => {
         if (pageInput && document.activeElement !== pageInput) {
-             // If user is no longer focused on input, reset it
              pageInput.value = currentPage + 1;
         } else if (pageInput && document.activeElement === pageInput && pageInput.value.length > 0) {
-             // If user is still focused but paused, blur and jump
              jumpToPage();
              pageInput.blur();
         } else if (pageInput) {
-             // Fallback to reset
              pageInput.value = currentPage + 1;
         }
         pageInputTimer = null;
-    }, 1500); // 1.5 second delay
+    }, 1500);
 }
 
-// Handles global key presses for shortcuts
 function handleGlobalKeys(e) {
     const activeEl = document.activeElement;
-    // Ignore shortcuts if user is typing in any input field
     if (activeEl && (activeEl.tagName === 'INPUT' || activeEl.tagName === 'TEXTAREA')) {
-        // Exception: allow Enter key on pageInput to trigger jumpToPage
         if (activeEl === pageInput && e.key === 'Enter') {
              jumpToPage();
-             activeEl.blur(); // Unfocus after jump
+             activeEl.blur();
         }
-        return; // Don't process shortcuts
+        return;
     }
-    // Also ignore if a modal is open (except for Escape, which is handled below)
     if (aiModal.style.display !== 'none' || phetModal.style.display !== 'none' || videoModal.style.display !== 'none') {
-         // Allow Escape key to close modals
-         if (e.key === "Escape") {
-             if (aiModal.style.display !== 'none') aiModal.style.display = 'none';
-             if (phetModal.style.display !== 'none') closePhetModal();
-             if (videoModal.style.display !== 'none') closeVideoModal();
-         }
-        return; // Don't process other shortcuts
+       if (e.key === "Escape") {
+           if (aiModal.style.display !== 'none') aiModal.style.display = 'none';
+           if (phetModal.style.display !== 'none') closePhetModal();
+           if (videoModal.style.display !== 'none') closeVideoModal();
+       }
+       return;
     }
-
-    // --- Process Shortcuts ---
 
     if (e.key === "ArrowLeft") {
         e.preventDefault();
@@ -490,34 +475,29 @@ function handleGlobalKeys(e) {
         e.preventDefault();
         nextPage();
     } else if (e.key >= "0" && e.key <= "9") {
-        // Number key pressed
         e.preventDefault();
         if (pageInput) {
             if (document.activeElement !== pageInput || !pageInputTimer) {
-                // If not already typing in the input, start a new buffer
                 pageInput.value = e.key;
             } else {
-                 // If already focused and typing, append
                  pageInput.value += e.key;
             }
             pageInput.focus();
-            resetPageInputTimer(); // Reset the auto-clear timer
+            resetPageInputTimer();
         }
     } else if (e.key === "Enter") {
         e.preventDefault();
         if (pageInput && pageInput.value !== (currentPage + 1).toString()) {
-            jumpToPage(); // Jump to the page number in the input
+            jumpToPage();
         }
-        if (pageInput) pageInput.blur(); // Unfocus
+        if (pageInput) pageInput.blur();
         if (pageInputTimer) { clearTimeout(pageInputTimer); pageInputTimer = null; }
     } else if (e.key === "Escape") {
-        // Close popups if they are open
         if (indexMenu && indexMenu.style.display !== 'none') closeIndexMenu();
         if (searchContainer && searchContainer.style.display !== 'none') closeSearchBox();
         if (highlightPopup && highlightPopup.classList.contains('visible')) closeHighlightPopup();
     }
 }
-
 
 document.addEventListener("DOMContentLoaded", () => {
     loadBookText();
@@ -531,7 +511,6 @@ document.addEventListener("DOMContentLoaded", () => {
     if (pageCounterEl) pageCounterEl.textContent = `Page ${currentPage + 1} / ${totalPages}`;
     if (pageInputEl) { pageInputEl.max = totalPages; pageInputEl.value = currentPage + 1; }
     
-    // Add global key listener
     document.addEventListener("keydown", handleGlobalKeys);
 
     renderThumbs();
