@@ -12,6 +12,7 @@ async function loadIDs() {
     }
 }
 
+// Check config.js to enable/disable login
 if (typeof config !== 'undefined' && config.requireLogin === true) {
     loadIDs();
     const lockScreen = document.getElementById('lockScreen');
@@ -55,7 +56,6 @@ async function loadBookText() {
         console.error("Could not load book text:", err);
          const searchBtn = document.getElementById('searchBtn');
          if (searchBtn) searchBtn.disabled = true;
-         // Indicate translation is unavailable if text failed to load
     }
 }
 
@@ -120,10 +120,11 @@ const aiLoadingEl = document.getElementById("aiLoading");
 const aiChapterTitleEl = document.getElementById("aiChapterTitle");
 const translateAnalysisBtn = document.getElementById("translate-analysis-btn");
 
-// --- !!! USE APPS SCRIPT PROXY URL !!! ---
+// --- KEYBOARD SHORTCUT VARIABLES ---
+let pageInputTimer = null;
+
+// --- Use Apps Script Proxy URL ---
 const APPS_SCRIPT_PROXY_URL = 'https://script.google.com/macros/s/AKfycbxzKK4RKp0rpCZcznOYPyV4aWMhBZLqYSn_ZFyNe3EO6_MxPWHZ3laF1QGL6zk6E4-h/exec';
-// Remove old API Key constant:
-// const GEMINI_API_KEY = (typeof config !== 'undefined' && config.geminiApiKey) ? config.geminiApiKey : 'YOUR_API_KEY_HERE';
 
 // --- Utility Functions ---
 const delay = ms => new Promise(resolve => setTimeout(resolve, ms));
@@ -194,21 +195,46 @@ function renderPage() {
 
 function resetZoomPan(element) { currentScale=1; currentOffsetX=0; currentOffsetY=0; pinchStartScale=1; if (element) element.style.transform="scale(1) translate(0px, 0px)"; const t=document.getElementById("flipbook"); if (t && hammerManager) hammerManager.get("pan").set({enable:true, direction:Hammer.DIRECTION_ALL}); }
 function preloadImages() { if (currentPage<images.length-1) (new Image).src=images[currentPage+1]; if (currentPage>0) (new Image).src=images[currentPage-1]; }
-function renderThumbs() { if(!thumbbar)return; thumbbar.innerHTML=""; thumbs.forEach((src, i) => { const t = document.createElement("img"); t.src = src; t.alt = `Thumb ${i + 1}`; t.loading = "lazy"; t.addEventListener("click", () => { // --- DEBUGGING ---
- console.log(`Thumbnail clicked! Index: ${i}, Current Page Before Click: ${currentPage}`); // --- END DEBUGGING ---
- if (currentPage !== i) { currentPage = i; // --- DEBUGGING ---
- console.log(`Current Page Updated To: ${currentPage}. Calling renderPage().`); // --- END DEBUGGING ---
- renderPage(); } else { // --- DEBUGGING ---
- console.log(`Clicked thumbnail ${i} is already the current page (${currentPage}). No action taken.`); // --- END DEBUGGING ---
- } }); t.onerror = () => { t.alt = "Thumb N/A"; t.src = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' fill='%23eee'/%3E%3Ctext x='50%25' y='50%25' font-family='sans-serif' font-size='12' fill='%23aaa' text-anchor='middle' dominant-baseline='middle'%3EN/A%3C/text%3E%3C/svg%3E"; }; thumbbar.appendChild(t); }); }
+function renderThumbs() { if(!thumbbar)return; thumbbar.innerHTML=""; thumbs.forEach((src, i) => { const t = document.createElement("img"); t.src = src; t.alt = `Thumb ${i + 1}`; t.loading = "lazy"; t.addEventListener("click", () => { if (currentPage !== i) { currentPage = i; renderPage(); } }); t.onerror = () => { t.alt = "Thumb N/A"; t.src = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' fill='%23eee'/%3E%3Ctext x='50%25' y='50%25' font-family='sans-serif' font-size='12' fill='%23aaa' text-anchor='middle' dominant-baseline='middle'%3EN/A%3C/text%3E%3C/svg%3E"; }; thumbbar.appendChild(t); }); }
 function highlightThumb() { if(!thumbbar)return; let activeThumb = null; thumbbar.querySelectorAll("img").forEach((im, i) => { const isActive = i === currentPage; im.classList.toggle("active", isActive); if (isActive) activeThumb = im; }); if (activeThumb) { const rect = activeThumb.getBoundingClientRect(), parentRect = thumbbar.getBoundingClientRect(); if (rect.left < parentRect.left || rect.right > parentRect.right) activeThumb.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' }); } }
 function renderIndex() { if(!indexMenu || !indexToggle)return; indexMenu.innerHTML=""; if (typeof config !== 'undefined' && config.chapters && config.chapters.length > 0) { config.chapters.forEach(chapter => { const button = document.createElement("button"); button.textContent = chapter.title; button.onclick = () => goToPage(chapter.page - 1); indexMenu.appendChild(button); }); indexToggle.style.display = 'inline-block'; } else indexToggle.style.display = 'none'; }
 function nextPage() { if (currentPage < images.length - 1) { currentPage++; renderPage(); } }
 function prevPage() { if (currentPage > 0) { currentPage--; renderPage(); } }
 function firstPage() { if (currentPage !== 0) { currentPage = 0; renderPage(); } }
 function lastPage() { if (currentPage !== images.length - 1) { currentPage = images.length - 1; renderPage(); } }
-function jumpToPage() { if (!pageInput) return; const v = parseInt(pageInput.value, 10); if (!isNaN(v) && v >= 1 && v <= totalPages && (v - 1) !== currentPage) { currentPage = v - 1; renderPage(); } else pageInput.value = currentPage + 1; }
-if (pageInput) pageInput.addEventListener('keydown', (e) => { if (e.key === 'Enter') { jumpToPage(); e.preventDefault(); } });
+
+// Modified jumpToPage to clear the timer
+function jumpToPage() {
+    if (pageInputTimer) {
+        clearTimeout(pageInputTimer);
+        pageInputTimer = null;
+    }
+    if (!pageInput) return;
+    const v = parseInt(pageInput.value, 10);
+    if (!isNaN(v) && v >= 1 && v <= totalPages) { // Allow jumping to current page
+        currentPage = v - 1;
+        renderPage();
+    } else {
+        // If invalid, reset to current page
+        pageInput.value = currentPage + 1;
+    }
+}
+if (pageInput) {
+    pageInput.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') {
+            jumpToPage();
+            e.preventDefault();
+            pageInput.blur(); // Unfocus after jump
+        }
+    });
+    // Add keyup listener to reset timer while user is typing
+    pageInput.addEventListener('keyup', (e) => {
+        if (e.key >= "0" && e.key <= "9") {
+            resetPageInputTimer();
+        }
+    });
+}
+
 function toggleFullScreen() { document.fullscreenElement ? document.exitFullscreen() : document.documentElement.requestFullscreen().catch(err => console.error(`Fullscreen error: ${err.message}`)); }
 function shareBook(){ const shareData = { title: "PHYS101 Flipbook", url: window.location.href }; if (navigator.share) { navigator.share(shareData).catch((err) => console.log("Share failed:", err)); } else if (navigator.clipboard) { const textArea = document.createElement("textarea"); textArea.value = window.location.href; document.body.appendChild(textArea); textArea.focus(); textArea.select(); try { document.execCommand('copy'); alert("Link copied to clipboard!"); } catch (err) { console.error('Fallback copy failed', err); alert('Failed to copy link.'); } document.body.removeChild(textArea); } else alert("Sharing/Copying not supported."); }
 function openIndexMenu() { if (!indexToggle || !footer || !indexMenu) return; const rect = indexToggle.getBoundingClientRect(), footerRect = footer.getBoundingClientRect(); indexMenu.style.left = `${rect.left - footerRect.left}px`; indexMenu.style.bottom = `${footerRect.height}px`; indexMenu.style.top = "auto"; indexMenu.style.display = "flex"; indexMenu.setAttribute("aria-hidden","false"); indexToggle.setAttribute("aria-expanded","true"); }
@@ -242,7 +268,6 @@ if(videoBtn)videoBtn.addEventListener("click",openVideoModal);
 if(videoCloseBtn)videoCloseBtn.addEventListener("click",closeVideoModal);
 if(videoModal)videoModal.addEventListener("click",e=>{e.target===videoModal&&closeVideoModal()});
 
-
 // --- HAMMER.JS SETUP (Updated for Scrolling) ---
 function setupHammer(element) {
     if (!element || typeof Hammer === 'undefined') { console.warn("Hammer.js not found or element missing."); return; }
@@ -266,7 +291,7 @@ function sizeCanvasToImage(img, canvas) { if (!img || !canvas) return; const rec
 function getDrawPosition(e, canvas) { if (!canvas) return { x: 0, y: 0 }; const pageWrap = canvas.closest('.page-wrap'); if (!pageWrap) return { x: 0, y: 0 }; const canvasRect = canvas.getBoundingClientRect(); const scaleXCanvas = canvas.width / canvasRect.width; const scaleYCanvas = canvas.height / canvasRect.height; let clientX, clientY; if (e.touches && e.touches.length > 0) { clientX = e.touches[0].pageX - window.scrollX; clientY = e.touches[0].pageY - window.scrollY; } else if (e.changedTouches && e.changedTouches.length > 0) { clientX = e.changedTouches[0].pageX - window.scrollX; clientY = e.changedTouches[0].pageY - window.scrollY; } else { clientX = e.clientX; clientY = e.clientY; } const screenX = clientX - canvasRect.left; const screenY = clientY - canvasRect.top; return { x: screenX * scaleXCanvas, y: screenY * scaleYCanvas }; }
 function startDrawing(e) { if (!highlightCanvas || !ctx || !document.body.classList.contains("highlight-mode") || e.target !== highlightCanvas || (e.touches && e.touches.length > 1)) return; if (hammerManager) { hammerManager.get("pinch").set({ enable: !1 }); hammerManager.get("pan").set({ enable: !1 }); } e.touches && e.preventDefault(); isDrawing = !0; const t = getDrawPosition(e, highlightCanvas); [lastX, lastY] = [t.x, t.y]; if ("eraser" === drawMode) { ctx.beginPath(); ctx.globalCompositeOperation = "destination-out"; ctx.fillStyle = "rgba(0,0,0,1)"; ctx.arc(t.x, t.y, currentBrushSize / 2, 0, 2 * Math.PI); ctx.fill(); } }
 function draw(e) { if (!isDrawing || !ctx) return; e.touches && e.preventDefault(); if ("eraser" === drawMode) { const t = getDrawPosition(e, highlightCanvas); ctx.beginPath(); ctx.globalCompositeOperation = "destination-out"; ctx.strokeStyle = "rgba(0,0,0,1)"; ctx.lineWidth = currentBrushSize; ctx.moveTo(lastX, lastY); ctx.lineTo(t.x, t.y); ctx.lineCap = "round"; ctx.lineJoin = "round"; ctx.stroke(); [lastX, lastY] = [t.x, t.y]; } }
-function stopDrawing(e) { if (!isDrawing) return; isDrawing = !1; let t = getDrawPosition(e, highlightCanvas); if ("highlight" === drawMode) { ctx.beginPath(); ctx.globalCompositeOperation = "source-over"; ctx.strokeStyle = currentHighlightColor; ctx.lineWidth = currentBrushSize; ctx.lineCap = "butt"; ctx.moveTo(lastX, lastY); ctx.lineTo(t.x, lastY); ctx.stroke(); } saveHighlights(currentPage); if (hammerManager) { hammerManager.get("pinch").set({ enable: !0 }); hammerManager.get("pan").set({ enable: !0 }); } }
+function stopDrawing(e) { if (!isDrawing) return; isDrawing = !1; let t = getDrawPosition(e, highlightCanvas); if ("highlight" === drawMode) { ctx.beginPath(); ctx.globalCompositeOperation = "source-over"; ctx.fillStyle = currentHighlightColor; const rectX = Math.min(lastX, t.x); const rectWidth = Math.abs(t.x - lastX); const rectY = lastY - (currentBrushSize / 2); const rectHeight = currentBrushSize; ctx.fillRect(rectX, rectY, rectWidth, rectHeight); } saveHighlights(currentPage); if (hammerManager) { hammerManager.get("pinch").set({ enable: !0 }); hammerManager.get("pan").set({ enable: !0 }); } }
 function setupDrawingListeners(canvas) { if (!canvas) return; canvas.removeEventListener("mousedown", startDrawing); canvas.removeEventListener("mousemove", draw); canvas.removeEventListener("mouseup", stopDrawing); canvas.removeEventListener("mouseleave", stopDrawing); canvas.removeEventListener("touchstart", startDrawing); canvas.removeEventListener("touchmove", draw); canvas.removeEventListener("touchend", stopDrawing); canvas.removeEventListener("touchcancel", stopDrawing); canvas.addEventListener("mousedown", startDrawing); canvas.addEventListener("mousemove", draw); canvas.addEventListener("mouseup", stopDrawing); canvas.addEventListener("mouseleave", stopDrawing); canvas.addEventListener("touchstart", startDrawing, { passive: !1 }); canvas.addEventListener("touchmove", draw, { passive: !1 }); canvas.addEventListener("touchend", stopDrawing); canvas.addEventListener("touchcancel", stopDrawing); }
 function saveHighlights(pageNumber) { if (!highlightCanvas) return; requestAnimationFrame(() => { try { localStorage.setItem(`flipbook-highlights-page-${pageNumber}`, highlightCanvas.toDataURL()); } catch (e) { console.error("Save highlights error:", e); if (e.name === "QuotaExceededError") alert("Storage full."); } }); }
 function loadHighlights(pageNumber) {
@@ -307,17 +332,17 @@ if (searchInput) { searchInput.addEventListener('keydown', (e) => { if (e.key ==
 
 // --- AI HELPER ---
 async function getImageAsBase64FromCanvas(){ const e=document.querySelector(".page-image");if(!e||!e.complete||0===e.naturalWidth)return console.error("Image not ready"),null;try{const t=document.createElement("canvas");t.width=e.naturalWidth,t.height=e.naturalHeight;return t.getContext("2d").drawImage(e,0,0),t.toDataURL("image/png").split(",")[1]}catch(o){return console.error("Canvas error:",o),null}}
-if(aiHelperToggle)aiHelperToggle.addEventListener("click",()=>{const e=getCurrentChapter();if(aiChapterTitleEl)aiChapterTitleEl.textContent=e?e.title:"Current Page";if(aiResponseEl)aiResponseEl.innerHTML=""; if(translateAnalysisBtn) translateAnalysisBtn.style.display = 'none'; if(aiModal)aiModal.style.display="flex"});
+if(aiHelperToggle)aiHelperToggle.addEventListener("click",()=>{const e=getCurrentChapter();if(aiChapterTitleEl)aiChapterTitleEl.textContent=e?e.title:"Current Page";if(aiResponseEl){aiResponseEl.innerHTML=""; aiResponseEl.classList.remove('rtl-text');} if(translateAnalysisBtn) translateAnalysisBtn.style.display = 'none'; if(aiModal)aiModal.style.display="flex"});
 if(aiCloseBtn)aiCloseBtn.addEventListener("click",()=>{if(aiModal)aiModal.style.display="none"});
 if(aiModal)aiModal.addEventListener("click",e=>{if(e.target===aiModal)aiModal.style.display="none"});
 function getCurrentChapter(){ if(!config.chapters||0===config.chapters.length)return null;let e=config.chapters[0];for(let t=config.chapters.length-1;t>=0;t--)if(currentPage>=config.chapters[t].page-1){e=config.chapters[t];break}return e}
 
 async function getAiHelp(e){
-    // Removed API Key check
     if(!aiLoadingEl||!aiResponseEl)return;
-    aiLoadingEl.style.display="block"; aiResponseEl.innerHTML=""; if(translateAnalysisBtn) translateAnalysisBtn.style.display = 'none';
+    aiLoadingEl.style.display="block"; aiResponseEl.innerHTML=""; aiResponseEl.classList.remove('rtl-text'); if(translateAnalysisBtn) translateAnalysisBtn.style.display = 'none';
     let originalRequestBody; const n=getCurrentChapter(),o=n?n.title:"this page";
     try{
+        let apiUrl = APPS_SCRIPT_PROXY_URL;
         if("analyze_page"===e){
              let a=await getImageAsBase64FromCanvas();
              if(!a) { aiResponseEl.textContent="Could not process page image."; aiLoadingEl.style.display="none"; return; }
@@ -334,13 +359,9 @@ async function getAiHelp(e){
         }
 
         const fetchOptions = { method: "POST", body: JSON.stringify(originalRequestBody), headers: { 'Content-Type': 'text/plain;charset=utf-8' } };
-        const response = await fetchWithRetry(APPS_SCRIPT_PROXY_URL, fetchOptions);
+        const response = await fetchWithRetry(apiUrl, fetchOptions);
 
-        if(!response.ok){
-             let errorText = `Proxy Error (${response.status}): ${response.statusText}`;
-             try { const errorData = await response.json(); errorText = (errorData.error && errorData.error.message) ? `API Error via Proxy: ${errorData.error.message}` : errorText; } catch(g){}
-             throw new Error(errorText);
-        }
+        if(!response.ok){ let p= `Proxy Error (${response.status}): ${response.statusText}`; try { const errorData = await response.json(); p = (errorData.error && errorData.error.message) ? `API Error via Proxy: ${errorData.error.message}` : p; } catch(g){} throw new Error(p); }
         const responseData = await response.json();
         if (responseData.error && responseData.error.message) { throw new Error(`API Error via Proxy: ${responseData.error.message}`); }
         if(!responseData.candidates || responseData.candidates.length === 0 || !responseData.candidates[0].content || !responseData.candidates[0].content.parts || responseData.candidates[0].content.parts.length === 0){ let f="Unknown"; if(responseData.candidates && responseData.candidates[0]) f=responseData.candidates[0].finishReason; console.warn("AI response missing content. Reason:",f,responseData); aiResponseEl.textContent=`Response was blocked or empty. Reason: ${f}.`;}
@@ -358,7 +379,6 @@ async function getAiHelp(e){
 // --- Translation Helper Function ---
 async function callTranslationAPI(textToTranslate) {
     if (!textToTranslate || !textToTranslate.trim()) return { success: false, message: "No text provided for translation." };
-    // Removed API Key check
     try {
         const originalRequestBody = { contents: [{ parts: [{ text:`Translate the following English text accurately into clear, educational Arabic suitable for university-level students. Preserve specific terminology and equations where appropriate. Focus only on translation.\n\n---START---\n${textToTranslate}\n---END---` }] }] };
         const fetchOptions = { method: 'POST', body: JSON.stringify(originalRequestBody), headers: { 'Content-Type': 'text/plain;charset=utf-8' } };
@@ -393,15 +413,21 @@ async function translateCurrentPage() {
 async function translateAnalysisResults() {
     if (!aiResponseEl || !aiLoadingEl) return;
     const englishText = aiResponseEl.innerText;
-    if (!englishText || !englishText.trim()) { alert("No analysis text to translate."); return; }
+    if (!englishText || !englishText.trim() || englishText.endsWith("(Translated)")) {
+        alert("Already translated or no text to translate.");
+        return;
+    }
+
     aiLoadingEl.style.display = 'block';
     if (translateAnalysisBtn) translateAnalysisBtn.style.display = 'none';
     const result = await callTranslationAPI(englishText);
     if (result.success) {
         aiResponseEl.innerText = result.translatedText + "\n\n(Translated)";
+        aiResponseEl.classList.add('rtl-text'); // Add RTL class
         if (window.MathJax) MathJax.typesetPromise([aiResponseEl]).catch(b=>console.error("MathJax error:",b));
     } else {
         alert(result.message);
+         aiResponseEl.classList.remove('rtl-text'); // Ensure LTR if failed
         if (translateAnalysisBtn) translateAnalysisBtn.style.display = 'block';
     }
     aiLoadingEl.style.display = 'none';
@@ -411,7 +437,88 @@ if (translateAnalysisBtn) {
 }
 
 
-// --- Initial Setup ---
+// --- Initial Setup & Global Key Listener ---
+
+// Resets the page input buffer if user stops typing
+function resetPageInputTimer() {
+    if (pageInputTimer) clearTimeout(pageInputTimer);
+    pageInputTimer = setTimeout(() => {
+        if (pageInput && document.activeElement !== pageInput) {
+             // If user is no longer focused on input, reset it
+             pageInput.value = currentPage + 1;
+        } else if (pageInput && document.activeElement === pageInput && pageInput.value.length > 0) {
+             // If user is still focused but paused, blur and jump
+             jumpToPage();
+             pageInput.blur();
+        } else if (pageInput) {
+             // Fallback to reset
+             pageInput.value = currentPage + 1;
+        }
+        pageInputTimer = null;
+    }, 1500); // 1.5 second delay
+}
+
+// Handles global key presses for shortcuts
+function handleGlobalKeys(e) {
+    const activeEl = document.activeElement;
+    // Ignore shortcuts if user is typing in any input field
+    if (activeEl && (activeEl.tagName === 'INPUT' || activeEl.tagName === 'TEXTAREA')) {
+        // Exception: allow Enter key on pageInput to trigger jumpToPage
+        if (activeEl === pageInput && e.key === 'Enter') {
+             jumpToPage();
+             activeEl.blur(); // Unfocus after jump
+        }
+        return; // Don't process shortcuts
+    }
+    // Also ignore if a modal is open (except for Escape, which is handled below)
+    if (aiModal.style.display !== 'none' || phetModal.style.display !== 'none' || videoModal.style.display !== 'none') {
+         // Allow Escape key to close modals
+         if (e.key === "Escape") {
+             if (aiModal.style.display !== 'none') aiModal.style.display = 'none';
+             if (phetModal.style.display !== 'none') closePhetModal();
+             if (videoModal.style.display !== 'none') closeVideoModal();
+         }
+        return; // Don't process other shortcuts
+    }
+
+    // --- Process Shortcuts ---
+
+    if (e.key === "ArrowLeft") {
+        e.preventDefault();
+        prevPage();
+    } else if (e.key === "ArrowRight") {
+        e.preventDefault();
+        nextPage();
+    } else if (e.key >= "0" && e.key <= "9") {
+        // Number key pressed
+        e.preventDefault();
+        if (pageInput) {
+            if (document.activeElement !== pageInput || !pageInputTimer) {
+                // If not already typing in the input, start a new buffer
+                pageInput.value = e.key;
+            } else {
+                 // If already focused and typing, append
+                 pageInput.value += e.key;
+            }
+            pageInput.focus();
+            resetPageInputTimer(); // Reset the auto-clear timer
+        }
+    } else if (e.key === "Enter") {
+        e.preventDefault();
+        if (pageInput && pageInput.value !== (currentPage + 1).toString()) {
+            jumpToPage(); // Jump to the page number in the input
+        }
+        if (pageInput) pageInput.blur(); // Unfocus
+        if (pageInputTimer) { clearTimeout(pageInputTimer); pageInputTimer = null; }
+    } else if (e.key === "Escape") {
+        // Close popups if they are open
+        if (indexMenu && indexMenu.style.display !== 'none') closeIndexMenu();
+        if (searchContainer && searchContainer.style.display !== 'none') closeSearchBox();
+        if (highlightPopup && highlightPopup.classList.contains('visible')) closeHighlightPopup();
+    }
+}
+
+
 document.addEventListener("DOMContentLoaded", () => {
     loadBookText();
     const flipbookElement = document.getElementById('flipbook');
@@ -423,6 +530,10 @@ document.addEventListener("DOMContentLoaded", () => {
     const pageInputEl = document.getElementById('pageInput');
     if (pageCounterEl) pageCounterEl.textContent = `Page ${currentPage + 1} / ${totalPages}`;
     if (pageInputEl) { pageInputEl.max = totalPages; pageInputEl.value = currentPage + 1; }
+    
+    // Add global key listener
+    document.addEventListener("keydown", handleGlobalKeys);
+
     renderThumbs();
     renderIndex();
     renderPage();
