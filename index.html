@@ -105,7 +105,8 @@
 
 <!-- Main Flipbook Content Area -->
 <div id="flipbook">
-    <!-- Page content (image, canvas, overlay) will be loaded here by JavaScript -->
+    <!-- Page content (image, canvas) will be loaded here by JavaScript -->
+    <!-- The translation overlay is placed here, to be moved into .page-wrap by JS -->
 </div>
 
 <!-- Footer -->
@@ -142,6 +143,12 @@
 <!-- Video Modal -->
 <div id="videoModal"> <div class="video-content"> <button id="videoCloseBtn">×</button> <iframe id="videoFrame" src="about:blank" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen></iframe> </div> </div>
 
+<!-- Translation Overlay (Hidden by default, moved by JS) -->
+<div id="translationOverlay">
+    <button id="translationCloseBtn" title="Close Translation">×</button>
+    <div id="translationContent"></div>
+</div>
+
 <!-- Load Scripts -->
 <script src="config.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/hammer.js/2.0.8/hammer.min.js"></script>
@@ -149,3 +156,4 @@
 
 </body>
 </html>
+
