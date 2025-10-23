@@ -88,11 +88,11 @@ const highlightSettingsBtn = document.getElementById('highlight-settings-btn');
 const highlightPopup = document.getElementById('highlight-popup');
 const colorSwatchesContainer = document.querySelector('.color-swatches');
 const penToolBtnPopup = document.getElementById('pen-tool-btn-popup');
-const highlightToolBtn = document.getElementById('highlight-tool-btn'); // <-- ADDED THIS VARIABLE
+const highlightToolBtn = document.getElementById('highlight-tool-btn');
 const eraserToolBtnPopup = document.getElementById('eraser-tool-btn-popup');
 const brushSizeSliderPopup = document.getElementById('brush-size-popup');
 const clearHighlightsBtnPopup = document.getElementById('clear-highlights-btn-popup');
-let currentHighlightColor = 'rgba(255, 255, 0, 0.2)'; // Default
+let currentHighlightColor = 'rgba(255, 255, 0, 0.2)'; // Default: transparent yellow
 let currentBrushSize = 40; // Default
 let highlightCanvas, ctx, isDrawing = false, drawMode = 'highlight', lastX = 0, lastY = 0; // Defaults
 
@@ -192,13 +192,7 @@ function renderPage() {
     if (typeof config !== 'undefined') { const simConfig = config.simulations && config.simulations.find(s => s.page === (currentPage + 1)); if (phetBtn) phetBtn.style.display = simConfig ? 'inline-block' : 'none'; const videoConfig = config.videos && config.videos.find(v => v.page === (currentPage + 1)); if (videoBtn) videoBtn.style.display = videoConfig ? 'inline-block' : 'none'; }
     const currentOverlay = document.getElementById('overlay-translation'); if (currentOverlay) currentOverlay.style.display = 'none';
     closeSearchBox(); closeHighlightPopup(); preloadImages();
-
-    // Save last page to local storage
-    try {
-        localStorage.setItem('flipbook-lastPage', currentPage.toString());
-    } catch (e) {
-        console.warn("Could not save last page to localStorage:", e);
-    }
+    try { localStorage.setItem('flipbook-lastPage', currentPage.toString()); } catch (e) { console.warn("Could not save last page:", e); }
 }
 
 function resetZoomPan(element) { currentScale=1; currentOffsetX=0; currentOffsetY=0; pinchStartScale=1; if (element) element.style.transform="scale(1) translate(0px, 0px)"; const t=document.getElementById("flipbook"); if (t && hammerManager) hammerManager.get("pan").set({enable:true, direction:Hammer.DIRECTION_ALL}); }
@@ -233,7 +227,7 @@ if (indexMenu) indexMenu.addEventListener("click", e => e.stopPropagation());
 document.addEventListener("click", e => {
     if (indexMenu && indexToggle && indexMenu.style.display === "flex" && !indexMenu.contains(e.target) && !indexToggle.contains(e.target)) closeIndexMenu();
     if (searchContainer && searchContainer.style.display !== 'none' && !searchContainer.contains(e.target) && e.target !== searchBtn) closeSearchBox();
-    if (highlightPopup && highlightSettingsBtn && highlightPopup.classList.contains('visible') && !highlightPopup.contains(e.target) && e.target !== highlightSettingsBtn) closeHighlightPopup();
+    if (highlightPopup && highlightSettingsBtn && highlightPopup.classList.contains('visible') && !highlightPopup.contains(e.target) && e.target !== highlightSettingsBtn && e.target !== toggleDrawModeBtn) closeHighlightPopup();
 });
 function goToPage(page){ if (page >= 0 && page < images.length){ currentPage = page; renderPage(); closeIndexMenu(); } }
 window.goToPage = goToPage;
@@ -255,6 +249,7 @@ function closeVideoModal(){ videoModal&&(videoModal.style.display="none"),videoF
 if(videoBtn)videoBtn.addEventListener("click",openVideoModal);
 if(videoCloseBtn)videoCloseBtn.addEventListener("click",closeVideoModal);
 if(videoModal)videoModal.addEventListener("click",e=>{e.target===videoModal&&closeVideoModal()});
+
 
 // --- HAMMER.JS SETUP (Updated for Scrolling) ---
 function setupHammer(element) {
@@ -298,7 +293,7 @@ function startDrawing(e) {
     } else if (drawMode === "pen") {
         ctx.beginPath();
         ctx.globalCompositeOperation = "source-over";
-        ctx.strokeStyle = currentHighlightColor; // Use selected color
+        ctx.strokeStyle = currentHighlightColor; // Use selected color (opaque)
         ctx.lineWidth = currentBrushSize / 10; // Pen is much thinner
         ctx.moveTo(lastX, lastY);
     }
@@ -338,7 +333,7 @@ function stopDrawing(e) {
     if (drawMode === "highlight") {
         ctx.beginPath();
         ctx.globalCompositeOperation = "source-over";
-        ctx.fillStyle = currentHighlightColor;
+        ctx.fillStyle = currentHighlightColor; // This is the RGBA(..., 0.2)
         const rectX = Math.min(lastX, t.x);
         const rectWidth = Math.abs(t.x - lastX);
         const rectY = lastY - (currentBrushSize / 2);
@@ -400,7 +395,10 @@ if (toggleDrawModeBtn) {
             document.body.classList.add("highlight-mode");
             toggleDrawModeBtn.classList.add("active");
             setDrawMode(drawMode); // Set to last used mode
-            setActiveColorSwatch(colorSwatchesContainer.querySelector(`.color-swatch[data-color="${currentHighlightColor}"]`) || colorSwatchesContainer.querySelector('.color-swatch'));
+            // Find and set the active color swatch based on the (possibly loaded) current color
+            let activeSwatch = colorSwatchesContainer && (colorSwatchesContainer.querySelector(`.color-swatch[data-pen-color="${currentHighlightColor}"]`) || colorSwatchesContainer.querySelector(`.color-swatch[data-highlight-color="${currentHighlightColor}"]`));
+            if (!activeSwatch && colorSwatchesContainer) activeSwatch = colorSwatchesContainer.querySelector('.color-swatch'); // Fallback to first
+            setActiveColorSwatch(activeSwatch);
         }
         updateCursor();
     });
@@ -414,24 +412,31 @@ if (highlightSettingsBtn) {
 }
 function openHighlightPopup() { if(highlightPopup) highlightPopup.classList.add('visible'); if(highlightSettingsBtn) highlightSettingsBtn.classList.add('active'); }
 function closeHighlightPopup() { if(highlightPopup) highlightPopup.classList.remove('visible'); if(highlightSettingsBtn) highlightSettingsBtn.classList.remove('active'); }
+
 if (colorSwatchesContainer) {
     colorSwatchesContainer.addEventListener('click', (e) => {
-        if (e.target.classList.contains('color-swatch')) {
-            setActiveColorSwatch(e.target);
-            // If pen tool isn't active, default to highlight
-            if (drawMode !== 'pen') {
+        const swatch = e.target.closest('.color-swatch');
+        if (swatch) {
+            setActiveColorSwatch(swatch);
+            // If eraser was active, switch to pen or highlight. Default to highlight.
+            if (drawMode === 'eraser') {
                 setDrawMode('highlight');
+            } else {
+                 setDrawMode(drawMode); // Re-apply current mode to update color
             }
             closeHighlightPopup();
         }
     });
 }
+
 function setActiveColorSwatch(swatchElement) {
     if (!swatchElement || !colorSwatchesContainer) return;
     colorSwatchesContainer.querySelectorAll('.color-swatch').forEach(sw => sw.classList.remove('active'));
     swatchElement.classList.add('active');
-    currentHighlightColor = swatchElement.getAttribute('data-color');
-    try { localStorage.setItem('flipbook-lastColor', currentHighlightColor); } catch(e) { console.warn("Could not save color pref:", e); }
+    // Update color based on current mode
+    updateCurrentColor();
+    // Save last *base* color (e.g., pen color)
+    try { localStorage.setItem('flipbook-lastColor', swatchElement.dataset.penColor); } catch(e) { console.warn("Could not save color pref:", e); }
 }
 
 if (penToolBtnPopup) {
@@ -440,7 +445,7 @@ if (penToolBtnPopup) {
         closeHighlightPopup();
     });
 }
-if (highlightToolBtn) { // Added listener for highlight tool button
+if (highlightToolBtn) {
     highlightToolBtn.addEventListener('click', () => {
         setDrawMode('highlight');
         closeHighlightPopup();
@@ -459,10 +464,12 @@ function setDrawMode(mode) {
     if (penToolBtnPopup) penToolBtnPopup.classList.remove('active');
     if (eraserToolBtnPopup) eraserToolBtnPopup.classList.remove('active');
     if (highlightToolBtn) highlightToolBtn.classList.remove('active');
+    
+    // Deactivate all color swatches (will be reactivated if 'pen' or 'highlight')
     if (colorSwatchesContainer) colorSwatchesContainer.querySelectorAll('.color-swatch').forEach(sw => sw.classList.remove('active'));
 
-    const activeSwatch = colorSwatchesContainer && colorSwatchesContainer.querySelector(`.color-swatch[data-color="${currentHighlightColor}"]`);
-
+    const activeSwatch = colorSwatchesContainer && (colorSwatchesContainer.querySelector(`.color-swatch[data-pen-color="${currentHighlightColor}"]`) || colorSwatchesContainer.querySelector(`.color-swatch[data-highlight-color="${currentHighlightColor}"]`));
+    
     if (mode === 'highlight') {
         if (highlightToolBtn) highlightToolBtn.classList.add('active');
         if (activeSwatch) activeSwatch.classList.add('active');
@@ -472,9 +479,31 @@ function setDrawMode(mode) {
     } else { // Eraser
         if (eraserToolBtnPopup) eraserToolBtnPopup.classList.add('active');
     }
+    
+    updateCurrentColor(); // Set the correct color string for the tool
     updateCursor();
     try { localStorage.setItem('flipbook-lastDrawMode', drawMode); } catch(e) { console.warn("Could not save draw mode:", e); }
 }
+
+// New function to set the correct color string based on the active tool and swatch
+function updateCurrentColor() {
+    const activeSwatch = colorSwatchesContainer && colorSwatchesContainer.querySelector('.color-swatch.active');
+    if (!activeSwatch) {
+        // If no swatch is active, try to find one based on saved color or default
+        let savedColor = localStorage.getItem('flipbook-lastColor') || '#FFFF00'; // Default to yellow base
+        const targetSwatch = colorSwatchesContainer.querySelector(`.color-swatch[data-pen-color="${savedColor}"]`) || colorSwatchesContainer.querySelector('.color-swatch');
+        setActiveColorSwatch(targetSwatch); // This will call updateCurrentColor() again
+        return;
+    }
+
+    if (drawMode === 'pen') {
+        currentHighlightColor = activeSwatch.dataset.penColor;
+    } else if (drawMode === 'highlight') {
+        currentHighlightColor = activeSwatch.dataset.highlightColor;
+    }
+    // Eraser mode doesn't need a color
+}
+
 
 if (brushSizeSliderPopup) {
     brushSizeSliderPopup.addEventListener('input', (e) => { currentBrushSize = e.target.value; });
@@ -615,8 +644,18 @@ function loadPreferences() {
             }
         }
         
+        // Load color as the *opaque* pen color
         const savedColor = localStorage.getItem('flipbook-lastColor');
-        if (savedColor) currentHighlightColor = savedColor;
+        if (savedColor) {
+             // Find the swatch that has this pen color and set its highlight color as default if needed
+             const matchingSwatch = colorSwatchesContainer && colorSwatchesContainer.querySelector(`.color-swatch[data-pen-color="${savedColor}"]`);
+             if (matchingSwatch) {
+                 currentHighlightColor = matchingSwatch.dataset.highlightColor; // Default to its highlight version
+             } else {
+                 // Fallback if saved color isn't in swatches
+                 currentHighlightColor = 'rgba(255, 255, 0, 0.2)';
+             }
+        }
 
         const savedSize = localStorage.getItem('flipbook-lastBrushSize');
         if (savedSize) currentBrushSize = savedSize;
@@ -726,11 +765,15 @@ document.addEventListener("DOMContentLoaded", () => {
 
     // Apply loaded preferences
     if (brushSizeSliderPopup) brushSizeSliderPopup.value = currentBrushSize;
-    if (colorSwatchesContainer) {
-        const activeSwatch = colorSwatchesContainer.querySelector(`.color-swatch[data-color="${currentHighlightColor}"]`) || colorSwatchesContainer.querySelector('.color-swatch');
-        setActiveColorSwatch(activeSwatch);
+    
+    // Find the swatch matching the loaded *pen* color, or default to first
+    let savedColor = localStorage.getItem('flipbook-lastColor');
+    let activeSwatch = colorSwatchesContainer && colorSwatchesContainer.querySelector(`.color-swatch[data-pen-color="${savedColor}"]`);
+    if (!activeSwatch && colorSwatchesContainer) {
+        activeSwatch = colorSwatchesContainer.querySelector('.color-swatch'); // Fallback to first
     }
-    setDrawMode(drawMode); // Set the initial tool
+    setActiveColorSwatch(activeSwatch); // Set the active swatch
+    setDrawMode(drawMode); // Set the initial tool (which also sets the correct color variable)
 
     renderThumbs();
     renderIndex();
