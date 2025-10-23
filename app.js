@@ -293,17 +293,32 @@ function draw(e) { if (!isDrawing || !ctx) return; e.touches && e.preventDefault
 function stopDrawing(e) { if (!isDrawing) return; isDrawing = !1; let t = getDrawPosition(e, highlightCanvas); if ("highlight" === drawMode) { ctx.beginPath(); ctx.globalCompositeOperation = "source-over"; ctx.fillStyle = currentHighlightColor; const rectX = Math.min(lastX, t.x); const rectWidth = Math.abs(t.x - lastX); const rectY = lastY - (currentBrushSize / 2); const rectHeight = currentBrushSize; ctx.fillRect(rectX, rectY, rectWidth, rectHeight); } saveHighlights(currentPage); if (hammerManager) { hammerManager.get("pinch").set({ enable: !0 }); hammerManager.get("pan").set({ enable: !0 }); } }
 function setupDrawingListeners(canvas) { if (!canvas) return; canvas.removeEventListener("mousedown", startDrawing); canvas.removeEventListener("mousemove", draw); canvas.removeEventListener("mouseup", stopDrawing); canvas.removeEventListener("mouseleave", stopDrawing); canvas.removeEventListener("touchstart", startDrawing); canvas.removeEventListener("touchmove", draw); canvas.removeEventListener("touchend", stopDrawing); canvas.removeEventListener("touchcancel", stopDrawing); canvas.addEventListener("mousedown", startDrawing); canvas.addEventListener("mousemove", draw); canvas.addEventListener("mouseup", stopDrawing); canvas.addEventListener("mouseleave", stopDrawing); canvas.addEventListener("touchstart", startDrawing, { passive: !1 }); canvas.addEventListener("touchmove", draw, { passive: !1 }); canvas.addEventListener("touchend", stopDrawing); canvas.addEventListener("touchcancel", stopDrawing); }
 function saveHighlights(pageNumber) { if (!highlightCanvas) return; requestAnimationFrame(() => { try { localStorage.setItem(`flipbook-highlights-page-${pageNumber}`, highlightCanvas.toDataURL()); } catch (e) { console.error("Save highlights error:", e); if (e.name === "QuotaExceededError") alert("Storage full."); } }); }
+
+// Corrected loadHighlights function
 function loadHighlights(pageNumber) {
-    if (!highlightCanvas || !ctx) return;
-    const dataUrl = localStorage.getItem(`flipbook-highlights-page-${pageNumber}`);
-    ctx.clearRect(0, 0, highlightCanvas.width, highlightCanvas.height);
+    if (!highlightCanvas || !ctx) {
+        console.warn("Canvas or context not ready for loading highlights.");
+        return;
+    }
+     const dataUrl = localStorage.getItem(`flipbook-highlights-page-${pageNumber}`);
+    ctx.clearRect(0, 0, highlightCanvas.width, highlightCanvas.height); // Clear existing canvas before drawing saved image
     if (dataUrl) {
-        const img = new Image();
-        img.onload = () => { ctx.drawImage(img, 0, 0); };
-        img.onerror = () => { console.error("Failed load highlight image for page", pageNumber); localStorage.removeItem(`flipbook-highlights-page-${pageNumber}`); };
-        img.src = dataUrl;
+        const img = new Image(); // Create a new Image object
+        img.onload = () => { // Define what happens when the image data is loaded
+             // Draw the saved highlight image
+            ctx.drawImage(img, 0, 0);
+            // console.log(`Highlights loaded for page ${pageNumber}`); // Optional: for debugging
+        };
+        img.onerror = () => { // Define what happens if the image data fails to load
+             console.error(`Failed to load highlight image from localStorage for page ${pageNumber}`);
+             // Optionally remove corrupted data
+             localStorage.removeItem(`flipbook-highlights-page-${pageNumber}`);
+        };
+        img.src = dataUrl; // Set the source of the image object to the saved data URL
     }
 }
+
+
 function clearCurrentHighlights() { if (!ctx) return; if (confirm("Erase all highlights on this page?")) { ctx.clearRect(0, 0, highlightCanvas.width, highlightCanvas.height); localStorage.removeItem(`flipbook-highlights-page-${currentPage}`); } }
 function updateCursor() { if (!highlightCanvas) return; const e = document.body.classList.contains("highlight-mode"); e ? "highlight" === drawMode ? (highlightCanvas.style.cursor = "", highlightCanvas.classList.add("highlight-cursor")) : (highlightCanvas.style.cursor = "cell", highlightCanvas.classList.remove("highlight-cursor")) : (highlightCanvas.style.cursor = "default", highlightCanvas.classList.remove("highlight-cursor")); }
 
@@ -459,14 +474,26 @@ function handleGlobalKeys(e) {
         }
         return;
     }
-    if (aiModal.style.display !== 'none' || phetModal.style.display !== 'none' || videoModal.style.display !== 'none') {
-       if (e.key === "Escape") {
-           if (aiModal.style.display !== 'none') aiModal.style.display = 'none';
-           if (phetModal.style.display !== 'none') closePhetModal();
-           if (videoModal.style.display !== 'none') closeVideoModal();
-       }
-       return;
+    
+    // Check if any modal is open
+    const modalIsOpen = (aiModal && aiModal.style.display !== 'none') ||
+                        (phetModal && phetModal.style.display !== 'none') ||
+                        (videoModal && videoModal.style.display !== 'none');
+
+    if (e.key === "Escape") {
+        e.preventDefault(); // Always prevent default for Escape
+        if (aiModal && aiModal.style.display !== 'none') aiModal.style.display = 'none';
+        else if (phetModal && phetModal.style.display !== 'none') closePhetModal();
+        else if (videoModal && videoModal.style.display !== 'none') closeVideoModal();
+        else if (indexMenu && indexMenu.style.display !== 'none') closeIndexMenu();
+        else if (searchContainer && searchContainer.style.display !== 'none') closeSearchBox();
+        else if (highlightPopup && highlightPopup.classList.contains('visible')) closeHighlightPopup();
+        return; // Handled Escape, do nothing else
     }
+
+    // Ignore other shortcuts if a modal is open
+    if (modalIsOpen) return;
+
 
     if (e.key === "ArrowLeft") {
         e.preventDefault();
@@ -487,15 +514,11 @@ function handleGlobalKeys(e) {
         }
     } else if (e.key === "Enter") {
         e.preventDefault();
-        if (pageInput && pageInput.value !== (currentPage + 1).toString()) {
+        if (pageInput && document.activeElement === pageInput && pageInput.value !== (currentPage + 1).toString()) {
             jumpToPage();
         }
         if (pageInput) pageInput.blur();
         if (pageInputTimer) { clearTimeout(pageInputTimer); pageInputTimer = null; }
-    } else if (e.key === "Escape") {
-        if (indexMenu && indexMenu.style.display !== 'none') closeIndexMenu();
-        if (searchContainer && searchContainer.style.display !== 'none') closeSearchBox();
-        if (highlightPopup && highlightPopup.classList.contains('visible')) closeHighlightPopup();
     }
 }
 
