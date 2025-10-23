@@ -80,6 +80,7 @@ body.highlight-mode #highlight-canvas {
     border: 1px solid #ccc;
     border-radius: 8px;
     padding: 20px 25px; /* Equal left/right padding */
+    padding-top: 40px; /* Add padding to top to make room for centered button */
     box-sizing: border-box;
     display: none;
     direction: rtl; /* Right-to-left for Arabic */
@@ -95,26 +96,26 @@ body.highlight-mode #highlight-canvas {
 .translation-close-btn {
     position: absolute;
     top: 5px;
-    left: 50%; /* Position center */
-    transform: translateX(-50%); /* Adjust for center */
+    left: 50%;
+    transform: translateX(-50%);
     width: 30px;
     height: 30px;
-    line-height: 30px;
+    line-height: 28px; /* Manually adjust for '×' symbol */
     text-align: center;
-    font-size: 1.8rem; /* Make 'x' bigger */
+    font-size: 1.5rem; /* '×' size */
     font-weight: bold;
-    color: #e63946; /* Red color */
-    background-color: transparent; /* Make background transparent */
+    color: #ffffff; /* White '×' */
+    background-color: #e63946; /* Red background */
+    border: 2px solid white;
     border-radius: 50%;
     cursor: pointer;
-    transition: color 0.2s, background-color 0.2s;
+    transition: background-color 0.2s, transform 0.2s;
     z-index: 2501; /* Above overlay content */
-    padding: 0; /* Override button padding */
-    border: none; /* Override button border */
+    padding: 0;
 }
 .translation-close-btn:hover {
-    color: #fff; /* White 'x' on hover */
-    background-color: #e63946; /* Red background on hover */
+    background-color: #d62828; /* Darker red on hover */
+    transform: translateX(-50%) scale(1.1); /* Slight zoom effect */
 }
 
 /* --- Lock Screen --- */
@@ -144,12 +145,10 @@ button { padding: 5px 12px; border: none; border-radius: 6px; background: #007ac
 button:hover { background: #005fa3; }
 button:disabled { background-color: #b0b0b0; cursor: not-allowed; opacity: 0.7; }
 button:active { transform: translateY(1px); }
-
-/* --- Active state for toggle buttons (Draw button) --- */
 button.active {
-    background-color: #005fa3;
     /* Yellow shadow glow for active draw button */
     box-shadow: 0 0 8px 2px #ffc107;
+    background-color: #005fa3;
 }
 
 /* --- Page Input --- */
@@ -266,7 +265,7 @@ button.active {
 @media (max-width: 768px) {
     .thumbbar img { height: 60px; gap: 6px; padding: 6px;}
     .overlay-translation { left: 4%; width: 92%; top: 3%; padding: 20px 15px 15px 15px; font-size: 1rem; }
-    .translation-close-btn { top: 3px; left: 50%; transform: translateX(-50%); width: 26px; height: 26px; line-height: 26px; font-size: 1.5rem; }
+    .translation-close-btn { top: 3px; left: 50%; transform: translateX(-50%); width: 26px; height: 26px; line-height: 25px; font-size: 1.4rem; }
     .toolbar { gap: 6px; }
     button { padding: 6px 10px; font-size: 0.9rem; }
     #pageInput { width: 50px; font-size: 0.9rem; }
