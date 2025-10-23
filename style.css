@@ -79,7 +79,7 @@ body.highlight-mode #highlight-canvas {
     background: rgba(255, 255, 255, 0.9);
     border: 1px solid #ccc;
     border-radius: 8px;
-    padding: 20px 20px 20px 50px; /* Make space for close button on left */
+    padding: 20px 25px; /* Equal left/right padding */
     box-sizing: border-box;
     display: none;
     direction: rtl; /* Right-to-left for Arabic */
@@ -95,24 +95,26 @@ body.highlight-mode #highlight-canvas {
 .translation-close-btn {
     position: absolute;
     top: 5px;
-    left: 10px; /* Positioned on the left */
+    left: 50%; /* Position center */
+    transform: translateX(-50%); /* Adjust for center */
     width: 30px;
     height: 30px;
     line-height: 30px;
     text-align: center;
     font-size: 1.8rem; /* Make 'x' bigger */
     font-weight: bold;
-    color: #aaa;
+    color: #e63946; /* Red color */
     background-color: transparent; /* Make background transparent */
     border-radius: 50%;
     cursor: pointer;
-    transition: color 0.2s;
+    transition: color 0.2s, background-color 0.2s;
     z-index: 2501; /* Above overlay content */
     padding: 0; /* Override button padding */
     border: none; /* Override button border */
 }
 .translation-close-btn:hover {
-    color: #333; /* Darken 'x' on hover */
+    color: #fff; /* White 'x' on hover */
+    background-color: #e63946; /* Red background on hover */
 }
 
 /* --- Lock Screen --- */
@@ -249,8 +251,8 @@ button.active { box-shadow: 0 0 0 3px #ffc107 inset; background-color: #005fa3; 
 /* --- Mobile Specific Adjustments --- */
 @media (max-width: 768px) {
     .thumbbar img { height: 60px; gap: 6px; padding: 6px;}
-    .overlay-translation { left: 4%; width: 92%; top: 3%; padding: 15px 15px 15px 40px; font-size: 1rem; }
-    .translation-close-btn { top: 3px; left: 8px; width: 26px; height: 26px; line-height: 26px; font-size: 1.5rem; }
+    .overlay-translation { left: 4%; width: 92%; top: 3%; padding: 20px 15px 15px 15px; font-size: 1rem; } /* Adjusted padding for centered button */
+    .translation-close-btn { top: 3px; /* left: 50%; transform: translateX(-50%); */ width: 26px; height: 26px; line-height: 26px; font-size: 1.5rem; }
     .toolbar { gap: 6px; }
     button { padding: 6px 10px; font-size: 0.9rem; }
     #pageInput { width: 50px; font-size: 0.9rem; }
