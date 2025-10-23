@@ -61,7 +61,9 @@ async function loadBookText() {
 // --- NEW: Function to load chapters from JSON ---
 async function loadChapters() {
     try {
-        const res = await fetch("./chapters.json");
+        // config.chapters is defined in config.js as an empty array
+        // We fetch the new JSON file and populate it.
+        const res = await fetch("./chapters.json"); 
         if (!res.ok) throw new Error("chapters.json not found");
         config.chapters = await res.json(); // Load data directly into the config object
         console.log("Chapters loaded successfully.");
@@ -198,13 +200,21 @@ function renderPage() {
     img.onerror = () => { img.alt = "Image not available"; img.src = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 400 300'%3E%3Crect width='400' height='300' fill='%23eee'/%3E%3Ctext x='50%25' y='50%25' font-family='sans-serif' font-size='24' fill='%23aaa' text-anchor='middle' dominant-baseline='middle'%3EImage Not Found%3C/text%3E%3C/svg%3E"; };
     img.onload = () => { sizeCanvasToImage(img, canvas); ctx = canvas.getContext('2d'); setupDrawingListeners(canvas); loadHighlights(currentPage); updateCursor(); setupHammer(wrap); };
     wrap.appendChild(img); wrap.appendChild(canvas);
-    const overlay = document.createElement("div"); overlay.className = "overlay-translation"; overlay.id = "overlay-translation";
-    const closeBtn = document.createElement("span"); closeBtn.className = "translation-close-btn"; closeBtn.innerHTML = "&times;"; closeBtn.title = "Close Translation"; closeBtn.onclick = () => { overlay.style.display = 'none'; }; overlay.appendChild(closeBtn);
-    wrap.appendChild(overlay); flipbook.appendChild(wrap);
+    
+    // Get overlay from HTML instead of creating it
+    const overlay = document.getElementById("translationOverlay");
+    if (overlay) {
+        wrap.appendChild(overlay); // Move the existing overlay into the wrap
+    }
+
+    flipbook.appendChild(wrap);
     if (counter) counter.textContent = `Page ${currentPage + 1} / ${totalPages}`; if (pageInput) pageInput.value = currentPage + 1;
     highlightThumb();
     if (typeof config !== 'undefined') { const simConfig = config.simulations && config.simulations.find(s => s.page === (currentPage + 1)); if (phetBtn) phetBtn.style.display = simConfig ? 'inline-block' : 'none'; const videoConfig = config.videos && config.videos.find(v => v.page === (currentPage + 1)); if (videoBtn) videoBtn.style.display = videoConfig ? 'inline-block' : 'none'; }
-    const currentOverlay = document.getElementById('overlay-translation'); if (currentOverlay) currentOverlay.style.display = 'none';
+    
+    // Hide overlay on page turn
+    if (overlay) overlay.style.display = 'none';
+
     closeSearchBox(); closeHighlightPopup(); preloadImages();
     try { localStorage.setItem('flipbook-lastPage', currentPage.toString()); } catch (e) { console.warn("Could not save last page:", e); }
 }
@@ -213,7 +223,68 @@ function resetZoomPan(element) { currentScale=1; currentOffsetX=0; currentOffset
 function preloadImages() { if (currentPage<images.length-1) (new Image).src=images[currentPage+1]; if (currentPage>0) (new Image).src=images[currentPage-1]; }
 function renderThumbs() { if(!thumbbar)return; thumbbar.innerHTML=""; thumbs.forEach((src, i) => { const t = document.createElement("img"); t.src = src; t.alt = `Thumb ${i + 1}`; t.loading = "lazy"; t.addEventListener("click", () => { if (currentPage !== i) { currentPage = i; renderPage(); } }); t.onerror = () => { t.alt = "Thumb N/A"; t.src = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' fill='%23eee'/%3E%3Ctext x='50%25' y='50%25' font-family='sans-serif' font-size='12' fill='%23aaa' text-anchor='middle' dominant-baseline='middle'%3EN/A%3C/text%3E%3C/svg%3E"; }; thumbbar.appendChild(t); }); }
 function highlightThumb() { if(!thumbbar)return; let activeThumb = null; thumbbar.querySelectorAll("img").forEach((im, i) => { const isActive = i === currentPage; im.classList.toggle("active", isActive); if (isActive) activeThumb = im; }); if (activeThumb) { const rect = activeThumb.getBoundingClientRect(), parentRect = thumbbar.getBoundingClientRect(); if (rect.left < parentRect.left || rect.right > parentRect.right) activeThumb.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' }); } }
-function renderIndex() { if(!indexMenu || !indexToggle)return; indexMenu.innerHTML=""; if (typeof config !== 'undefined' && config.chapters && config.chapters.length > 0) { config.chapters.forEach(chapter => { const button = document.createElement("button"); button.textContent = chapter.title; button.onclick = () => goToPage(chapter.page - 1); indexMenu.appendChild(button); }); indexToggle.style.display = 'inline-block'; } else { indexToggle.style.display = 'none'; } }
+
+// --- UPDATED renderIndex function ---
+function renderIndex() {
+    if (!indexMenu || !indexToggle) return;
+    indexMenu.innerHTML = ""; // Clear previous items
+
+    if (typeof config !== 'undefined' && config.chapters && config.chapters.length > 0) {
+        config.chapters.forEach(chapter => {
+            const itemWrapper = document.createElement('div');
+            itemWrapper.className = 'index-item';
+
+            const header = document.createElement('div');
+            header.className = 'index-chapter-header';
+
+            // Main chapter title button
+            const titleBtn = document.createElement('button');
+            titleBtn.className = 'chapter-title';
+            titleBtn.textContent = chapter.title;
+            titleBtn.onclick = () => goToPage(chapter.page - 1);
+            header.appendChild(titleBtn);
+            
+            let subsectionsList = null;
+
+            // If there are subsections, add a toggle button and list
+            if (chapter.subsections && chapter.subsections.length > 0) {
+                const toggleBtn = document.createElement('button');
+                toggleBtn.className = 'subsection-toggle';
+                toggleBtn.textContent = '▸'; // Collapsed state
+                header.appendChild(toggleBtn);
+                
+                subsectionsList = document.createElement('div');
+                subsectionsList.className = 'subsection-list'; // Hidden by default CSS
+
+                chapter.subsections.forEach(sub => {
+                    const subBtn = document.createElement('button');
+                    subBtn.className = 'subsection-link';
+                    subBtn.textContent = sub.title;
+                    subBtn.onclick = () => goToPage(sub.page - 1);
+                    subsectionsList.appendChild(subBtn);
+                });
+
+                // Toggle logic
+                toggleBtn.onclick = (e) => {
+                    e.stopPropagation(); // Prevent title button click
+                    const isVisible = subsectionsList.classList.toggle('visible');
+                    toggleBtn.textContent = isVisible ? '▾' : '▸'; // Update arrow
+                };
+            }
+
+            itemWrapper.appendChild(header);
+            if (subsectionsList) {
+                itemWrapper.appendChild(subsectionsList);
+            }
+            indexMenu.appendChild(itemWrapper);
+        });
+        indexToggle.style.display = 'inline-block';
+    } else {
+        indexToggle.style.display = 'none'; // Hide index button if no chapters
+    }
+}
+// --- END updated renderIndex ---
+
 function nextPage() { if (currentPage < images.length - 1) { currentPage++; renderPage(); } }
 function prevPage() { if (currentPage > 0) { currentPage--; renderPage(); } }
 function firstPage() { if (currentPage !== 0) { currentPage = 0; renderPage(); } }
@@ -264,6 +335,7 @@ if(videoBtn)videoBtn.addEventListener("click",openVideoModal);
 if(videoCloseBtn)videoCloseBtn.addEventListener("click",closeVideoModal);
 if(videoModal)videoModal.addEventListener("click",e=>{e.target===videoModal&&closeVideoModal()});
 
+
 // --- HAMMER.JS SETUP (Updated for Scrolling) ---
 function setupHammer(element) {
     if (!element || typeof Hammer === 'undefined') { console.warn("Hammer.js not found or element missing."); return; }
@@ -290,7 +362,17 @@ function draw(e) { if (!isDrawing || !ctx) return; e.touches && e.preventDefault
 function stopDrawing(e) { if (!isDrawing) return; isDrawing = false; let t = getDrawPosition(e, highlightCanvas); if ("highlight" === drawMode) { ctx.beginPath(); ctx.globalCompositeOperation = "source-over"; ctx.fillStyle = currentHighlightColor; const rectX = Math.min(lastX, t.x); const rectWidth = Math.abs(t.x - lastX); const rectY = lastY - (currentBrushSize / 2); const rectHeight = currentBrushSize; ctx.fillRect(rectX, rectY, rectWidth, rectHeight); } saveHighlights(currentPage); if (hammerManager) { hammerManager.get("pinch").set({ enable: true }); hammerManager.get("pan").set({ enable: true }); } }
 function setupDrawingListeners(canvas) { if (!canvas) return; canvas.removeEventListener("mousedown", startDrawing); canvas.removeEventListener("mousemove", draw); canvas.removeEventListener("mouseup", stopDrawing); canvas.removeEventListener("mouseleave", stopDrawing); canvas.removeEventListener("touchstart", startDrawing); canvas.removeEventListener("touchmove", draw); canvas.removeEventListener("touchend", stopDrawing); canvas.removeEventListener("touchcancel", stopDrawing); canvas.addEventListener("mousedown", startDrawing); canvas.addEventListener("mousemove", draw); canvas.addEventListener("mouseup", stopDrawing); canvas.addEventListener("mouseleave", stopDrawing); canvas.addEventListener("touchstart", startDrawing, { passive: !1 }); canvas.addEventListener("touchmove", draw, { passive: !1 }); canvas.addEventListener("touchend", stopDrawing); canvas.addEventListener("touchcancel", stopDrawing); }
 function saveHighlights(pageNumber) { if (!highlightCanvas) return; requestAnimationFrame(() => { try { localStorage.setItem(`flipbook-highlights-page-${pageNumber}`, highlightCanvas.toDataURL()); } catch (e) { console.error("Save highlights error:", e); if (e.name === "QuotaExceededError") alert("Storage full."); } }); }
-function loadHighlights(pageNumber) { if (!highlightCanvas || !ctx) return; const dataUrl = localStorage.getItem(`flipbook-highlights-page-${pageNumber}`); ctx.clearRect(0, 0, highlightCanvas.width, highlightCanvas.height); if (dataUrl) { const img = new Image(); img.onload = () => { ctx.drawImage(img, 0, 0); }; img.onerror = () => { console.error("Failed load highlight image for page", pageNumber); localStorage.removeItem(`flipbook-highlights-page-${pageNumber}`); }; img.src = dataUrl; } }
+function loadHighlights(pageNumber) {
+    if (!highlightCanvas || !ctx) return;
+    const dataUrl = localStorage.getItem(`flipbook-highlights-page-${pageNumber}`);
+    ctx.clearRect(0, 0, highlightCanvas.width, highlightCanvas.height);
+    if (dataUrl) {
+        const img = new Image();
+        img.onload = () => { ctx.drawImage(img, 0, 0); };
+        img.onerror = () => { console.error("Failed load highlight image for page", pageNumber); localStorage.removeItem(`flipbook-highlights-page-${pageNumber}`); };
+        img.src = dataUrl;
+    }
+}
 function clearCurrentHighlights() { if (!ctx) return; if (confirm("Erase all highlights on this page?")) { ctx.clearRect(0, 0, highlightCanvas.width, highlightCanvas.height); localStorage.removeItem(`flipbook-highlights-page-${currentPage}`); } }
 function updateCursor() { if (!highlightCanvas) return; const e = document.body.classList.contains("highlight-mode"); if (e) { if (drawMode === 'highlight') { highlightCanvas.style.cursor = ""; highlightCanvas.classList.add("highlight-cursor"); } else if (drawMode === 'pen') { highlightCanvas.style.cursor = "crosshair"; highlightCanvas.classList.remove("highlight-cursor"); } else { highlightCanvas.style.cursor = "cell"; highlightCanvas.classList.remove("highlight-cursor"); } } else { highlightCanvas.style.cursor = "default"; highlightCanvas.classList.remove("highlight-cursor"); } }
 
@@ -310,9 +392,21 @@ function setDrawMode(mode) {
     if (penToolBtnPopup) penToolBtnPopup.classList.remove('active');
     if (eraserToolBtnPopup) eraserToolBtnPopup.classList.remove('active');
     if (highlightToolBtn) highlightToolBtn.classList.remove('active');
-    if (mode === 'highlight') { if (highlightToolBtn) highlightToolBtn.classList.add('active'); }
-    else if (mode === 'pen') { if (penToolBtnPopup) penToolBtnPopup.classList.add('active'); }
-    else { if (eraserToolBtnPopup) eraserToolBtnPopup.classList.add('active'); }
+    
+    if (colorSwatchesContainer) colorSwatchesContainer.querySelectorAll('.color-swatch').forEach(sw => sw.classList.remove('active'));
+    
+    let savedColor = localStorage.getItem('flipbook-lastColor');
+    const activeSwatch = colorSwatchesContainer && (colorSwatchesContainer.querySelector(`.color-swatch[data-pen-color="${savedColor}"]`) || colorSwatchesContainer.querySelector('.color-swatch'));
+
+    if (mode === 'highlight') {
+        if (highlightToolBtn) highlightToolBtn.classList.add('active');
+        if (activeSwatch) activeSwatch.classList.add('active');
+    } else if (mode === 'pen') {
+        if (penToolBtnPopup) penToolBtnPopup.classList.add('active');
+        if (activeSwatch) activeSwatch.classList.add('active');
+    } else { // Eraser
+        if (eraserToolBtnPopup) eraserToolBtnPopup.classList.add('active');
+    }
     updateCurrentColor(); updateCursor();
     try { localStorage.setItem('flipbook-lastDrawMode', drawMode); } catch(e) { console.warn("Could not save draw mode:", e); }
 }
@@ -321,7 +415,10 @@ function updateCurrentColor() {
     const activeSwatch = colorSwatchesContainer && colorSwatchesContainer.querySelector('.color-swatch.active');
     if (!activeSwatch) {
          const firstSwatch = colorSwatchesContainer && colorSwatchesContainer.querySelector('.color-swatch');
-         if (firstSwatch) setActiveColorSwatch(firstSwatch);
+         if (firstSwatch) {
+             setActiveColorSwatch(firstSwatch);
+             return;
+         }
          return;
     }
     if (drawMode === 'pen') { currentHighlightColor = activeSwatch.dataset.penColor; }
@@ -391,7 +488,6 @@ async function getAiHelp(e){
     finally{aiLoadingEl.style.display="none"}
 }
 
-
 // --- Translation Helper Function ---
 async function callTranslationAPI(textToTranslate) {
     if (!APPS_SCRIPT_PROXY_URL) return { success: false, message: "AI proxy URL not configured." };
@@ -411,18 +507,22 @@ async function callTranslationAPI(textToTranslate) {
 // --- Translate Page (from AI Modal) ---
 async function translateCurrentPage() {
     if(aiModal) aiModal.style.display = 'none';
-    const overlay = document.getElementById("overlay-translation"); if (!overlay) return;
-    overlay.style.display = 'block'; overlay.textContent = '🔄 Loading text...';
+    const overlay = document.getElementById("translationOverlay"); if (!overlay) return;
+    const content = document.getElementById("translationContent"); if (!content) return;
+    
+    overlay.style.display = 'block'; content.textContent = '🔄 Loading text...';
     const pageKey = String(currentPage); const englishText = bookTextData[pageKey];
-    if (englishText === undefined) { overlay.textContent = '⚠️ Text data unavailable.'; return; }
-    if (!englishText || !englishText.trim()) { overlay.textContent = 'ℹ️ No translatable text found.'; return; }
-    overlay.textContent = '🌐 Translating to Arabic...';
+    if (englishText === undefined) { content.textContent = '⚠️ Text data unavailable.'; return; }
+    if (!englishText || !englishText.trim()) { content.textContent = 'ℹ️ No translatable text found.'; return; }
+    
+    content.textContent = '🌐 Translating to Arabic...';
     const result = await callTranslationAPI(englishText);
+    
     if (result.success) {
-        overlay.innerText = result.translatedText;
-        if (window.MathJax) MathJax.typesetPromise([overlay]).catch(p => console.error("MathJax translate error:", p));
+        content.innerText = result.translatedText; // Use innerText for safety
+        if (window.MathJax) MathJax.typesetPromise([content]).catch(p => console.error("MathJax translate error:", p));
     } else {
-        overlay.textContent = result.message;
+        content.textContent = result.message;
     }
 }
 
@@ -465,15 +565,15 @@ function loadPreferences() {
         }
         
         const savedColor = localStorage.getItem('flipbook-lastColor'); // This is the PEN color
-        if (savedColor) {
-             // Find the swatch that has this pen color
-             const matchingSwatch = colorSwatchesContainer && colorSwatchesContainer.querySelector(`.color-swatch[data-pen-color="${savedColor}"]`);
+        const savedMode = localStorage.getItem('flipbook-lastDrawMode');
+        if (savedMode) drawMode = savedMode;
+
+        if (savedColor && colorSwatchesContainer) {
+             const matchingSwatch = colorSwatchesContainer.querySelector(`.color-swatch[data-pen-color="${savedColor}"]`);
              if (matchingSwatch) {
-                 // Set the current color based on the *saved mode*
-                 const savedMode = localStorage.getItem('flipbook-lastDrawMode') || 'highlight';
-                 if (savedMode === 'pen') {
+                 if (drawMode === 'pen') {
                     currentHighlightColor = matchingSwatch.dataset.penColor;
-                 } else {
+                 } else { // Default to highlight
                     currentHighlightColor = matchingSwatch.dataset.highlightColor;
                  }
              }
@@ -482,9 +582,6 @@ function loadPreferences() {
         const savedSize = localStorage.getItem('flipbook-lastBrushSize');
         if (savedSize) currentBrushSize = savedSize;
         
-        const savedMode = localStorage.getItem('flipbook-lastDrawMode');
-        if (savedMode) drawMode = savedMode;
-
     } catch (e) {
         console.warn("Could not load preferences from localStorage:", e);
     }
@@ -570,8 +667,19 @@ function handleGlobalKeys(e) {
     }
 }
 
-document.addEventListener("DOMContentLoaded", async () => { // Make async
-    loadPreferences(); // Load saved page and settings first
+// Add click listener for the static translation close button
+const staticTranslationCloseBtn = document.getElementById('translationCloseBtn');
+if (staticTranslationCloseBtn) {
+    staticTranslationCloseBtn.addEventListener('click', () => {
+        const overlay = document.getElementById('translationOverlay');
+        if (overlay) {
+            overlay.style.display = 'none';
+        }
+    });
+}
+
+document.addEventListener("DOMContentLoaded", async () => {
+    loadPreferences();
     
     // Await critical data
     await loadBookText();
@@ -591,16 +699,17 @@ document.addEventListener("DOMContentLoaded", async () => { // Make async
 
     // Apply loaded preferences to UI
     if (brushSizeSliderPopup) brushSizeSliderPopup.value = currentBrushSize;
-    let savedColor = localStorage.getItem('flipbook-lastColor');
+    
+    let savedColor = localStorage.getItem('flipbook-lastColor'); // This is the base/pen color
     let activeSwatch = colorSwatchesContainer && colorSwatchesContainer.querySelector(`.color-swatch[data-pen-color="${savedColor}"]`);
     if (!activeSwatch && colorSwatchesContainer) {
         activeSwatch = colorSwatchesContainer.querySelector('.color-swatch'); // Fallback to first
     }
-    setActiveColorSwatch(activeSwatch); // Set the active swatch
+    setActiveColorSwatch(activeSwatch);
     setDrawMode(drawMode); // Set the initial tool (which also sets the correct color)
 
-    // Render components that depend on data
     renderThumbs();
     renderIndex(); // Now runs after chapters are loaded
     renderPage(); // Render the loaded page
 });
+
