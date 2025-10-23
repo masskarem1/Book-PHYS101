@@ -1,8 +1,88 @@
 [
-  { "title": "CHAPTER 1 – Physics and Measurements", "page": 9 },
-  { "title": "CHAPTER 2 – Solids and Elasticity", "page": 41 },
-  { "title": "CHAPTER 3 – Fluids", "page": 63 },
-  { "title": "CHAPTER 4 – Thermal Physics", "page": 135 },
-  { "title": "CHAPTER 5 – Waves and Sound", "page": 217 },
-  { "title": "APPENDIX", "page": 279 }
+  {
+    "title": "CHAPTER 1 – Physics and Measurements",
+    "page": 9,
+    "subsections": [
+      { "title": "1. Dimensions and Units", "page": 10 },
+      { "title": "2. The SI System of Units", "page": 11 },
+      { "title": "3. The dimensions and SI units of some derived physical parameters", "page": 13 },
+      { "title": "4. Dimensions analysis", "page": 19 },
+      { "title": "5. Some prefixes for powers of ten", "page": 28 },
+      { "title": "6. Vector and Scalar Quantities", "page": 29 },
+      { "title": "Questions", "page": 35 },
+      { "title": "Problems", "page": 38 }
+    ]
+  },
+  {
+    "title": "CHAPTER 2 – Solids and Elasticity",
+    "page": 41,
+    "subsections": [
+      { "title": "1. States of Matter", "page": 42 },
+      { "title": "2. The Deformation of Solids", "page": 44 },
+      { "title": "2.1 Young’s Modulus: Elasticity in Length", "page": 45 },
+      { "title": "2.2 Shear Modulus: Elasticity of Shape", "page": 52 },
+      { "title": "2.3 Bulk Modulus: Volume Elasticity", "page": 56 },
+      { "title": "Problems and Conceptual Exercises", "page": 60 }
+    ]
+  },
+  {
+    "title": "CHAPTER 3 – Fluids",
+    "page": 63,
+    "subsections": [
+      { "title": "1. Density and Pressure", "page": 64 },
+      { "title": "2. Atmospheric Pressure and Gauge Pressure", "page": 72 },
+      { "title": "3. Static Equilibrium In Fluids", "page": 75 },
+      { "title": "3.1. Pressure and Depth", "page": 75 },
+      { "title": "3.2. Pascal’s Principle", "page": 79 },
+      { "title": "4. Archimedes’ Principle and Buoyancy", "page": 82 },
+      { "title": "5. Applications of Archimedes’ Principle", "page": 86 },
+      { "title": "5.1 Complete Submersion", "page": 86 },
+      { "title": "5.2 Floatation", "page": 90 },
+      { "title": "Tip Of The Iceberg", "page": 96 },
+      { "title": "6. Fluid Flow And Continuity", "page": 100 },
+      { "title": "7. Bernoulli’s Equation", "page": 104 },
+      { "title": "8. Applications Of Bernoulli’s Equation", "page": 113 },
+      { "title": "9. Viscosity And Surface Tension", "page": 121 },
+      { "title": "Problems And Conceptual Exercises", "page": 130 }
+    ]
+  },
+  {
+    "title": "CHAPTER 4 – Thermal Physics",
+    "page": 135,
+    "subsections": [
+      { "title": "1. Temperature and the Zeroth Law of Thermodynamics", "page": 136 },
+      { "title": "2. Temperature Scales", "page": 139 },
+      { "title": "3. Thermal Expansion", "page": 149 },
+      { "title": "1. Heat and Mechanical Work", "page": 164 },
+      { "title": "2. Specific Heats", "page": 168 },
+      { "title": "3. Latent Heats", "page": 176 },
+      { "title": "4. Conduction, Convection, and Radiation", "page": 182 },
+      { "title": "5. The First Law of Thermodynamics", "page": 200 },
+      { "title": "6. Human Metabolism", "page": 202 },
+      { "title": "Problems and Conceptual Exercises", "page": 210 }
+    ]
+  },
+  {
+    "title": "CHAPTER 5 – Waves and Sound",
+    "page": 217,
+    "subsections": [
+      { "title": "1. Types of Waves", "page": 218 },
+      { "title": "2. Waves on a String", "page": 227 },
+      { "title": "3. Harmonic Wave Functions", "page": 235 },
+      { "title": "4. Sound Waves", "page": 238 },
+      { "title": "5. Sound Intensity", "page": 249 },
+      { "title": "6. The Doppler Effect", "page": 260 },
+      { "title": "Problems and Conceptual Exercises", "page": 275 }
+    ]
+  },
+  {
+    "title": "APPENDIX",
+    "page": 279,
+    "subsections": [
+      { "title": "APPENDIX A. TABLES", "page": 280 },
+      { "title": "APPENDIX B. MATHEMATICAL REVIEW", "page": 283 },
+      { "title": "REFERENCES", "page": 292 }
+    ]
+  }
 ]
+
