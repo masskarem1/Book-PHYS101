@@ -55,6 +55,7 @@ async function loadBookText() {
         console.error("Could not load book text:", err);
          const searchBtn = document.getElementById('searchBtn');
          if (searchBtn) searchBtn.disabled = true;
+         // Indicate translation is unavailable if text failed to load
     }
 }
 
@@ -118,7 +119,11 @@ const aiResponseEl = document.getElementById("aiResponse");
 const aiLoadingEl = document.getElementById("aiLoading");
 const aiChapterTitleEl = document.getElementById("aiChapterTitle");
 const translateAnalysisBtn = document.getElementById("translate-analysis-btn");
-const GEMINI_API_KEY = (typeof config !== 'undefined' && config.geminiApiKey) ? config.geminiApiKey : 'YOUR_API_KEY_HERE';
+
+// --- !!! USE APPS SCRIPT PROXY URL !!! ---
+const APPS_SCRIPT_PROXY_URL = 'https://script.google.com/macros/s/AKfycbxzKK4RKp0rpCZcznOYPyV4aWMhBZLqYSn_ZFyNe3EO6_MxPWHZ3laF1QGL6zk6E4-h/exec';
+// Remove old API Key constant:
+// const GEMINI_API_KEY = (typeof config !== 'undefined' && config.geminiApiKey) ? config.geminiApiKey : 'YOUR_API_KEY_HERE';
 
 // --- Utility Functions ---
 const delay = ms => new Promise(resolve => setTimeout(resolve, ms));
@@ -126,11 +131,11 @@ const delay = ms => new Promise(resolve => setTimeout(resolve, ms));
 async function fetchWithRetry(url, options, maxRetries = 3, initialDelay = 1000) {
     let attempt = 0;
     let currentDelay = initialDelay;
-    while (attempt < maxRetries) {
+    while (attempt <= maxRetries) {
         try {
             const response = await fetch(url, options);
-            if ([503, 429].includes(response.status) && attempt < maxRetries - 1) {
-                console.warn(`API request failed with status ${response.status}. Retrying in ${currentDelay / 1000}s...`);
+            if ([503, 429].includes(response.status) && attempt < maxRetries) {
+                console.warn(`API request via proxy failed with status ${response.status}. Retrying in ${currentDelay / 1000}s...`);
                 await delay(currentDelay);
                 attempt++;
                 currentDelay *= 2;
@@ -139,16 +144,18 @@ async function fetchWithRetry(url, options, maxRetries = 3, initialDelay = 1000)
             return response;
         } catch (error) {
             console.error(`Fetch error on attempt ${attempt + 1}:`, error);
-            if (attempt < maxRetries - 1) {
+            if (attempt < maxRetries) {
+                console.warn(`Network error during fetch. Retrying in ${currentDelay / 1000}s...`);
                 await delay(currentDelay);
                 attempt++;
                 currentDelay *= 2;
             } else {
-                throw error;
+                 console.error("Fetch failed after multiple retries.");
+                 throw error;
             }
         }
     }
-    throw new Error("API request failed after multiple retries.");
+     throw new Error("API request failed after multiple retries.");
 }
 
 function getYoutubeEmbedUrl(url) {
@@ -235,6 +242,7 @@ if(videoBtn)videoBtn.addEventListener("click",openVideoModal);
 if(videoCloseBtn)videoCloseBtn.addEventListener("click",closeVideoModal);
 if(videoModal)videoModal.addEventListener("click",e=>{e.target===videoModal&&closeVideoModal()});
 
+
 // --- HAMMER.JS SETUP (Updated for Scrolling) ---
 function setupHammer(element) {
     if (!element || typeof Hammer === 'undefined') { console.warn("Hammer.js not found or element missing."); return; }
@@ -261,35 +269,17 @@ function draw(e) { if (!isDrawing || !ctx) return; e.touches && e.preventDefault
 function stopDrawing(e) { if (!isDrawing) return; isDrawing = !1; let t = getDrawPosition(e, highlightCanvas); if ("highlight" === drawMode) { ctx.beginPath(); ctx.globalCompositeOperation = "source-over"; ctx.strokeStyle = currentHighlightColor; ctx.lineWidth = currentBrushSize; ctx.lineCap = "butt"; ctx.moveTo(lastX, lastY); ctx.lineTo(t.x, lastY); ctx.stroke(); } saveHighlights(currentPage); if (hammerManager) { hammerManager.get("pinch").set({ enable: !0 }); hammerManager.get("pan").set({ enable: !0 }); } }
 function setupDrawingListeners(canvas) { if (!canvas) return; canvas.removeEventListener("mousedown", startDrawing); canvas.removeEventListener("mousemove", draw); canvas.removeEventListener("mouseup", stopDrawing); canvas.removeEventListener("mouseleave", stopDrawing); canvas.removeEventListener("touchstart", startDrawing); canvas.removeEventListener("touchmove", draw); canvas.removeEventListener("touchend", stopDrawing); canvas.removeEventListener("touchcancel", stopDrawing); canvas.addEventListener("mousedown", startDrawing); canvas.addEventListener("mousemove", draw); canvas.addEventListener("mouseup", stopDrawing); canvas.addEventListener("mouseleave", stopDrawing); canvas.addEventListener("touchstart", startDrawing, { passive: !1 }); canvas.addEventListener("touchmove", draw, { passive: !1 }); canvas.addEventListener("touchend", stopDrawing); canvas.addEventListener("touchcancel", stopDrawing); }
 function saveHighlights(pageNumber) { if (!highlightCanvas) return; requestAnimationFrame(() => { try { localStorage.setItem(`flipbook-highlights-page-${pageNumber}`, highlightCanvas.toDataURL()); } catch (e) { console.error("Save highlights error:", e); if (e.name === "QuotaExceededError") alert("Storage full."); } }); }
-
-// Corrected loadHighlights function - Restored readable version
 function loadHighlights(pageNumber) {
-    if (!highlightCanvas || !ctx) {
-        console.warn("Canvas or context not ready for loading highlights.");
-        return;
-    }
-     const dataUrl = localStorage.getItem(`flipbook-highlights-page-${pageNumber}`);
-    ctx.clearRect(0, 0, highlightCanvas.width, highlightCanvas.height); // Clear existing canvas before drawing saved image
+    if (!highlightCanvas || !ctx) return;
+    const dataUrl = localStorage.getItem(`flipbook-highlights-page-${pageNumber}`);
+    ctx.clearRect(0, 0, highlightCanvas.width, highlightCanvas.height);
     if (dataUrl) {
         const img = new Image();
-        img.onload = () => {
-             // Draw the saved highlight image
-            ctx.drawImage(img, 0, 0);
-            console.log(`Highlights loaded for page ${pageNumber}`);
-        };
-        img.onerror = () => {
-            console.error(`Failed to load highlight image from localStorage for page ${pageNumber}`);
-             // Optionally remove corrupted data
-             localStorage.removeItem(`flipbook-highlights-page-${pageNumber}`);
-        }; // Semicolon was needed here
+        img.onload = () => { ctx.drawImage(img, 0, 0); };
+        img.onerror = () => { console.error("Failed load highlight image for page", pageNumber); localStorage.removeItem(`flipbook-highlights-page-${pageNumber}`); };
         img.src = dataUrl;
-    } else {
-         // If no saved data, ensure canvas is clear (already done by clearRect)
-         // console.log(`No highlights found for page ${pageNumber}`);
     }
 }
-
-
 function clearCurrentHighlights() { if (!ctx) return; if (confirm("Erase all highlights on this page?")) { ctx.clearRect(0, 0, highlightCanvas.width, highlightCanvas.height); localStorage.removeItem(`flipbook-highlights-page-${currentPage}`); } }
 function updateCursor() { if (!highlightCanvas) return; const e = document.body.classList.contains("highlight-mode"); e ? "highlight" === drawMode ? (highlightCanvas.style.cursor = "", highlightCanvas.classList.add("highlight-cursor")) : (highlightCanvas.style.cursor = "cell", highlightCanvas.classList.remove("highlight-cursor")) : (highlightCanvas.style.cursor = "default", highlightCanvas.classList.remove("highlight-cursor")); }
 
@@ -316,110 +306,66 @@ if (searchCloseBtn) searchCloseBtn.addEventListener('click', closeSearchBox);
 if (searchInput) { searchInput.addEventListener('keydown', (e) => { if (e.key === 'Enter') { performSearch(); e.preventDefault(); } if (e.key === 'Escape') { closeSearchBox(); e.preventDefault(); } }); }
 
 // --- AI HELPER ---
-// Restored readable version
-async function getImageAsBase64FromCanvas(){
-    const e=document.querySelector(".page-image");
-    if(!e||!e.complete||0===e.naturalWidth) {
-        console.error("Image not ready");
-        return null;
-    }
-    try{
-        const t=document.createElement("canvas");
-        t.width=e.naturalWidth;
-        t.height=e.naturalHeight;
-        t.getContext("2d").drawImage(e,0,0);
-        return t.toDataURL("image/png").split(",")[1];
-    } catch(o) {
-        console.error("Canvas error:",o);
-        return null;
-    }
-}
-
-if(aiHelperToggle) {
-    aiHelperToggle.addEventListener("click",()=>{
-        const e=getCurrentChapter();
-        if(aiChapterTitleEl)aiChapterTitleEl.textContent=e?e.title:"Current Page";
-        if(aiResponseEl)aiResponseEl.innerHTML="";
-        if(translateAnalysisBtn) translateAnalysisBtn.style.display = 'none';
-        if(aiModal)aiModal.style.display="flex";
-    });
-}
-if(aiCloseBtn) {
-    aiCloseBtn.addEventListener("click",()=>{
-        if(aiModal)aiModal.style.display="none";
-    });
-}
-if(aiModal) {
-    aiModal.addEventListener("click",e=>{
-        if(e.target===aiModal)aiModal.style.display="none";
-    });
-}
-function getCurrentChapter(){
-    if(!config.chapters||0===config.chapters.length) return null;
-    let e=config.chapters[0];
-    for(let t=config.chapters.length-1;t>=0;t--) {
-        if(currentPage>=config.chapters[t].page-1){
-            e=config.chapters[t];
-            break;
-        }
-    }
-    return e;
-}
+async function getImageAsBase64FromCanvas(){ const e=document.querySelector(".page-image");if(!e||!e.complete||0===e.naturalWidth)return console.error("Image not ready"),null;try{const t=document.createElement("canvas");t.width=e.naturalWidth,t.height=e.naturalHeight;return t.getContext("2d").drawImage(e,0,0),t.toDataURL("image/png").split(",")[1]}catch(o){return console.error("Canvas error:",o),null}}
+if(aiHelperToggle)aiHelperToggle.addEventListener("click",()=>{const e=getCurrentChapter();if(aiChapterTitleEl)aiChapterTitleEl.textContent=e?e.title:"Current Page";if(aiResponseEl)aiResponseEl.innerHTML=""; if(translateAnalysisBtn) translateAnalysisBtn.style.display = 'none'; if(aiModal)aiModal.style.display="flex"});
+if(aiCloseBtn)aiCloseBtn.addEventListener("click",()=>{if(aiModal)aiModal.style.display="none"});
+if(aiModal)aiModal.addEventListener("click",e=>{if(e.target===aiModal)aiModal.style.display="none"});
+function getCurrentChapter(){ if(!config.chapters||0===config.chapters.length)return null;let e=config.chapters[0];for(let t=config.chapters.length-1;t>=0;t--)if(currentPage>=config.chapters[t].page-1){e=config.chapters[t];break}return e}
 
 async function getAiHelp(e){
-    if(!GEMINI_API_KEY||"YOUR_API_KEY_HERE"===GEMINI_API_KEY) {
-        if(aiResponseEl) aiResponseEl.textContent="AI Helper not configured.";
-        return;
-    }
-    if(!aiLoadingEl||!aiResponseEl) return;
+    // Removed API Key check
+    if(!aiLoadingEl||!aiResponseEl)return;
     aiLoadingEl.style.display="block"; aiResponseEl.innerHTML=""; if(translateAnalysisBtn) translateAnalysisBtn.style.display = 'none';
-    let requestBody; const n=getCurrentChapter(),o=n?n.title:"this page";
+    let originalRequestBody; const n=getCurrentChapter(),o=n?n.title:"this page";
     try{
-        let apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=${GEMINI_API_KEY}`;
         if("analyze_page"===e){
-            let a=await getImageAsBase64FromCanvas();
-            if(!a) {
-                if(aiResponseEl) aiResponseEl.textContent="Could not process page image.";
-                aiLoadingEl.style.display="none";
-                return;
-            }
-            requestBody={contents:[{parts:[{text:`Analyze this physics page (from chapter "${o}"). Summarize concepts,explain formulas/diagrams,and give a takeaway for a life science student.`},{inline_data:{mime_type:"image/png",data:a}}]}]};
+             let a=await getImageAsBase64FromCanvas();
+             if(!a) { aiResponseEl.textContent="Could not process page image."; aiLoadingEl.style.display="none"; return; }
+             originalRequestBody={contents:[{parts:[{text:`Analyze this physics page (from chapter "${o}"). Summarize concepts,explain formulas/diagrams,and give a takeaway for a life science student.`},{inline_data:{mime_type:"image/png",data:a}}]}]};
         } else {
-            let r;
-            switch(e){
-                case"explain":{const i=window.prompt(`Concept from "${o}" to explain?`,"Pascal's Principle");if(!i){aiLoadingEl.style.display="none"; return;} r=`Explain "${i}" from "${o}" simply for life science students.`;}break;
-                case"quiz":r=`Generate 2 multiple-choice questions on "${o}". Explain the correct answer (bold it).`;break;
-                case"relate":r=`Provide 2 examples of how "${o}" applies to biology or medicine.`;break;
-                default:aiLoadingEl.style.display="none"; return;
-            }
-            requestBody={contents:[{parts:[{text:r}]}]};
+             let r;
+             switch(e){
+                 case"explain":{const i=window.prompt(`Concept from "${o}" to explain?`,"Pascal's Principle");if(!i){aiLoadingEl.style.display="none"; return;} r=`Explain "${i}" from "${o}" simply for life science students.`;}break;
+                 case"quiz":r=`Generate 2 multiple-choice questions on "${o}". Explain the correct answer (bold it).`;break;
+                 case"relate":r=`Provide 2 examples of how "${o}" applies to biology or medicine.`;break;
+                 default:aiLoadingEl.style.display="none"; return;
+             }
+             originalRequestBody={contents:[{parts:[{text:r}]}]};
         }
-        const response = await fetchWithRetry(apiUrl, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(requestBody) });
-        if(!response.ok){ let p=response.statusText; try{p=(await response.json()).error.message||p}catch(g){} throw new Error(`API error (${response.status}): ${p}`); }
+
+        const fetchOptions = { method: "POST", body: JSON.stringify(originalRequestBody), headers: { 'Content-Type': 'text/plain;charset=utf-8' } };
+        const response = await fetchWithRetry(APPS_SCRIPT_PROXY_URL, fetchOptions);
+
+        if(!response.ok){
+             let errorText = `Proxy Error (${response.status}): ${response.statusText}`;
+             try { const errorData = await response.json(); errorText = (errorData.error && errorData.error.message) ? `API Error via Proxy: ${errorData.error.message}` : errorText; } catch(g){}
+             throw new Error(errorText);
+        }
         const responseData = await response.json();
-        if(!responseData.candidates || responseData.candidates.length === 0 || !responseData.candidates[0].content || !responseData.candidates[0].content.parts || responseData.candidates[0].content.parts.length === 0){ let f="Unknown"; if(responseData.candidates && responseData.candidates[0]) f=responseData.candidates[0].finishReason; console.warn("AI response missing content. Reason:",f,responseData); if(aiResponseEl) aiResponseEl.textContent=`Response was blocked or empty. Reason: ${f}.`; }
+        if (responseData.error && responseData.error.message) { throw new Error(`API Error via Proxy: ${responseData.error.message}`); }
+        if(!responseData.candidates || responseData.candidates.length === 0 || !responseData.candidates[0].content || !responseData.candidates[0].content.parts || responseData.candidates[0].content.parts.length === 0){ let f="Unknown"; if(responseData.candidates && responseData.candidates[0]) f=responseData.candidates[0].finishReason; console.warn("AI response missing content. Reason:",f,responseData); aiResponseEl.textContent=`Response was blocked or empty. Reason: ${f}.`;}
         else{
             const resultText = responseData.candidates[0].content.parts[0].text;
-            if (aiResponseEl) {
-                "undefined"!=typeof marked ? aiResponseEl.innerHTML = marked.parse(resultText) : aiResponseEl.innerText = resultText;
-                if(translateAnalysisBtn && aiResponseEl.innerText.trim()) translateAnalysisBtn.style.display = 'block';
-            }
-            if (window.MathJax) MathJax.typesetPromise([aiResponseEl]).catch(b=>console.error("MathJax error:",b));
+            "undefined"!=typeof marked ? aiResponseEl.innerHTML = marked.parse(resultText) : aiResponseEl.innerText = resultText;
+            if(translateAnalysisBtn && aiResponseEl.innerText.trim()) translateAnalysisBtn.style.display = 'block';
+            window.MathJax && MathJax.typesetPromise([aiResponseEl]).catch(b=>console.error("MathJax error:",b));
         }
-    }catch(w){ console.error("AI Helper Error:",w); if(aiResponseEl) aiResponseEl.textContent=`Error: ${w.message}` }
-    finally{ if(aiLoadingEl) aiLoadingEl.style.display="none" }
+    }catch(w){ console.error("AI Helper Error:",w); aiResponseEl.textContent=`Error: ${w.message}` }
+    finally{aiLoadingEl.style.display="none"}
 }
+
 
 // --- Translation Helper Function ---
 async function callTranslationAPI(textToTranslate) {
     if (!textToTranslate || !textToTranslate.trim()) return { success: false, message: "No text provided for translation." };
-    if (!GEMINI_API_KEY || GEMINI_API_KEY === 'YOUR_API_KEY_HERE') return { success: false, message: "Translation unavailable: No API key." };
+    // Removed API Key check
     try {
-        const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=${GEMINI_API_KEY}`;
-        const requestBody = { contents: [{ parts: [{ text:`Translate the following English text accurately into clear, educational Arabic suitable for university-level students. Preserve specific terminology and equations where appropriate. Focus only on translation.\n\n---START---\n${textToTranslate}\n---END---` }] }] };
-        const resp = await fetchWithRetry(apiUrl, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(requestBody) });
-        if (!resp.ok) { let errorText = resp.statusText; try { errorText = (await resp.json()).error.message || errorText; } catch (e) {} throw new Error(`API error (${resp.status}): ${errorText}`); }
+        const originalRequestBody = { contents: [{ parts: [{ text:`Translate the following English text accurately into clear, educational Arabic suitable for university-level students. Preserve specific terminology and equations where appropriate. Focus only on translation.\n\n---START---\n${textToTranslate}\n---END---` }] }] };
+        const fetchOptions = { method: 'POST', body: JSON.stringify(originalRequestBody), headers: { 'Content-Type': 'text/plain;charset=utf-8' } };
+        const resp = await fetchWithRetry(APPS_SCRIPT_PROXY_URL, fetchOptions);
+        if (!resp.ok) { let errorText = `Proxy Error (${resp.status}): ${resp.statusText}`; try { const errorData = await resp.json(); errorText = (errorData.error && errorData.error.message) ? `API Error via Proxy: ${errorData.error.message}` : errorText; } catch (e) {} throw new Error(errorText); }
         const data = await resp.json();
+        if (data.error && data.error.message) { throw new Error(`API Error via Proxy: ${data.error.message}`); }
         if (!data.candidates || data.candidates.length === 0 || !data.candidates[0].content || !data.candidates[0].content.parts || data.candidates[0].content.parts.length === 0) { let reason = data.candidates?.[0]?.finishReason || "Unknown reason"; console.warn("Translate response missing. Reason:", reason, data); return { success: false, message: `Translation failed. Reason: ${reason}.` }; }
         return { success: true, translatedText: data.candidates[0].content.parts[0].text };
     } catch (err) { console.error("Translate API error:", err); return { success: false, message: `Translation Error: ${err.message}` }; }
@@ -463,6 +409,7 @@ async function translateAnalysisResults() {
 if (translateAnalysisBtn) {
     translateAnalysisBtn.addEventListener('click', translateAnalysisResults);
 }
+
 
 // --- Initial Setup ---
 document.addEventListener("DOMContentLoaded", () => {
