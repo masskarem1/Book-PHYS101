@@ -71,11 +71,16 @@
         <div class="popup-section">
             <label>Color:</label>
             <div class="color-swatches">
-                <div class="color-swatch active" data-color="rgba(255, 255, 0, 0.4)" style="background-color: rgba(255, 255, 0, 0.5);" title="Yellow"></div>
-                <div class="color-swatch" data-color="rgba(144, 238, 144, 0.4)" style="background-color: rgba(144, 238, 144, 0.5);" title="Green"></div>
-                <div class="color-swatch" data-color="rgba(0, 191, 255, 0.4)" style="background-color: rgba(0, 191, 255, 0.5);" title="Blue"></div>
-                <div class="color-swatch" data-color="rgba(255, 192, 203, 0.4)" style="background-color: rgba(255, 192, 203, 0.5);" title="Pink"></div>
-                <div class="color-swatch" data-color="rgba(255, 99, 71, 0.4)" style="background-color: rgba(255, 99, 71, 0.5);" title="Red"></div>
+                <!-- Pen colors are opaque, Highlight colors are transparent (0.2 opacity) -->
+                <div class="color-swatch active" data-pen-color="#FFFF00" data-highlight-color="rgba(255, 255, 0, 0.2)" style="background-color: #FFFF00;" title="Yellow"></div>
+                <div class="color-swatch" data-pen-color="#90EE90" data-highlight-color="rgba(144, 238, 144, 0.2)" style="background-color: #90EE90;" title="Green"></div>
+                <div class="color-swatch" data-pen-color="#00BFFF" data-highlight-color="rgba(0, 191, 255, 0.2)" style="background-color: #00BFFF;" title="Blue"></div>
+                <div class="color-swatch" data-pen-color="#FFC0CB" data-highlight-color="rgba(255, 192, 203, 0.2)" style="background-color: #FFC0CB;" title="Pink"></div>
+                <div class="color-swatch" data-pen-color="#FF6347" data-highlight-color="rgba(255, 99, 71, 0.2)" style="background-color: #FF6347;" title="Red"></div>
+                <!-- New Pen-specific colors -->
+                <div class="color-swatch" data-pen-color="#000000" data-highlight-color="rgba(0, 0, 0, 0.2)" style="background-color: #000000;" title="Black"></div>
+                <div class="color-swatch" data-pen-color="#00008B" data-highlight-color="rgba(0, 0, 139, 0.2)" style="background-color: #00008B;" title="Dark Blue"></div>
+                <div class="color-swatch" data-pen-color="#FF0000" data-highlight-color="rgba(255, 0, 0, 0.2)" style="background-color: #FF0000;" title="Bright Red"></div>
             </div>
         </div>
         <div class="popup-section">
