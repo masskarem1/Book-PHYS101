@@ -61,6 +61,8 @@ async function loadBookText() {
 // --- NEW: Function to load chapters from JSON ---
 async function loadChapters() {
     try {
+        // config.chapters is defined in config.js as an empty array
+        // We fetch the new JSON file and populate it.
         const res = await fetch("./chapters.json"); 
         if (!res.ok) throw new Error("chapters.json not found");
         config.chapters = await res.json(); // Load data directly into the config object
@@ -435,7 +437,7 @@ if (searchInput) { searchInput.addEventListener('keydown', (e) => { if (e.key ==
 
 // --- AI HELPER ---
 async function getImageAsBase64FromCanvas(){ const e=document.querySelector(".page-image");if(!e||!e.complete||0===e.naturalWidth)return console.error("Image not ready"),null;try{const t=document.createElement("canvas");t.width=e.naturalWidth,t.height=e.naturalHeight;return t.getContext("2d").drawImage(e,0,0),t.toDataURL("image/png").split(",")[1]}catch(o){return console.error("Canvas error:",o),null}}
-if(aiHelperToggle)aiHelperToggle.addEventListener("click",()=>{const e=getCurrentChapter();if(aiChapterTitleEl)aiChapterTitleEl.textContent=e?e.title:"Current Page";if(aiResponseEl){aiResponseEl.innerHTML=""; aiResponseEl.classList.remove('rtl-text');} /*if(translateAnalysisBtn) translateAnalysisBtn.style.display = 'none';*/ if(aiModal)aiModal.style.display="flex"}); // translateAnalysisBtn is removed
+if(aiHelperToggle)aiHelperToggle.addEventListener("click",()=>{const e=getCurrentChapter();if(aiChapterTitleEl)aiChapterTitleEl.textContent=e?e.title:"Current Page";if(aiResponseEl){aiResponseEl.innerHTML=""; aiResponseEl.classList.remove('rtl-text');} /*if(translateAnalysisBtn) translateAnalysisBtn.style.display = 'none';*/ if(aiModal)aiModal.style.display="flex"});
 if(aiCloseBtn)aiCloseBtn.addEventListener("click",()=>{if(aiModal)aiModal.style.display="none"});
 if(aiModal)aiModal.addEventListener("click",e=>{if(e.target===aiModal)aiModal.style.display="none"});
 function getCurrentChapter(){ if(!config.chapters||0===config.chapters.length)return null;let e=config.chapters[0];for(let t=config.chapters.length-1;t>=0;t--)if(currentPage>=config.chapters[t].page-1){e=config.chapters[t];break}return e}
@@ -443,7 +445,7 @@ function getCurrentChapter(){ if(!config.chapters||0===config.chapters.length)re
 async function getAiHelp(e){
     if(!APPS_SCRIPT_PROXY_URL) { if(aiResponseEl) aiResponseEl.textContent="AI Helper not configured: Proxy URL missing."; return; }
     if(!aiLoadingEl||!aiResponseEl)return;
-    aiLoadingEl.style.display="block"; aiResponseEl.innerHTML=""; aiResponseEl.classList.remove('rtl-text'); /*if(translateAnalysisBtn) translateAnalysisBtn.style.display = 'none';*/ // translateAnalysisBtn is removed
+    aiLoadingEl.style.display="block"; aiResponseEl.innerHTML=""; aiResponseEl.classList.remove('rtl-text'); /*if(translateAnalysisBtn) translateAnalysisBtn.style.display = 'none';*/
     let originalRequestBody; const n=getCurrentChapter(),o=n?n.title:"this page";
     try{
         let apiUrl = APPS_SCRIPT_PROXY_URL;
@@ -472,14 +474,15 @@ async function getAiHelp(e){
         else{
             const resultText = responseData.candidates[0].content.parts[0].text;
             "undefined"!=typeof marked ? aiResponseEl.innerHTML = marked.parse(resultText) : aiResponseEl.innerText = resultText;
-            // if(translateAnalysisBtn && aiResponseEl.innerText.trim()) translateAnalysisBtn.style.display = 'block'; // translateAnalysisBtn is removed
+            // if(translateAnalysisBtn && aiResponseEl.innerText.trim()) translateAnalysisBtn.style.display = 'block'; // Removed
             window.MathJax && MathJax.typesetPromise([aiResponseEl]).catch(b=>console.error("MathJax error:",b));
         }
     }catch(w){ console.error("AI Helper Error:",w); aiResponseEl.textContent=`Error: ${w.message}` }
     finally{aiLoadingEl.style.display="none"}
 }
 
-// --- Translation logic is fully removed ---
+// --- Translation logic removed ---
+
 
 // --- Preference Loader ---
 function loadPreferences() {
@@ -595,7 +598,16 @@ function handleGlobalKeys(e) {
     }
 }
 
-// Removed the staticTranslationCloseBtn listener
+// Add click listener for the static translation close button
+const staticTranslationCloseBtn = document.getElementById('translationCloseBtn');
+if (staticTranslationCloseBtn) {
+    staticTranslationCloseBtn.addEventListener('click', () => {
+        const overlay = document.getElementById('translationOverlay');
+        if (overlay) {
+            overlay.style.display = 'none';
+        }
+    });
+}
 
 document.addEventListener("DOMContentLoaded", async () => {
     loadPreferences();
