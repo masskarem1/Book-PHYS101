@@ -264,10 +264,12 @@ function renderIndex() {
 
                 // Toggle logic
                 toggleBtn.onclick = (e) => {
-                    e.stopPropagation(); // Prevent title button click
-                    const isVisible = subsectionsList.classList.toggle('visible');
-                    toggleBtn.textContent = isVisible ? '▾' : '▸'; // Update arrow
+                e.stopPropagation(); // Prevent title button click
+                if (!subsectionsList) return; // ✅ Added safety check
+                const isVisible = subsectionsList.classList.toggle('visible');
+                toggleBtn.textContent = isVisible ? '▾' : '▸'; // Update arrow
                 };
+
             }
 
             itemWrapper.appendChild(header);
