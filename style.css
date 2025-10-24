@@ -52,28 +52,31 @@ body {
 }
 
 /* Index items */
-.index-item {
+/* Note: You might not need .index-item if your JS uses .chapter directly */
+.chapter { /* Changed from .index-item based on JS */
     border-bottom: 1px solid #f0f0f0;
     padding-bottom: 6px;
     margin-bottom: 6px;
 }
-.index-item:last-child { border-bottom: none; margin-bottom: 0; padding-bottom: 0; }
+.chapter:last-child { border-bottom: none; margin-bottom: 0; padding-bottom: 0; }
 
-.index-chapter-header {
+
+.chapter-header { /* Changed from .index-chapter-header based on JS */
     display: flex;
     justify-content: space-between;
     align-items: center;
 }
-.index-chapter-header .chapter-title {
+.chapter-header .chapter-title { /* Kept .chapter-title, assuming it's inside */
     flex-grow: 1;
     font-weight: 600;
     font-size: 0.95rem;
     color: #000;
     text-align: left;
+    cursor: pointer; /* Added cursor for title click */
 }
 
-/* subsection toggle */
-.index-chapter-header .subsection-toggle {
+/* subsection toggle button */
+.chapter-header .toggle-btn { /* Changed from .subsection-toggle based on JS */
     flex: 0 0 20px;       /* Keep the width you set */
     text-align: center;
     color: #007acc;
@@ -81,16 +84,13 @@ body {
     border: none;
     font-weight: bold;
     cursor: pointer;
-
-    /* --- ADDED THESE --- */
     font-size: 0.8em;    /* Makes the arrow ▸/▾ smaller */
     padding: 0;          /* Removes extra space inside the button */
     line-height: 1;      /* Helps vertically center the smaller arrow */
-    /* ----------------- */
 }
 
-/* subsection list inside sidebar */
-.subsection-list {
+/* subsection list inside sidebar - CORRECTED SELECTOR */
+.subsections-list {
     display: none;
     padding-left: 12px;
     border-left: 3px solid #007acc;
@@ -98,10 +98,12 @@ body {
     margin-top: 6px;
     margin-bottom: 8px;
 }
-.subsection-list.visible {
+/* CORRECTED SELECTOR */
+.subsections-list.visible {
     display: block;
 }
-.subsection-list .subsection-link {
+/* CORRECTED SELECTOR */
+.subsections-list .subsection { /* Changed from .subsection-link based on JS */
     font-size: 0.9rem;
     color: #444;
     padding: 6px 8px;
@@ -110,7 +112,8 @@ body {
     cursor: pointer;
     text-align: left;
 }
-.subsection-list .subsection-link:hover {
+/* CORRECTED SELECTOR */
+.subsections-list .subsection:hover { /* Changed from .subsection-link based on JS */
     background: rgba(0, 122, 204, 0.05);
     color: #000;
 }
