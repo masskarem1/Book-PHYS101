@@ -223,7 +223,7 @@ button.active {
     border-radius: 8px; /* Softer radius */
     box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15);
     padding: 10px; /* More internal padding */
-    width: 400px; /* Kept width */
+    width: 300px; /* Kept width */
     max-width: 90vw;
     z-index: 1200;
     max-height: 50vh; /* Allow it to be taller */
@@ -245,7 +245,7 @@ button.active {
     background: none;
     border: none;
     text-align: left;
-    padding: 14px 10px;        /* Slightly more vertical padding */
+    padding: 16px 8px;        /* Slightly more vertical padding */
     font-size: 0.95rem;
     cursor: pointer;
     width: 100%;
