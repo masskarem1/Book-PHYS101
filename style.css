@@ -213,105 +213,113 @@ button.active {
 #fullBtn { font-size: 1.2rem; }
 #shareBtn { font-size: 1.1rem; }
 
-/* --- Index Menu (Updated for Nesting and Spacing) --- */
+/* --- Index Menu (Refined Spacing & Visual Balance) --- */
 #indexMenu {
     position: absolute;
     display: none;
     flex-direction: column;
-    background: #fdfdfd; /* Slightly off-white */
+    background: #fdfdfd;
     border: 1px solid #ddd;
-    border-radius: 8px; /* Softer radius */
+    border-radius: 10px;
     box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15);
-    padding: 10px; /* More internal padding */
-    width: 300px; /* Kept width */
+    padding: 14px 12px;          /* Slightly more breathing room */
+    width: 320px;                /* Slightly wider for multi-line text */
     max-width: 90vw;
     z-index: 1200;
-    max-height: 50vh; /* Allow it to be taller */
-    overflow-y: auto; /* Allow scrolling */
-    overflow-x: hidden; /* Prevent horizontal scroll */
+    max-height: 55vh;
+    overflow-y: auto;
+    overflow-x: hidden;
 }
+
+/* Chapter container */
 .index-item {
-    border-bottom: 1px solid #f0f0f0; /* Lighter border */
+    border-bottom: 1px solid #f0f0f0;
+    padding-bottom: 10px;        /* Added spacing inside each block */
+    margin-bottom: 10px;         /* Separation between chapters */
 }
 .index-item:last-child {
     border-bottom: none;
 }
+
+/* Chapter header (title + toggle arrow) */
 .index-chapter-header {
     display: flex;
     justify-content: space-between;
     align-items: center;
-}
-#indexMenu button {
-    background: none;
-    border: none;
-    text-align: left;
-    padding: 16px 8px;        /* Slightly more vertical padding */
-    font-size: 0.95rem;
-    cursor: pointer;
-    width: 100%;
-    color: #333;
-    border-radius: 8px;        /* Softer edges */
-    white-space: normal;       /* Allow wrapping */
-    line-height: 1.6;          /* More breathing room between lines */
-    border: 2px solid transparent;
-    transition: background-color 0.2s, color 0.2s;
-    box-sizing: border-box;
-    margin-bottom: 8px;        /* Adds space between buttons */
-}
-
-/* Optional hover enhancement */
-#indexMenu button:hover {
-    background-color: #f5f7fa;
-}
-
-#indexMenu button:hover {
-    background: rgba(0, 122, 204, 0.1);
-    color: #000;
+    margin-bottom: 6px;          /* Adds a clear break before subsections */
 }
 .index-chapter-header .chapter-title {
     flex-grow: 1;
-    font-weight: 600; /* Bolder */
+    font-weight: 600;
     font-size: 0.95rem;
-    color: #000; /* Darker chapter title */
+    color: #000;
 }
 .index-chapter-header .subsection-toggle {
     flex-grow: 0;
     flex-shrink: 0;
-    width: 35px; /* Fixed width for toggle */
-    font-size: 1rem; /* Bolder arrow */
-    padding: 6px 0; /* Adjust padding if needed after main button change */
+    width: 35px;
+    font-size: 1rem;
+    padding: 6px 0;
     text-align: center;
     color: #007acc;
     font-weight: bold;
+    border-radius: 4px;
 }
 .index-chapter-header .subsection-toggle:hover {
     background: rgba(0, 122, 204, 0.15);
 }
-.subsection-list {
-    display: none; /* Hidden by default */
-    padding-left: 15px; /* MODIFICATION: Reduced Indent */
-    border-left: 3px solid #007acc;
-    margin-left: 8px; /* MODIFICATION: Reduced margin */
-    margin-top: 5px;
-    margin-bottom: 10px;
+
+/* Main chapter buttons */
+#indexMenu button {
+    background: none;
+    border: none;
+    text-align: left;
+    padding: 14px 10px;
+    font-size: 0.95rem;
+    cursor: pointer;
+    width: 100%;
+    color: #333;
+    border-radius: 8px;
+    white-space: normal;
+    line-height: 1.6;
+    border: 2px solid transparent;
+    transition: background-color 0.2s, color 0.2s;
+    box-sizing: border-box;
 }
-.subsection-list.visible {
-    display: block; /* Show when toggled */
-}
-.subsection-list .subsection-link {
-    font-size: 0.9rem; /* Slightly larger subsection font */
-    color: #444;
-    padding: 6px 8px; /* Keep subsection padding potentially smaller */
-    margin: 2px 0;
-    border-left: none;
-    margin-left: 0;
-}
-.subsection-list .subsection-link:hover {
-    background: rgba(0, 122, 204, 0.05);
+#indexMenu button:hover {
+    background: rgba(0, 122, 204, 0.08);
     color: #000;
 }
 
-/* --- Custom Scrollbar for Index --- */
+/* Subsection container */
+.subsection-list {
+    display: none;
+    padding-left: 14px;
+    border-left: 3px solid #007acc;
+    margin-left: 6px;
+    margin-top: 6px;
+    margin-bottom: 12px;         /* More space under subsection list */
+}
+.subsection-list.visible {
+    display: block;
+}
+
+/* Subsection items */
+.subsection-list .subsection-link {
+    font-size: 0.9rem;
+    color: #333;
+    padding: 8px 10px;           /* More comfortable height */
+    margin: 4px 0;               /* Increased spacing between items */
+    border-radius: 6px;
+    display: block;
+    transition: background-color 0.2s;
+}
+.subsection-list .subsection-link:hover {
+    background: rgba(0, 122, 204, 0.08);
+    color: #000;
+}
+
+/* Scrollbar */
 #indexMenu::-webkit-scrollbar {
     width: 8px;
 }
