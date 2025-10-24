@@ -192,9 +192,9 @@ button.active {
     justify-content: space-between; 
     padding: 8px 16px; 
     box-sizing: border-box;
-    position: sticky; /* <-- MODIFICATION: Make footer sticky */
-    bottom: 0; /* <-- MODIFICATION: Stick to bottom */
-    left: 0; /* <-- MODIFICATION: Align to left */
+    position: sticky; /* Make footer sticky */
+    bottom: 0; /* Stick to bottom */
+    left: 0; /* Align to left */
     border-top: 1px solid #ddd; 
     background-color: #f8f8f8;
     z-index: 500;
@@ -276,7 +276,20 @@ button.active {
 }
 
 /* --- AI Helper --- */
-#aiHelperToggle { position: fixed; bottom: 20px; right: 20px; width: 50px; height: 50px; border-radius: 50%; font-size: 1.5rem; z-index: 2000; box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2); background-color: #6a0dad; color: white; border: 2px solid white;}
+#aiHelperToggle {
+    position: fixed;
+    right: 20px;
+    bottom: 65px; /* MODIFICATION: 50px footer + 15px gap */
+    width: 50px;
+    height: 50px;
+    border-radius: 50%;
+    font-size: 1.5rem;
+    z-index: 2000;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+    background-color: #6a0dad;
+    color: white;
+    border: 2px solid white;
+}
 #aiHelperToggle:hover { background-color: #5a0bad; }
 #aiHelperModal { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0, 0, 0, 0.5); display: none; justify-content: center; align-items: center; z-index: 2500; padding: 10px; box-sizing: border-box;}
 .ai-content { background: #fff; padding: 1.5rem; border-radius: 12px; width: 95%; max-width: 550px; max-height: 90vh; overflow-y: auto; position: relative; box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3); }
@@ -310,7 +323,12 @@ button.active {
     #pageInput { width: 50px; font-size: 0.9rem; }
     .footer-left, .footer-right { gap: 8px; }
     #pageCounter { font-size: 0.9rem; }
-    #aiHelperToggle { width: 45px; height: 45px; font-size: 1.3rem; bottom: 15px; right: 15px;}
+    #aiHelperToggle {
+        width: 45px; height: 45px;
+        font-size: 1.3rem;
+        right: 15px;
+        bottom: 60px; /* MODIFICATION: 45px mobile footer + 15px gap */
+    }
     .ai-content { padding: 1rem; }
     .highlight-popup { padding: 8px; gap: 8px; min-width: 180px;}
     .popup-section { gap: 6px; padding-bottom: 6px;}
@@ -333,5 +351,8 @@ button.active {
     #pageCounter { font-size: 0.8rem; }
     .ai-content { width: 98%; padding: 0.8rem;}
     .ai-buttons button { font-size: 0.8rem; padding: 5px 8px;}
+    #aiHelperToggle {
+        bottom: 55px; /* MODIFICATION: ~40px small mobile footer + 15px gap */
+    }
 }
 
