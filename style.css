@@ -78,7 +78,9 @@ body.highlight-mode #highlight-canvas {
 /* --- Translation Overlay (Removed) --- */
 
 /* --- Translation Close Button (Removed) --- */
+/* --- Translation Close Button (Removed) --- */
 
+/* --- Lock Screen --- */
 /* --- Lock Screen --- */
 #lockScreen {
     position: fixed; top: 0; left: 0; width: 100%; height: 100%;
@@ -131,7 +133,7 @@ button.active {
 /* Add rounded corners to the buttons themselves */
 .highlight-buttons-group button:first-child {
     border-top-left-radius: 6px;
-    border-bottom-left-radius: 6px;
+    border-left: none; border-top-left-radius: 5px; border-bottom-left-radius: 5px;
 }
 .highlight-buttons-group button:last-child {
     border-top-right-radius: 6px;
@@ -223,12 +225,13 @@ button.active {
     border-radius: 8px; /* Softer radius */
     box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15);
     padding: 8px; /* More internal padding */
-    width: 320px; /* Set a fixed width */
+    width: 350px; /* MODIFICATION: Increased width */
     max-width: 90vw;
     z-index: 1200;
     /* backdrop-filter: blur(2px); */ /* Removed for performance, replace with light bg */
     max-height: 50vh; /* Allow it to be taller */
     overflow-y: auto; /* Allow scrolling */
+    overflow-x: hidden; /* MODIFICATION: Prevent horizontal scroll */
 }
 .index-item {
     border-bottom: 1px solid #eee;
