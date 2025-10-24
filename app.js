@@ -1,4 +1,4 @@
-// ---------- Student IDs (robust loading) ----------
+// ---------- Student IDs (robust loading) ---------
 let ALLOWED_IDS = [];
 async function loadIDs() {
     try {
