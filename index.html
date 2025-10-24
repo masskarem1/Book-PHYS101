@@ -6,23 +6,27 @@
     <title>PHYS101 Flipbook</title>
     <link rel="icon" href="data:;base64,iVBORw0KGgo=">
 
-    <!-- Libraries -->
+    <!-- Marked (deferred) -->
     <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js" defer></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/hammer.js/2.0.8/hammer.min.js"></script>
+
+    <!-- MathJax for rendering equations -->
     <script>
         window.MathJax = {
-            tex: { inlineMath: [['$', '$'], ['\\(', '\\)']], displayMath: [['$$', '$$'], ['\\[', '\\]']] },
+            tex: {
+                inlineMath: [['$', '$'], ['\\(', '\\)']],
+                displayMath: [['$$', '$$'], ['\\[', '\\]']]
+            },
             svg: { fontCache: 'global' }
         };
     </script>
     <script async id="MathJax-script" src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-svg.js"></script>
 
-    <!-- External CSS -->
+    <!-- Link to external CSS -->
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
 
-<!-- Optional Lock Screen -->
+<!-- Optional Login Screen -->
 <div id="lockScreen">
     <div class="lock-box">
         <h2>Enter your Student ID</h2>
@@ -32,8 +36,13 @@
     </div>
 </div>
 
-<!-- Toolbar -->
+<!-- Overlay for sidebar + modals (created by JS if needed) -->
+<!-- (kept empty here; JS will set its visibility and behavior) -->
+<div id="pageOverlay" aria-hidden="true"></div>
+
+<!-- Sticky Toolbar Container -->
 <div class="toolbar-container">
+    <!-- Main Navigation Toolbar -->
     <div class="toolbar">
         <button onclick="firstPage()">⏮ First</button>
         <button onclick="prevPage()">⬅ Prev</button>
@@ -42,72 +51,80 @@
         <button onclick="nextPage()">Next ➡</button>
         <button onclick="lastPage()">⏭ Last</button>
 
+        <!-- Draw Button Group -->
         <div class="highlight-buttons-group">
             <button id="toggle-draw-mode-btn" title="Toggle Draw Mode (D)">✏️ Draw</button>
             <button id="highlight-settings-btn" title="Drawing Settings">⌄</button>
         </div>
-
-        <button id="searchBtn" title="Search Book (S)" disabled>🔍 Search</button>
+        
+        <button id="searchBtn" title="Search Book (S)" disabled>🔍 Search</button> 
         <button id="phetBtn" style="display:none;">🔬 Launch Simulation</button>
         <button id="videoBtn" style="display:none;">▶️ Watch Video</button>
     </div>
-
-    <!-- Drawing Popup -->
+    
+    <!-- Highlight Settings Popup (Initially Hidden) -->
     <div id="highlight-popup" class="highlight-popup">
         <div class="popup-section">
             <label>Tool:</label>
-            <button id="pen-tool-btn-popup" class="tool-btn">Pen</button>
-            <button id="highlight-tool-btn" class="tool-btn active">Marker</button>
-            <button id="eraser-tool-btn-popup" class="tool-btn">Eraser</button>
+            <button id="pen-tool-btn-popup" class="tool-btn" title="Pen (freehand draw)">Pen</button>
+            <button id="highlight-tool-btn" class="tool-btn active" title="Highlighter (straight line)">Marker</button>
+            <button id="eraser-tool-btn-popup" class="tool-btn" title="Eraser">Eraser</button>
         </div>
         <div class="popup-section">
             <label>Color:</label>
             <div class="color-swatches">
-                <div class="color-swatch active" data-pen-color="#FFFF00" data-highlight-color="rgba(255,255,0,0.2)" style="background:#FFFF00;"></div>
-                <div class="color-swatch" data-pen-color="#90EE90" data-highlight-color="rgba(144,238,144,0.2)" style="background:#90EE90;"></div>
-                <div class="color-swatch" data-pen-color="#00BFFF" data-highlight-color="rgba(0,191,255,0.2)" style="background:#00BFFF;"></div>
-                <div class="color-swatch" data-pen-color="#FFC0CB" data-highlight-color="rgba(255,192,203,0.2)" style="background:#FFC0CB;"></div>
-                <div class="color-swatch" data-pen-color="#FF6347" data-highlight-color="rgba(255,99,71,0.2)" style="background:#FF6347;"></div>
-                <div class="color-swatch" data-pen-color="#000000" data-highlight-color="rgba(0,0,0,0.2)" style="background:#000000;"></div>
-                <div class="color-swatch" data-pen-color="#00008B" data-highlight-color="rgba(0,0,139,0.2)" style="background:#00008B;"></div>
-                <div class="color-swatch" data-pen-color="#FF0000" data-highlight-color="rgba(255,0,0,0.2)" style="background:#FF0000;"></div>
+                <div class="color-swatch active" data-pen-color="#FFFF00" data-highlight-color="rgba(255, 255, 0, 0.2)" style="background-color: #FFFF00;" title="Yellow"></div>
+                <div class="color-swatch" data-pen-color="#90EE90" data-highlight-color="rgba(144, 238, 144, 0.2)" style="background-color: #90EE90;" title="Green"></div>
+                <div class="color-swatch" data-pen-color="#00BFFF" data-highlight-color="rgba(0, 191, 255, 0.2)" style="background-color: #00BFFF;" title="Blue"></div>
+                <div class="color-swatch" data-pen-color="#FFC0CB" data-highlight-color="rgba(255, 192, 203, 0.2)" style="background-color: #FFC0CB;" title="Pink"></div>
+                <div class="color-swatch" data-pen-color="#FF6347" data-highlight-color="rgba(255, 99, 71, 0.2)" style="background-color: #FF6347;" title="Red"></div>
+                <div class="color-swatch" data-pen-color="#000000" data-highlight-color="rgba(0, 0, 0, 0.2)" style="background-color: #000000;" title="Black"></div>
+                <div class="color-swatch" data-pen-color="#00008B" data-highlight-color="rgba(0, 0, 139, 0.2)" style="background-color: #00008B;" title="Dark Blue"></div>
+                <div class="color-swatch" data-pen-color="#FF0000" data-highlight-color="rgba(255, 0, 0, 0.2)" style="background-color: #FF0000;" title="Bright Red"></div>
             </div>
         </div>
         <div class="popup-section">
             <label for="brush-size-popup">Size:</label>
-            <input type="range" id="brush-size-popup" min="30" max="90" value="40">
+            <input type="range" id="brush-size-popup" min="30" max="90" value="40" title="Adjust Size">
         </div>
-        <div class="popup-section">
-            <button id="clear-highlights-btn-popup">Clear Page</button>
+         <div class="popup-section">
+             <button id="clear-highlights-btn-popup" title="Clear All Highlights on This Page (Delete)">Clear Page</button>
         </div>
     </div>
-
-    <!-- Search Bar -->
-    <div id="searchContainer" style="display:none;">
+     
+    <!-- Search Bar (Initially Hidden) -->
+    <div id="searchContainer" style="display: none;">
         <input type="text" id="searchInput" placeholder="Search book text...">
-        <button id="searchCloseBtn">×</button>
+        <button id="searchCloseBtn" title="Close Search">×</button>
         <div id="searchResults"></div>
     </div>
 </div>
 
-<!-- Flipbook + Thumbnails -->
+<!-- Thumbnail Scroller -->
 <div id="thumbbar" class="thumbbar"></div>
-<div id="flipbook"></div>
 
-<!-- Footer + Index Sidebar -->
+<!-- Main Flipbook Content Area -->
+<div id="flipbook">
+    <!-- Page content (image, canvas) will be loaded here by JavaScript -->
+</div>
+
+<!-- Sidebar (Index Menu) - top-level so it's fixed and can push the page -->
+<div id="indexMenu" role="menu" aria-hidden="true"></div>
+
+<!-- Footer -->
 <div id="footer">
     <div class="footer-left">
-        <button id="indexToggle" aria-expanded="false">☰ Index</button>
+        <!-- Keep same ID for your existing code, we'll hook it as the sidebar toggle -->
+        <button id="indexToggle" aria-expanded="false" aria-controls="indexMenu">☰ Index</button>
     </div>
     <div id="pageCounter">Page 1 / ---</div>
     <div class="footer-right">
-        <button id="fullBtn" onclick="toggleFullScreen()">⛶</button>
-        <button id="shareBtn" onclick="shareBook()">🔗</button>
+        <button id="fullBtn" onclick="toggleFullScreen()" title="Toggle Fullscreen">⛶</button>
+        <button id="shareBtn" onclick="shareBook()" title="Share Link">🔗</button>
     </div>
-    <div id="indexMenu" role="menu" aria-hidden="true"></div>
 </div>
 
-<!-- AI Helper Modal -->
+<!-- AI Helper Button and Modal -->
 <button id="aiHelperToggle" title="AI Study Helper (A)">🧠</button>
 <div id="aiHelperModal">
     <div class="ai-content">
@@ -115,22 +132,26 @@
         <h2>AI Study Helper</h2>
         <p>Get help with <strong id="aiChapterTitle">Chapter X</strong>.</p>
         <div class="ai-buttons">
-            <button onclick="getAiHelp('explain')">Explain a Concept</button>
-            <button onclick="getAiHelp('quiz')">Quiz Me on Chapter</button>
-            <button onclick="getAiHelp('relate')">Relate to Life Sciences</button>
-            <button onclick="getAiHelp('analyze_page')">Analyze This Page</button>
+             <button onclick="getAiHelp('explain')">Explain a Concept</button>
+             <button onclick="getAiHelp('quiz')">Quiz Me on Chapter</button>
+             <button onclick="getAiHelp('relate')">Relate to Life Sciences</button>
+             <button onclick="getAiHelp('analyze_page')">Analyze This Page</button>
         </div>
         <div id="aiResponse" class="ai-response"></div>
-        <div id="aiLoading" style="display:none;">Thinking...</div>
+        <div id="aiLoading" style="display: none;">Thinking...</div>
     </div>
 </div>
 
-<!-- PhET + Video Modals -->
-<div id="phetModal"><div class="phet-content"><button id="phetCloseBtn">×</button><iframe id="phetFrame" allowfullscreen></iframe></div></div>
-<div id="videoModal"><div class="video-content"><button id="videoCloseBtn">×</button><iframe id="videoFrame" allowfullscreen></iframe></div></div>
+<!-- PhET Simulation Modal -->
+<div id="phetModal"> <div class="phet-content"> <button id="phetCloseBtn">×</button> <iframe id="phetFrame" src="about:blank" allowfullscreen></iframe> </div> </div>
 
-<!-- Scripts -->
+<!-- Video Modal -->
+<div id="videoModal"> <div class="video-content"> <button id="videoCloseBtn">×</button> <iframe id="videoFrame" src="about:blank" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen></iframe> </div> </div>
+
+<!-- Load Scripts - Hammer included once (deferred) and app.js deferred -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/hammer.js/2.0.8/hammer.min.js" defer></script>
 <script src="config.js"></script>
 <script src="app.js" defer></script>
+
 </body>
 </html>
