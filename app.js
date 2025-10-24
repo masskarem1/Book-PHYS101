@@ -408,11 +408,13 @@ function setupSidebarToggle() {
     indexSidebar.classList.remove("open");
     bookContainer.classList.remove("shifted");
     indexToggle.setAttribute("aria-expanded", "false");
+    indexSidebar.setAttribute("aria-hidden", "true"); // Ensure hidden initially
 
     indexToggle.addEventListener("click", (e) => {
         e.stopPropagation();
         const isOpen = indexSidebar.classList.toggle("open");
         indexToggle.setAttribute("aria-expanded", isOpen);
+        indexSidebar.setAttribute("aria-hidden", !isOpen); // Toggle aria-hidden
         bookContainer.classList.toggle("shifted", isOpen);
     });
 }
@@ -421,6 +423,7 @@ function openSidebar() {
     if (indexSidebar && !indexSidebar.classList.contains("open")) {
         indexSidebar.classList.add("open");
         if (indexToggle) indexToggle.setAttribute("aria-expanded", "true");
+        indexSidebar.setAttribute("aria-hidden", "false");
         if (bookContainer) bookContainer.classList.add("shifted");
     }
 }
@@ -428,7 +431,13 @@ function openSidebar() {
 function closeSidebar() {
     if (indexSidebar && indexSidebar.classList.contains("open")) {
         indexSidebar.classList.remove("open");
-        if (indexToggle) indexToggle.setAttribute("aria-expanded", "false");
+        if (indexToggle) {
+             indexToggle.setAttribute("aria-expanded", "false");
+             // --- FIX: Move focus back to the main toggle button ---
+             indexToggle.focus();
+             // --------------------------------------------------------
+        }
+        indexSidebar.setAttribute("aria-hidden", "true"); // Ensure it's marked hidden
         if (bookContainer) bookContainer.classList.remove("shifted");
     }
 }
@@ -554,6 +563,8 @@ async function getAiHelp(type) {
         aiLoadingEl.style.display = "none";
     }
 }
+
+// --- End of Part 2 ---
 // --- Part 3 of 3 Starts ---
 
 // --- Highlight / Draw Tools ---
