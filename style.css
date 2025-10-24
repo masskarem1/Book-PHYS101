@@ -123,8 +123,8 @@ button.active {
 
 /* --- Highlight Buttons Group --- */
 .highlight-buttons-group { display: flex; /* Removed border and overflow */ }
-.highlight-buttons-group button { 
-    border-radius: 0; 
+.highlight-buttons-group button {
+    border-radius: 0;
     margin: 0;
     border: 3px solid transparent; /* Keep size consistent */
 }
@@ -193,17 +193,17 @@ button.active {
 
 /* --- Footer --- */
 #footer {
-    width: 100%; 
+    width: 100%;
     max-width: 100%; /* Make footer span full width */
-    display: flex; 
+    display: flex;
     align-items: center;
-    justify-content: space-between; 
-    padding: 8px 16px; 
+    justify-content: space-between;
+    padding: 8px 16px;
     box-sizing: border-box;
     position: sticky; /* Make footer sticky */
     bottom: 0; /* Stick to bottom */
     left: 0; /* Align to left */
-    border-top: 1px solid #ddd; 
+    border-top: 1px solid #ddd;
     background-color: #f8f8f8;
     z-index: 500;
 }
@@ -213,7 +213,7 @@ button.active {
 #fullBtn { font-size: 1.2rem; }
 #shareBtn { font-size: 1.1rem; }
 
-/* --- Index Menu (Updated for Nesting) --- */
+/* --- Index Menu (Updated for Nesting and Spacing) --- */
 #indexMenu {
     position: absolute;
     display: none;
@@ -241,9 +241,9 @@ button.active {
     justify-content: space-between;
     align-items: center;
 }
-#indexMenu button {
+#indexMenu button { /* MODIFIED PADDING */
     background: none; border: none; text-align: left;
-    padding: 10px 8px; /* More vertical padding */
+    padding: 12px 8px; /* Increased vertical padding from 10px */
     font-size: 0.9rem; cursor: pointer;
     width: 100%; color: #333; border-radius: 6px;
     white-space: normal; /* Allow text wrapping */
@@ -266,7 +266,7 @@ button.active {
     flex-shrink: 0;
     width: 35px; /* Fixed width for toggle */
     font-size: 1rem; /* Bolder arrow */
-    padding: 6px 0;
+    padding: 6px 0; /* Adjust padding if needed after main button change */
     text-align: center;
     color: #007acc;
     font-weight: bold;
@@ -288,7 +288,7 @@ button.active {
 .subsection-list .subsection-link {
     font-size: 0.9rem; /* Slightly larger subsection font */
     color: #444;
-    padding: 6px 8px;
+    padding: 6px 8px; /* Keep subsection padding potentially smaller */
     margin: 2px 0;
     border-left: none;
     margin-left: 0;
@@ -398,4 +398,3 @@ button.active {
         bottom: 55px; /* MODIFICATION: ~40px small mobile footer + 15px gap */
     }
 }
-
