@@ -218,16 +218,16 @@ button.active {
     position: absolute;
     display: none;
     flex-direction: column;
-    background: rgba(250, 250, 250, 0.95);
-    border: 1px solid rgba(0, 0, 0, 0.15);
-    border-radius: 6px;
-    box-shadow: 0 6px 18px rgba(0, 0, 0, 0.2);
-    padding: 5px;
-    width: 300px; /* Set a fixed width */
+    background: #fdfdfd; /* Slightly off-white */
+    border: 1px solid #ddd;
+    border-radius: 8px; /* Softer radius */
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15);
+    padding: 8px; /* More internal padding */
+    width: 320px; /* Set a fixed width */
     max-width: 90vw;
     z-index: 1200;
-    backdrop-filter: blur(2px);
-    max-height: 40vh; /* Prevent it from being too tall */
+    /* backdrop-filter: blur(2px); */ /* Removed for performance, replace with light bg */
+    max-height: 50vh; /* Allow it to be taller */
     overflow-y: auto; /* Allow scrolling */
 }
 .index-item {
@@ -243,31 +243,42 @@ button.active {
 }
 #indexMenu button {
     background: none; border: none; text-align: left;
-    padding: 6px 10px; font-size: 0.9rem; cursor: pointer;
-    width: 100%; color: #222; border-radius: 4px;
+    padding: 8px 10px; font-size: 0.9rem; cursor: pointer;
+    width: 100%; color: #333; border-radius: 6px;
     white-space: normal; /* Allow text wrapping */
-    line-height: 1.3;
-    border: 3px solid transparent; /* Added border */
+    line-height: 1.4;
+    border: 2px solid transparent; /* Use 2px border for consistency */
+    transition: background-color 0.2s, color 0.2s;
 }
 #indexMenu button:hover {
     background: rgba(0, 122, 204, 0.1);
+    color: #000;
 }
 .index-chapter-header .chapter-title {
-    flex-grow: 1; /* Allow title to take up space */
-    font-weight: bold;
+    flex-grow: 1;
+    font-weight: 600; /* Bolder */
+    font-size: 0.95rem;
 }
 .index-chapter-header .subsection-toggle {
     flex-grow: 0;
     flex-shrink: 0;
-    width: 30px; /* Fixed width for toggle */
-    font-size: 0.8rem;
+    width: 30px;
+    font-size: 1rem; /* Bolder arrow */
     padding: 6px 0;
     text-align: center;
-    color: #555;
+    color: #007acc;
+    font-weight: bold;
+}
+.index-chapter-header .subsection-toggle:hover {
+    background: rgba(0, 122, 204, 0.15);
 }
 .subsection-list {
     display: none; /* Hidden by default */
-    padding-left: 15px; /* Indent subsections */
+    padding-left: 20px; /* Indent subsections */
+    border-left: 3px solid #007acc;
+    margin-left: 10px;
+    margin-top: 5px;
+    margin-bottom: 10px;
 }
 .subsection-list.visible {
     display: block; /* Show when toggled */
@@ -275,13 +286,32 @@ button.active {
 .subsection-list .subsection-link {
     font-size: 0.85rem;
     color: #444;
-    padding: 4px 8px;
-    border-left: 2px solid #007acc;
-    margin-left: 5px;
+    padding: 6px 8px;
+    margin: 2px 0;
+    border-left: none;
+    margin-left: 0;
 }
 .subsection-list .subsection-link:hover {
     background: rgba(0, 122, 204, 0.05);
+    color: #000;
 }
+
+/* --- Custom Scrollbar for Index --- */
+#indexMenu::-webkit-scrollbar {
+    width: 8px;
+}
+#indexMenu::-webkit-scrollbar-track {
+    background: #f1f1f1;
+    border-radius: 10px;
+}
+#indexMenu::-webkit-scrollbar-thumb {
+    background: #ccc;
+    border-radius: 10px;
+}
+#indexMenu::-webkit-scrollbar-thumb:hover {
+    background: #aaa;
+}
+
 
 /* --- AI Helper --- */
 #aiHelperToggle {
