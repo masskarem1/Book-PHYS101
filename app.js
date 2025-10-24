@@ -1,85 +1,87 @@
 // ---------- Student IDs (robust loading) ----------
 let ALLOWED_IDS = [];
 async function loadIDs() {
-    try {
-        const res = await fetch("./students.json");
-        if (!res.ok) throw new Error("File not found or inaccessible");
-        const data = await res.json();
-        ALLOWED_IDS = Array.isArray(data) ? data : (Array.isArray(data.allowed) ? data.allowed : []);
-    } catch (err) {
-        console.error("Could not load student IDs:", err);
-        ALLOWED_IDS = [];
-    }
+    try {
+        const res = await fetch("./students.json");
+        if (!res.ok) throw new Error("File not found or inaccessible");
+        const data = await res.json();
+        ALLOWED_IDS = Array.isArray(data) ? data : (Array.isArray(data.allowed) ? data.allowed : []);
+    } catch (err) {
+        console.error("Could not load student IDs:", err);
+        ALLOWED_IDS = [];
+    }
 }
 
 if (typeof config !== 'undefined' && config.requireLogin === true) {
-    loadIDs();
-    const lockScreen = document.getElementById('lockScreen');
-    if (lockScreen) lockScreen.style.display = 'flex';
+    loadIDs();
+    const lockScreen = document.getElementById('lockScreen');
+    if (lockScreen) lockScreen.style.display = 'flex';
 }
 
 const unlockBtn = document.getElementById('unlockBtn');
 if (unlockBtn) {
-    unlockBtn.addEventListener('click', () => {
-        const idInput = document.getElementById("idInput");
-        const entered = idInput ? idInput.value.trim() : "";
-        const idError = document.getElementById("idError");
-        if (!idError) return;
-        idError.style.display = 'none';
-        if (!entered) {
-            idError.textContent = 'Please enter an ID';
-            idError.style.display = 'block';
-            return;
-        }
-        if (ALLOWED_IDS.includes(entered)) {
-            const lockScreen = document.getElementById("lockScreen");
-            if (lockScreen) lockScreen.style.display = "none";
-        } else {
-            idError.textContent = 'Invalid ID';
-            idError.style.display = 'block';
-        }
-    });
+    unlockBtn.addEventListener('click', () => {
+        const idInput = document.getElementById("idInput");
+        const entered = idInput ? idInput.value.trim() : "";
+        const idError = document.getElementById("idError");
+        if (!idError) return;
+        idError.style.display = 'none';
+        if (!entered) {
+            idError.textContent = 'Please enter an ID';
+            idError.style.display = 'block';
+            return;
+        }
+        if (ALLOWED_IDS.includes(entered)) {
+            const lockScreen = document.getElementById("lockScreen");
+            if (lockScreen) lockScreen.style.display = "none";
+        } else {
+            idError.textContent = 'Invalid ID';
+            idError.style.display = 'block';
+        }
+    });
 }
 
 // ---------- Load Pre-extracted Book Text ----------
 let bookTextData = {};
 async function loadBookText() {
-    try {
-        const res = await fetch("./book-text.json");
-        if (!res.ok) throw new Error("book-text.json not found");
-        bookTextData = await res.json();
-        console.log("Book text loaded successfully.");
-         const searchBtn = document.getElementById('searchBtn');
-         if (searchBtn) searchBtn.disabled = false;
-    } catch (err) {
-        console.error("Could not load book text:", err);
-         const searchBtn = document.getElementById('searchBtn');
-         if (searchBtn) searchBtn.disabled = true;
-    }
+    try {
+        const res = await fetch("./book-text.json");
+        if (!res.ok) throw new Error("book-text.json not found");
+        bookTextData = await res.json();
+        console.log("Book text loaded successfully.");
+         const searchBtn = document.getElementById('searchBtn');
+         if (searchBtn) searchBtn.disabled = false;
+    } catch (err) {
+        console.error("Could not load book text:", err);
+         const searchBtn = document.getElementById('searchBtn');
+         if (searchBtn) searchBtn.disabled = true;
+    }
 }
 
-// --- NEW: Function to load chapters from JSON ---
+// --- Function to load chapters from JSON ---
 async function loadChapters() {
-    try {
-        const res = await fetch("./chapters.json"); 
-        if (!res.ok) throw new Error("chapters.json not found");
-        config.chapters = await res.json(); // Load data directly into the config object
-        console.log("Chapters loaded successfully.");
-    } catch (err) {
-        console.error("Could not load chapters:", err);
-        config.chapters = []; // Default to empty array on failure
-    }
+    try {
+        const res = await fetch("./chapters.json"); 
+        if (!res.ok) throw new Error("chapters.json not found");
+        config.chapters = await res.json(); // Load data directly into the config object
+        console.log("Chapters loaded successfully.");
+    } catch (err) {
+        console.error("Could not load chapters:", err);
+        config.chapters = []; // Default to empty array on failure
+    }
 }
 
 
 // ---------- Flipbook data ----------
 const totalPages = (typeof config !== 'undefined' && config.totalPages) ? config.totalPages : 1;
-const imagePath = (typeof config !== 'undefined' && config.imagePath) ? config.imagePath : './images/page_';
-const thumbPath = (typeof config !== 'undefined' && config.thumbPath) ? config.thumbPath : './thumbs/thumb_';
+const imagePath = (typeof config !== 'undefined' && config.imagePath) ? config.imagePath : './images/Book_PHYS101_';
+const thumbPath = (typeof config !== 'undefined' && config.thumbPath) ? config.thumbPath : './thumbs/Book_PHYS101_';
 
 const images = Array.from({ length: totalPages }, (_, i) => `${imagePath}${i}.png`);
 const thumbs = Array.from({ length: totalPages }, (_, i) => `${thumbPath}${i}.jpg`);
 let currentPage = 0; // Will be updated by loadPreferences
+
+// --- DOM Elements ---
 const flipbook = document.getElementById("flipbook");
 const thumbbar = document.getElementById("thumbbar");
 const counter = document.getElementById("pageCounter");
@@ -87,6 +89,8 @@ const pageInput = document.getElementById("pageInput");
 const footer = document.getElementById("footer");
 const indexToggle = document.getElementById("indexToggle");
 const indexMenu = document.getElementById("indexMenu");
+const indexSidebar = document.getElementById('indexSidebar'); // For new sidebar
+const bookContainer = document.querySelector('.book-container'); // For new sidebar
 const phetModal = document.getElementById('phetModal');
 const phetBtn = document.getElementById('phetBtn');
 const phetCloseBtn = document.getElementById('phetCloseBtn');
@@ -133,7 +137,6 @@ const aiCloseBtn = document.getElementById("aiCloseBtn");
 const aiResponseEl = document.getElementById("aiResponse");
 const aiLoadingEl = document.getElementById("aiLoading");
 const aiChapterTitleEl = document.getElementById("aiChapterTitle");
-const translateAnalysisBtn = document.getElementById("translate-analysis-btn");
 
 // --- KEYBOARD SHORTCUT VARIABLES ---
 let pageInputTimer = null;
@@ -145,76 +148,67 @@ const APPS_SCRIPT_PROXY_URL = (typeof config !== 'undefined' && config.appsScrip
 const delay = ms => new Promise(resolve => setTimeout(resolve, ms));
 
 async function fetchWithRetry(url, options, maxRetries = 3, initialDelay = 1000) {
-    let attempt = 0;
-    let currentDelay = initialDelay;
-    while (attempt <= maxRetries) {
-        try {
-            const response = await fetch(url, options);
-            if ([503, 429].includes(response.status) && attempt < maxRetries) {
-                console.warn(`API request via proxy failed with status ${response.status}. Retrying in ${currentDelay / 1000}s...`);
-                await delay(currentDelay);
-                attempt++;
-                currentDelay *= 2;
-                continue;
-            }
-            return response;
-        } catch (error) {
-            console.error(`Fetch error on attempt ${attempt + 1}:`, error);
-            if (attempt < maxRetries) {
-                console.warn(`Network error during fetch. Retrying in ${currentDelay / 1000}s...`);
-                await delay(currentDelay);
-                attempt++;
-                currentDelay *= 2;
-            } else {
-                 console.error("Fetch failed after multiple retries.");
-                 throw error;
-            }
-        }
-    }
-     throw new Error("API request failed after multiple retries.");
+    let attempt = 0;
+    let currentDelay = initialDelay;
+    while (attempt <= maxRetries) {
+        try {
+            const response = await fetch(url, options);
+            if ([503, 429].includes(response.status) && attempt < maxRetries) {
+                console.warn(`API request via proxy failed with status ${response.status}. Retrying in ${currentDelay / 1000}s...`);
+                await delay(currentDelay);
+                attempt++;
+                currentDelay *= 2;
+                continue;
+            }
+            return response;
+        } catch (error) {
+            console.error(`Fetch error on attempt ${attempt + 1}:`, error);
+            if (attempt < maxRetries) {
+                console.warn(`Network error during fetch. Retrying in ${currentDelay / 1000}s...`);
+                await delay(currentDelay);
+                attempt++;
+                currentDelay *= 2;
+            } else {
+                 console.error("Fetch failed after multiple retries.");
+                 throw error;
+            }
+        }
+    }
+     throw new Error("API request failed after multiple retries.");
 }
 
 function getYoutubeEmbedUrl(url) {
-    try {
-        const urlObj = new URL(url);
-        let videoId = null;
-        if (urlObj.hostname === 'youtu.be') { videoId = urlObj.pathname.slice(1); }
-        else if (urlObj.hostname.includes('youtube.com') && urlObj.pathname === '/watch') { videoId = urlObj.searchParams.get('v'); }
-        else if (urlObj.hostname.includes('youtube.com') && urlObj.pathname.startsWith('/embed/')) { urlObj.searchParams.set('autoplay', '1'); urlObj.searchParams.set('rel', '0'); urlObj.hostname = 'www.youtube-nocookie.com'; return urlObj.toString(); }
-        else if (urlObj.hostname.includes('youtube.com') && urlObj.pathname.startsWith('/shorts/')) { videoId = urlObj.pathname.split('/shorts/')[1]; }
-        if (videoId) { return `https://www.youtube-nocookie.com/embed/${videoId}?autoplay=1&rel=0`; }
-    } catch (e) { console.error("Invalid video URL:", url, e); }
-    return url;
+    try {
+        const urlObj = new URL(url);
+        let videoId = null;
+        if (urlObj.hostname === 'youtu.be') { videoId = urlObj.pathname.slice(1); }
+        else if (urlObj.hostname.includes('youtube.com') && urlObj.pathname === '/watch') { videoId = urlObj.searchParams.get('v'); }
+        else if (urlObj.hostname.includes('youtube.com') && urlObj.pathname.startsWith('/embed/')) { urlObj.searchParams.set('autoplay', '1'); urlObj.searchParams.set('rel', '0'); urlObj.hostname = 'www.youtube-nocookie.com'; return urlObj.toString(); }
+        else if (urlObj.hostname.includes('youtube.com') && urlObj.pathname.startsWith('/shorts/')) { videoId = urlObj.pathname.split('/shorts/')[1]; }
+        if (videoId) { return `https://www.youtube-nocookie.com/embed/${videoId}?autoplay=1&rel=0`; }
+    } catch (e) { console.error("Invalid video URL:", url, e); }
+    return url;
 }
 
 // ---------- Render page ----------
 function renderPage() {
-    if (!flipbook) return;
-    flipbook.innerHTML = "";
-    const wrap = document.createElement("div"); wrap.className = "page-wrap"; wrap.id = "page-wrap-" + currentPage;
-    resetZoomPan(wrap);
-    const img = document.createElement("img"); const canvas = document.createElement("canvas"); canvas.id = "highlight-canvas"; highlightCanvas = canvas;
-    img.className = "page-image"; img.src = images[currentPage]; img.alt = `Page ${currentPage + 1}`; img.loading = "eager"; img.crossOrigin = "anonymous";
-    img.onerror = () => { img.alt = "Image not available"; img.src = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 400 300'%3E%3Crect width='400' height='300' fill='%23eee'/%3E%3Ctext x='50%25' y='50%25' font-family='sans-serif' font-size='24' fill='%23aaa' text-anchor='middle' dominant-baseline='middle'%3EImage Not Found%3C/text%3E%3C/svg%3E"; };
-    img.onload = () => { sizeCanvasToImage(img, canvas); ctx = canvas.getContext('2d'); setupDrawingListeners(canvas); loadHighlights(currentPage); updateCursor(); setupHammer(wrap); };
-    wrap.appendChild(img); wrap.appendChild(canvas);
-    
-    // Get overlay from HTML instead of creating it
-    const overlay = document.getElementById("translationOverlay");
-    if (overlay) {
-        wrap.appendChild(overlay); // Move the existing overlay into the wrap
-    }
-
-    flipbook.appendChild(wrap);
-    if (counter) counter.textContent = `Page ${currentPage + 1} / ${totalPages}`; if (pageInput) pageInput.value = currentPage + 1;
-    highlightThumb();
-    if (typeof config !== 'undefined') { const simConfig = config.simulations && config.simulations.find(s => s.page === (currentPage + 1)); if (phetBtn) phetBtn.style.display = simConfig ? 'inline-block' : 'none'; const videoConfig = config.videos && config.videos.find(v => v.page === (currentPage + 1)); if (videoBtn) videoBtn.style.display = videoConfig ? 'inline-block' : 'none'; }
-    
-    // Hide overlay on page turn
-    if (overlay) overlay.style.display = 'none';
-
-    closeSearchBox(); closeHighlightPopup(); preloadImages();
-    try { localStorage.setItem('flipbook-lastPage', currentPage.toString()); } catch (e) { console.warn("Could not save last page:", e); }
+    if (!flipbook) return;
+    flipbook.innerHTML = "";
+    const wrap = document.createElement("div"); wrap.className = "page-wrap"; wrap.id = "page-wrap-" + currentPage;
+    resetZoomPan(wrap);
+    const img = document.createElement("img"); const canvas = document.createElement("canvas"); canvas.id = "highlight-canvas"; highlightCanvas = canvas;
+    img.className = "page-image"; img.src = images[currentPage]; img.alt = `Page ${currentPage + 1}`; img.loading = "eager"; img.crossOrigin = "anonymous";
+    img.onerror = () => { img.alt = "Image not available"; img.src = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 400 300'%3E%3Crect width='400' height='300' fill='%23eee'/%3E%3Ctext x='50%25' y='50%25' font-family='sans-serif' font-size='24' fill='%23aaa' text-anchor='middle' dominant-baseline='middle'%3EImage Not Found%3C/text%3E%3C/svg%3E"; };
+    img.onload = () => { sizeCanvasToImage(img, canvas); ctx = canvas.getContext('2d'); setupDrawingListeners(canvas); loadHighlights(currentPage); updateCursor(); setupHammer(wrap); };
+    wrap.appendChild(img); wrap.appendChild(canvas);
+    
+    flipbook.appendChild(wrap);
+    if (counter) counter.textContent = `Page ${currentPage + 1} / ${totalPages}`; if (pageInput) pageInput.value = currentPage + 1;
+    highlightThumb();
+    if (typeof config !== 'undefined') { const simConfig = config.simulations && config.simulations.find(s => s.page === (currentPage + 1)); if (phetBtn) phetBtn.style.display = simConfig ? 'inline-block' : 'none'; const videoConfig = config.videos && config.videos.find(v => v.page === (currentPage + 1)); if (videoBtn) videoBtn.style.display = videoConfig ? 'inline-block' : 'none'; }
+    
+    closeSearchBox(); closeHighlightPopup(); preloadImages();
+    try { localStorage.setItem('flipbook-lastPage', currentPage.toString()); } catch (e) { console.warn("Could not save last page:", e); }
 }
 
 function resetZoomPan(element) { currentScale=1; currentOffsetX=0; currentOffsetY=0; pinchStartScale=1; if (element) element.style.transform="scale(1) translate(0px, 0px)"; const t=document.getElementById("flipbook"); if (t && hammerManager) hammerManager.get("pan").set({enable:true, direction:Hammer.DIRECTION_ALL}); }
@@ -223,83 +217,80 @@ function renderThumbs() { if(!thumbbar)return; thumbbar.innerHTML=""; thumbs.for
 function highlightThumb() { if(!thumbbar)return; let activeThumb = null; thumbbar.querySelectorAll("img").forEach((im, i) => { const isActive = i === currentPage; im.classList.toggle("active", isActive); if (isActive) activeThumb = im; }); if (activeThumb) { const rect = activeThumb.getBoundingClientRect(), parentRect = thumbbar.getBoundingClientRect(); if (rect.left < parentRect.left || rect.right > parentRect.right) activeThumb.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' }); } }
 
 // --- UPDATED renderIndex function ---
-function renderIndex(chapters) {
-    const indexMenu = document.getElementById("index-menu");
-    if (!indexMenu) {
-        console.error("Index menu element not found!");
-        return;
-    }
+function renderIndex() {
+    // **FIX:** Corrected ID from "index-menu" to "indexMenu"
+    if (!indexMenu) { 
+        console.error("Index menu element (indexMenu) not found!");
+        return;
+    }
 
-    indexMenu.innerHTML = ""; // Clear previous content
+    indexMenu.innerHTML = ""; // Clear previous content
 
-    chapters.forEach((chapter, i) => {
-        // Main chapter container
-        const chapterDiv = document.createElement("div");
-        chapterDiv.className = "chapter";
+    // **FIX:** Read chapters from global config object
+    if (!config.chapters || config.chapters.length === 0) {
+        indexMenu.innerHTML = "<div class='chapter'><span>No chapters loaded.</span></div>";
+        return;
+    }
 
-        // Chapter title and toggle
-        const chapterHeader = document.createElement("div");
-        chapterHeader.className = "chapter-header";
+    config.chapters.forEach((chapter, i) => {
+        // Main chapter container
+        const chapterDiv = document.createElement("div");
+        chapterDiv.className = "chapter";
 
-        const toggleBtn = document.createElement("button");
-        toggleBtn.className = "toggle-btn";
-        toggleBtn.textContent = "▸"; // Arrow right by default
+        // Chapter title and toggle
+        const chapterHeader = document.createElement("div");
+        chapterHeader.className = "chapter-header";
 
-        const titleSpan = document.createElement("span");
-        titleSpan.textContent = chapter.title;
+        const toggleBtn = document.createElement("button");
+        toggleBtn.className = "toggle-btn";
+        toggleBtn.textContent = "▸"; // Arrow right by default
 
-        // Append elements
-        chapterHeader.appendChild(toggleBtn);
-        chapterHeader.appendChild(titleSpan);
-        chapterDiv.appendChild(chapterHeader);
+        const titleSpan = document.createElement("span");
+        titleSpan.textContent = chapter.title;
 
-        // Subsections (if any)
-        const subsectionsList = document.createElement("div");
-        subsectionsList.className = "subsections-list";
+        // Append elements
+        chapterHeader.appendChild(toggleBtn);
+        chapterHeader.appendChild(titleSpan);
+        chapterDiv.appendChild(chapterHeader);
 
-        if (chapter.subsections && chapter.subsections.length > 0) {
-            chapter.subsections.forEach((sub, j) => {
-                const subDiv = document.createElement("div");
-                subDiv.className = "subsection";
-                subDiv.textContent = sub.title;
-                subDiv.onclick = () => {
+        // Subsections (if any)
+        const subsectionsList = document.createElement("div");
+        subsectionsList.className = "subsections-list";
+
+        if (chapter.subsections && chapter.subsections.length > 0) {
+            chapter.subsections.forEach((sub, j) => {
+                const subDiv = document.createElement("div");
+                subDiv.className = "subsection";
+                subDiv.textContent = sub.title;
+                subDiv.onclick = () => {
+                    // Use loadPage helper to handle page number (1-based index)
                     loadPage(sub.page);
-                    closeSidebar();
-                };
-                subsectionsList.appendChild(subDiv);
-            });
-            chapterDiv.appendChild(subsectionsList);
-        }
+                    closeIndexMenuSidebar(); // Use new sidebar close function
+                };
+                subsectionsList.appendChild(subDiv);
+            });
+            chapterDiv.appendChild(subsectionsList);
+        }
 
-        // ✅ Safe toggle (prevents null.classList errors)
-        toggleBtn.onclick = (e) => {
-            e.stopPropagation();
-            const list = chapterDiv.querySelector(".subsections-list");
+        // Toggle logic
+        toggleBtn.onclick = (e) => {
+            e.stopPropagation();
+            const list = chapterDiv.querySelector(".subsections-list");
+            if (!list) return;
+            const isVisible = list.classList.toggle("visible");
+            toggleBtn.textContent = isVisible ? "▾" : "▸";
+        };
 
-            if (!list) {
-                console.warn(`No subsections for chapter ${chapter.title}`);
-                return;
-            }
+        // Add click to title (load chapter page)
+        titleSpan.onclick = () => {
+            loadPage(chapter.page || 1);
+            closeIndexMenuSidebar(); // Use new sidebar close function
+        };
 
-            const isVisible = list.classList.toggle("visible");
-            toggleBtn.textContent = isVisible ? "▾" : "▸";
-        };
-
-        // Add click to title (load first page if no subsections)
-        titleSpan.onclick = () => {
-            if (!chapter.subsections || chapter.subsections.length === 0) {
-                loadPage(chapter.page || 1);
-                closeSidebar();
-            }
-        };
-
-        // Append to main index
-        indexMenu.appendChild(chapterDiv);
-    });
-
-    console.log("Chapters loaded successfully.");
+        // Append to main index
+        indexMenu.appendChild(chapterDiv);
+    });
 }
-
 // --- END updated renderIndex ---
 
 function nextPage() { if (currentPage < images.length - 1) { currentPage++; renderPage(); } }
@@ -308,31 +299,51 @@ function firstPage() { if (currentPage !== 0) { currentPage = 0; renderPage(); }
 function lastPage() { if (currentPage !== images.length - 1) { currentPage = images.length - 1; renderPage(); } }
 
 function jumpToPage() {
-    if (pageInputTimer) { clearTimeout(pageInputTimer); pageInputTimer = null; }
-    if (!pageInput) return;
-    const v = parseInt(pageInput.value, 10);
-    if (!isNaN(v) && v >= 1 && v <= totalPages) { currentPage = v - 1; renderPage(); }
-    else { pageInput.value = currentPage + 1; }
+    if (pageInputTimer) { clearTimeout(pageInputTimer); pageInputTimer = null; }
+    if (!pageInput) return;
+    const v = parseInt(pageInput.value, 10);
+    if (!isNaN(v) && v >= 1 && v <= totalPages) { currentPage = v - 1; renderPage(); }
+    else { pageInput.value = currentPage + 1; }
 }
 if (pageInput) {
-    pageInput.addEventListener('keydown', (e) => { if (e.key === 'Enter') { jumpToPage(); e.preventDefault(); pageInput.blur(); } });
-    pageInput.addEventListener('keyup', (e) => { if (e.key >= "0" && e.key <= "9") { resetPageInputTimer(); } });
+    pageInput.addEventListener('keydown', (e) => { if (e.key === 'Enter') { jumpToPage(); e.preventDefault(); pageInput.blur(); } });
+    pageInput.addEventListener('keyup', (e) => { if (e.key >= "0" && e.key <= "9") { resetPageInputTimer(); } });
+}
+
+// Helper function to load a page from a 1-based index
+function loadPage(pageNumber) {
+    let newPage = parseInt(pageNumber, 10) - 1; // Convert to 0-based index
+    if (!isNaN(newPage) && newPage >= 0 && newPage < totalPages) {
+        if (currentPage !== newPage) {
+            currentPage = newPage;
+            renderPage();
+        }
+    }
 }
 
 function toggleFullScreen() { document.fullscreenElement ? document.exitFullscreen() : document.documentElement.requestFullscreen().catch(err => console.error(`Fullscreen error: ${err.message}`)); }
 function shareBook(){ const shareData = { title: "PHYS101 Flipbook", url: window.location.href }; if (navigator.share) { navigator.share(shareData).catch((err) => console.log("Share failed:", err)); } else if (navigator.clipboard) { const textArea = document.createElement("textarea"); textArea.value = window.location.href; document.body.appendChild(textArea); textArea.focus(); textArea.select(); try { document.execCommand('copy'); alert("Link copied to clipboard!"); } catch (err) { console.error('Fallback copy failed', err); alert('Failed to copy link.'); } document.body.removeChild(textArea); } else alert("Sharing/Copying not supported."); }
-function openIndexMenu() { if (!indexToggle || !footer || !indexMenu) return; const rect = indexToggle.getBoundingClientRect(), footerRect = footer.getBoundingClientRect(); indexMenu.style.left = `${rect.left - footerRect.left}px`; indexMenu.style.bottom = `${footerRect.height}px`; indexMenu.style.top = "auto"; indexMenu.style.display = "flex"; indexMenu.setAttribute("aria-hidden","false"); indexToggle.setAttribute("aria-expanded","true"); }
-function closeIndexMenu(){ if (!indexMenu || !indexToggle) return; indexMenu.style.display="none"; indexMenu.setAttribute("aria-hidden","true"); indexToggle.setAttribute("aria-expanded","false"); }
-if (indexToggle) indexToggle.addEventListener("click", e=>{ e.stopPropagation(); indexMenu.style.display === "flex" ? closeIndexMenu() : openIndexMenu(); });
-if (indexMenu) indexMenu.addEventListener("click", e => e.stopPropagation());
 
+// **MERGED** Global click listener
 document.addEventListener("click", e => {
-    if (indexMenu && indexToggle && indexMenu.style.display === "flex" && !indexMenu.contains(e.target) && !indexToggle.contains(e.target)) closeIndexMenu();
-    if (searchContainer && searchContainer.style.display !== 'none' && !searchContainer.contains(e.target) && e.target !== searchBtn) closeSearchBox();
-    if (highlightPopup && highlightSettingsBtn && highlightPopup.classList.contains('visible') && !highlightPopup.contains(e.target) && e.target !== highlightSettingsBtn && e.target !== toggleDrawModeBtn) closeHighlightPopup();
+    // **NEW:** Logic to close sidebar
+    if (indexSidebar && indexSidebar.classList.contains('open')) {
+        const t = e.target;
+        if (!indexSidebar.contains(t) && t !== indexToggle && !indexToggle.contains(t)) {
+            closeIndexMenuSidebar();
+        }
+    }
+    
+    // Logic to close search box
+    if (searchContainer && searchContainer.style.display !== 'none' && !searchContainer.contains(e.target) && e.target !== searchBtn) closeSearchBox();
+    
+    // Logic to close highlight popup
+    if (highlightPopup && highlightSettingsBtn && highlightPopup.classList.contains('visible') && !highlightPopup.contains(e.target) && e.target !== highlightSettingsBtn && e.target !== toggleDrawModeBtn) closeHighlightPopup();
 });
-function goToPage(page){ if (page >= 0 && page < images.length){ currentPage = page; renderPage(); closeIndexMenu(); } }
-window.goToPage = goToPage;
+
+// **DEPRECATED** old goToPage, openIndexMenu, closeIndexMenu functions removed.
+// The new `loadPage` helper and `closeIndexMenuSidebar` replace them.
+window.goToPage = (page) => loadPage(page + 1); // Keep window.goToPage (0-indexed) for compatibility if needed
 
 // ---------- Input & touch (For SWIPING ONLY - Modified) ----------
 let touchStartX = 0, touchEndX = 0; const swipeThreshold = 50;
@@ -354,18 +365,39 @@ if(videoModal)videoModal.addEventListener("click",e=>{e.target===videoModal&&clo
 
 // --- HAMMER.JS SETUP (Updated for Scrolling) ---
 function setupHammer(element) {
-    if (!element || typeof Hammer === 'undefined') { console.warn("Hammer.js not found or element missing."); return; }
-    if (hammerManager) { hammerManager.destroy(); hammerManager = null; }
-    hammerManager = new Hammer.Manager(element);
-    const pinch = new Hammer.Pinch({ pointers: 2 }); const pan = new Hammer.Pan({ pointers: 0, direction: Hammer.DIRECTION_ALL });
-    pinch.recognizeWith(pan); hammerManager.add([pinch, pan]);
-    let initialOffsetX = currentOffsetX, initialOffsetY = currentOffsetY;
-    hammerManager.on('pinchstart', (e) => { if (isDrawing) return; isPinching = true; pinchStartScale = currentScale; element.style.transition = 'none'; });
-    hammerManager.on('pinchmove', (e) => { if (isDrawing || !isPinching) return; currentScale = Math.max(1, Math.min(pinchStartScale * e.scale, 5)); applyTransform(element); });
-    hammerManager.on('pinchend pinchcancel', (e) => { if (isDrawing) return; isPinching = false; element.style.transition = ''; adjustPanLimits(element); applyTransform(element); });
-    hammerManager.on('panstart', (e) => { if (isDrawing || (currentScale > 1 && e.pointers.length < 2) || (currentScale === 1 && e.pointers.length === 1 && Math.abs(e.deltaY) > Math.abs(e.deltaX))) return; initialOffsetX = currentOffsetX; initialOffsetY = currentOffsetY; element.style.transition = 'none'; });
-    hammerManager.on('panmove', (e) => { if (isDrawing || (currentScale > 1 && e.pointers.length < 2) || (currentScale === 1 && e.pointers.length === 1 && Math.abs(e.deltaY) > Math.abs(e.deltaX))) return; if (currentScale === 1 && e.pointers.length === 1 && Math.abs(e.deltaX) > Math.abs(e.deltaY)) return; let newOffsetX = initialOffsetX + e.deltaX; let newOffsetY = initialOffsetY + e.deltaY; adjustPanLimits(element); const rect = element.getBoundingClientRect(), parentRect = flipbook.getBoundingClientRect(); const maxMoveX = Math.max(0, (rect.width - parentRect.width) / 2); const maxMoveY = Math.max(0, (rect.height - parentRect.height) / 2); currentOffsetX = Math.max(-maxMoveX, Math.min(newOffsetX, maxMoveX)); currentOffsetY = Math.max(-maxMoveY, Math.min(newOffsetY, maxMoveY)); applyTransform(element); });
-    hammerManager.on('panend pancancel', (e) => { if (isDrawing) return; element.style.transition = ''; initialOffsetX = currentOffsetX; initialOffsetY = currentOffsetY; });
+    if (!element || typeof Hammer === 'undefined') { console.warn("Hammer.js not found or element missing."); return; }
+    if (hammerManager) { hammerManager.destroy(); hammerManager = null; }
+    hammerManager = new Hammer.Manager(element);
+    const pinch = new Hammer.Pinch({ pointers: 2 }); const pan = new Hammer.Pan({ pointers: 0, direction: Hammer.DIRECTION_ALL });
+    pinch.recognizeWith(pan); hammerManager.add([pinch, pan]);
+    let initialOffsetX = currentOffsetX, initialOffsetY = currentOffsetY;
+    hammerManager.on('pinchstart', (e) => { if (isDrawing) return; isPinching = true; pinchStartScale = currentScale; element.style.transition = 'none'; });
+    hammerManager.on('pinchmove', (e) => { if (isDrawing || !isPinching) return; currentScale = Math.max(1, Math.min(pinchStartScale * e.scale, 5)); applyTransform(element); });
+    hammerManager.on('pinchend pinchcancel', (e) => { if (isDrawing) return; isPinching = false; element.style.transition = ''; adjustPanLimits(element); applyTransform(element); });
+    
+    // **FIX:** Removed condition that blocked 1-finger pan when zoomed in
+    hammerManager.on('panstart', (e) => {
+        // Only bail if drawing, OR if zoomed out (scale 1) with 1 finger (allows vertical scroll)
+        if (isDrawing || (currentScale === 1 && e.pointers.length === 1)) return;
+        initialOffsetX = currentOffsetX; initialOffsetY = currentOffsetY;
+        element.style.transition = 'none';
+    });
+    hammerManager.on('panmove', (e) => {
+        // Only bail if drawing, OR if zoomed out (scale 1) with 1 finger (allows vertical scroll)
+        if (isDrawing || (currentScale === 1 && e.pointers.length === 1)) return;
+        
+        // This condition allows vertical page scrolling when zoomed out
+        if (currentScale === 1 && e.pointers.length === 1 && Math.abs(e.deltaX) > Math.abs(e.deltaY)) return;
+        let newOffsetX = initialOffsetX + e.deltaX;
+        let newOffsetY = initialOffsetY + e.deltaY;
+        const rect = element.getBoundingClientRect(), parentRect = flipbook.getBoundingClientRect();
+        const maxMoveX = Math.max(0, (rect.width - parentRect.width) / 2);
+        const maxMoveY = Math.max(0, (rect.height - parentRect.height) / 2);
+        currentOffsetX = Math.max(-maxMoveX, Math.min(newOffsetX, maxMoveX));
+        currentOffsetY = Math.max(-maxMoveY, Math.min(newOffsetY, maxMoveY));
+        applyTransform(element);
+    });
+    hammerManager.on('panend pancancel', (e) => { if (isDrawing) return; element.style.transition = ''; initialOffsetX = currentOffsetX; initialOffsetY = currentOffsetY; });
 }
 function adjustPanLimits(element) { if (!element || currentScale <= 1) { currentOffsetX = 0; currentOffsetY = 0; return; } const parentRect = flipbook.getBoundingClientRect(); const maxMoveX = Math.max(0, (element.offsetWidth * currentScale - parentRect.width) / 2); const maxMoveY = Math.max(0, (element.offsetHeight * currentScale - parentRect.height) / 2); currentOffsetX = Math.max(-maxMoveX, Math.min(currentOffsetX, maxMoveX)); currentOffsetY = Math.max(-maxMoveY, Math.min(currentOffsetY, maxMoveY)); }
 function applyTransform(element) { if (!element) return; element.style.transform = `scale(${currentScale}) translate(${currentOffsetX}px, ${currentOffsetY}px)`; }
@@ -379,37 +411,36 @@ function stopDrawing(e) { if (!isDrawing) return; isDrawing = false; let t = get
 function setupDrawingListeners(canvas) { if (!canvas) return; canvas.removeEventListener("mousedown", startDrawing); canvas.removeEventListener("mousemove", draw); canvas.removeEventListener("mouseup", stopDrawing); canvas.removeEventListener("mouseleave", stopDrawing); canvas.removeEventListener("touchstart", startDrawing); canvas.removeEventListener("touchmove", draw); canvas.removeEventListener("touchend", stopDrawing); canvas.removeEventListener("touchcancel", stopDrawing); canvas.addEventListener("mousedown", startDrawing); canvas.addEventListener("mousemove", draw); canvas.addEventListener("mouseup", stopDrawing); canvas.addEventListener("mouseleave", stopDrawing); canvas.addEventListener("touchstart", startDrawing, { passive: !1 }); canvas.addEventListener("touchmove", draw, { passive: !1 }); canvas.addEventListener("touchend", stopDrawing); canvas.addEventListener("touchcancel", stopDrawing); }
 function saveHighlights(pageNumber) { if (!highlightCanvas) return; requestAnimationFrame(() => { try { localStorage.setItem(`flipbook-highlights-page-${pageNumber}`, highlightCanvas.toDataURL()); } catch (e) { console.error("Save highlights error:", e); if (e.name === "QuotaExceededError") alert("Storage full."); } }); }
 function loadHighlights(pageNumber) {
-    if (!highlightCanvas || !ctx) return;
-    const dataUrl = localStorage.getItem(`flipbook-highlights-page-${pageNumber}`);
-    ctx.clearRect(0, 0, highlightCanvas.width, highlightCanvas.height);
-    if (dataUrl) {
-        const img = new Image();
-        img.onload = () => { ctx.drawImage(img, 0, 0); };
-        img.onerror = () => { console.error("Failed load highlight image for page", pageNumber); localStorage.removeItem(`flipbook-highlights-page-${pageNumber}`); };
-        img.src = dataUrl;
-    }
+    if (!highlightCanvas || !ctx) return;
+    const dataUrl = localStorage.getItem(`flipbook-highlights-page-${pageNumber}`);
+    ctx.clearRect(0, 0, highlightCanvas.width, highlightCanvas.height);
+    if (dataUrl) {
+        const img = new Image();
+        img.onload = () => { ctx.drawImage(img, 0, 0); };
+        img.onerror = () => { console.error("Failed load highlight image for page", pageNumber); localStorage.removeItem(`flipbook-highlights-page-${pageNumber}`); };
+        img.src = dataUrl;
+    }
 }
 function clearCurrentHighlights() { if (!ctx) return; if (confirm("Erase all highlights on this page?")) { ctx.clearRect(0, 0, highlightCanvas.width, highlightCanvas.height); localStorage.removeItem(`flipbook-highlights-page-${currentPage}`); } }
 function updateCursor() {
-    if (!highlightCanvas) return;
-    const e = document.body.classList.contains("highlight-mode");
-    // Clear all potential cursor classes first
-    highlightCanvas.classList.remove("highlight-cursor", "eraser-cursor");
-    if (e) {
-        if (drawMode === 'highlight') {
-            highlightCanvas.style.cursor = ""; // Let CSS class handle it
-            highlightCanvas.classList.add("highlight-cursor");
-        } else if (drawMode === 'pen') {
-            highlightCanvas.style.cursor = "crosshair";
-        } else { // Eraser
-            highlightCanvas.style.cursor = ""; // Let CSS class handle it
-            highlightCanvas.classList.add("eraser-cursor");
-        }
-    } else {
-        highlightCanvas.style.cursor = "default";
-    }
+    if (!highlightCanvas) return;
+    const e = document.body.classList.contains("highlight-mode");
+    // Clear all potential cursor classes first
+    highlightCanvas.classList.remove("highlight-cursor", "eraser-cursor");
+    if (e) {
+        if (drawMode === 'highlight') {
+            highlightCanvas.style.cursor = ""; // Let CSS class handle it
+            highlightCanvas.classList.add("highlight-cursor");
+        } else if (drawMode === 'pen') {
+            highlightCanvas.style.cursor = "crosshair";
+        } else { // Eraser
+            highlightCanvas.style.cursor = ""; // Let CSS class handle it
+            highlightCanvas.classList.add("eraser-cursor");
+        }
+    } else {
+        highlightCanvas.style.cursor = "default";
+    }
 }
-
 
 // --- Event Listeners for Highlight Buttons ---
 if (toggleDrawModeBtn) { toggleDrawModeBtn.addEventListener('click', (e) => { e.stopPropagation(); const t = document.body.classList.contains("highlight-mode"); t ? (document.body.classList.remove("highlight-mode"), toggleDrawModeBtn.classList.remove("active"), highlightSettingsBtn && highlightSettingsBtn.classList.remove("active"), closeHighlightPopup()) : (document.body.classList.add("highlight-mode"), toggleDrawModeBtn.classList.add("active"), setDrawMode(drawMode), setActiveColorSwatch(colorSwatchesContainer.querySelector(`.color-swatch[data-pen-color="${localStorage.getItem('flipbook-lastColor')}"]`) || colorSwatchesContainer.querySelector('.color-swatch'))); updateCursor(); }); }
@@ -423,47 +454,47 @@ if (highlightToolBtn) { highlightToolBtn.addEventListener('click', () => { setDr
 if (eraserToolBtnPopup) { eraserToolBtnPopup.addEventListener('click', () => { setDrawMode('eraser'); closeHighlightPopup(); }); }
 
 function setDrawMode(mode) {
-    drawMode = mode;
-    if (penToolBtnPopup) penToolBtnPopup.classList.remove('active');
-    if (eraserToolBtnPopup) eraserToolBtnPopup.classList.remove('active');
-    if (highlightToolBtn) highlightToolBtn.classList.remove('active');
-    
-    if (colorSwatchesContainer) colorSwatchesContainer.querySelectorAll('.color-swatch').forEach(sw => sw.classList.remove('active'));
-    
-    let savedColor = localStorage.getItem('flipbook-lastColor');
-    const activeSwatch = colorSwatchesContainer && (colorSwatchesContainer.querySelector(`.color-swatch[data-pen-color="${savedColor}"]`) || colorSwatchesContainer.querySelector('.color-swatch'));
+    drawMode = mode;
+    if (penToolBtnPopup) penToolBtnPopup.classList.remove('active');
+    if (eraserToolBtnPopup) eraserToolBtnPopup.classList.remove('active');
+    if (highlightToolBtn) highlightToolBtn.classList.remove('active');
+    
+    if (colorSwatchesContainer) colorSwatchesContainer.querySelectorAll('.color-swatch').forEach(sw => sw.classList.remove('active'));
+    
+    let savedColor = localStorage.getItem('flipbook-lastColor');
+    const activeSwatch = colorSwatchesContainer && (colorSwatchesContainer.querySelector(`.color-swatch[data-pen-color="${savedColor}"]`) || colorSwatchesContainer.querySelector('.color-swatch'));
 
-    if (mode === 'highlight') {
-        if (highlightToolBtn) highlightToolBtn.classList.add('active');
-        if (activeSwatch) activeSwatch.classList.add('active');
-    } else if (mode === 'pen') {
-        if (penToolBtnPopup) penToolBtnPopup.classList.add('active');
-        if (activeSwatch) activeSwatch.classList.add('active');
-    } else { // Eraser
-        if (eraserToolBtnPopup) eraserToolBtnPopup.classList.add('active');
-    }
-    updateCurrentColor(); updateCursor();
-    try { localStorage.setItem('flipbook-lastDrawMode', drawMode); } catch(e) { console.warn("Could not save draw mode:", e); }
+    if (mode === 'highlight') {
+        if (highlightToolBtn) highlightToolBtn.classList.add('active');
+        if (activeSwatch) activeSwatch.classList.add('active');
+    } else if (mode === 'pen') {
+        if (penToolBtnPopup) penToolBtnPopup.classList.add('active');
+        if (activeSwatch) activeSwatch.classList.add('active');
+    } else { // Eraser
+        if (eraserToolBtnPopup) eraserToolBtnPopup.classList.add('active');
+    }
+    updateCurrentColor(); updateCursor();
+    try { localStorage.setItem('flipbook-lastDrawMode', drawMode); } catch(e) { console.warn("Could not save draw mode:", e); }
 }
 
 function updateCurrentColor() {
-    const activeSwatch = colorSwatchesContainer && colorSwatchesContainer.querySelector('.color-swatch.active');
-    if (!activeSwatch) {
-         const firstSwatch = colorSwatchesContainer && colorSwatchesContainer.querySelector('.color-swatch');
-         if (firstSwatch) {
-             setActiveColorSwatch(firstSwatch);
-             return;
-         }
-         return;
-    }
-    if (drawMode === 'pen') { currentHighlightColor = activeSwatch.dataset.penColor; }
-    else if (drawMode === 'highlight') { currentHighlightColor = activeSwatch.dataset.highlightColor; }
+    const activeSwatch = colorSwatchesContainer && colorSwatchesContainer.querySelector('.color-swatch.active');
+    if (!activeSwatch) {
+         const firstSwatch = colorSwatchesContainer && colorSwatchesContainer.querySelector('.color-swatch');
+         if (firstSwatch) {
+             setActiveColorSwatch(firstSwatch);
+             return;
+         }
+         return;
+    }
+    if (drawMode === 'pen') { currentHighlightColor = activeSwatch.dataset.penColor; }
+    else if (drawMode === 'highlight') { currentHighlightColor = activeSwatch.dataset.highlightColor; }
 }
 
 if (brushSizeSliderPopup) {
-    brushSizeSliderPopup.addEventListener('input', (e) => { currentBrushSize = e.target.value; });
-    brushSizeSliderPopup.addEventListener('mouseup', () => { try { localStorage.setItem('flipbook-lastBrushSize', currentBrushSize); } catch(e) { console.warn("Could not save brush size:", e); } });
-    brushSizeSliderPopup.addEventListener('touchend', () => { try { localStorage.setItem('flipbook-lastBrushSize', currentBrushSize); } catch(e) { console.warn("Could not save brush size:", e); } });
+    brushSizeSliderPopup.addEventListener('input', (e) => { currentBrushSize = e.target.value; });
+    brushSizeSliderPopup.addEventListener('mouseup', () => { try { localStorage.setItem('flipbook-lastBrushSize', currentBrushSize); } catch(e) { console.warn("Could not save brush size:", e); } });
+    brushSizeSliderPopup.addEventListener('touchend', () => { try { localStorage.setItem('flipbook-lastBrushSize', currentBrushSize); } catch(e) { console.warn("Could not save brush size:", e); } });
 }
 if (clearHighlightsBtnPopup) { clearHighlightsBtnPopup.addEventListener('click', () => { clearCurrentHighlights(); closeHighlightPopup(); }); }
 
@@ -472,7 +503,7 @@ window.addEventListener('resize', () => { const img = document.querySelector('.p
 // --- SEARCH LOGIC ---
 function toggleSearchBox() { if(!searchContainer)return;"none"!==searchContainer.style.display?closeSearchBox():(searchContainer.style.display="flex",searchInput&&searchInput.focus(),searchResults&&(searchResults.innerHTML="")) }
 function closeSearchBox() { searchContainer&&(searchContainer.style.display="none"),searchInput&&(searchInput.value=""),searchResults&&(searchResults.innerHTML="") }
-function performSearch() { if(!searchInput||!searchResults||0===Object.keys(bookTextData).length)return;const e=searchInput.value.trim().toLowerCase();if(searchResults.innerHTML="",e.length<2){const t=document.createElement("div");return t.classList.add("no-results"),t.textContent="Please enter at least 2 characters.",void searchResults.appendChild(t)}const n=[];for(const o in bookTextData){const a=bookTextData[o];a&&a.toLowerCase().includes(e)&&n.push(parseInt(o,10))}if(n.length>0){n.sort((e,t)=>e-t),n.forEach(e=>{const t=document.createElement("div");t.textContent=`Page ${e+1}`,t.onclick=()=>{goToPage(e),closeSearchBox()},searchResults.appendChild(t)})}else{const l=document.createElement("div");l.classList.add("no-results"),l.textContent="No results found.",searchResults.appendChild(l)} }
+function performSearch() { if(!searchInput||!searchResults||0===Object.keys(bookTextData).length)return;const e=searchInput.value.trim().toLowerCase();if(searchResults.innerHTML="",e.length<2){const t=document.createElement("div");return t.classList.add("no-results"),t.textContent="Please enter at least 2 characters.",void searchResults.appendChild(t)}const n=[];for(const o in bookTextData){const a=bookTextData[o];a&&a.toLowerCase().includes(e)&&n.push(parseInt(o,10))}if(n.length>0){n.sort((e,t)=>e-t),n.forEach(e=>{const t=document.createElement("div");t.textContent=`Page ${e+1}`,t.onclick=()=>{ loadPage(e+1); closeSearchBox() },searchResults.appendChild(t)})}else{const l=document.createElement("div");l.classList.add("no-results"),l.textContent="No results found.",searchResults.appendChild(l)} }
 if (searchBtn) searchBtn.addEventListener('click', toggleSearchBox);
 if (searchCloseBtn) searchCloseBtn.addEventListener('click', closeSearchBox);
 if (searchInput) { searchInput.addEventListener('keydown', (e) => { if (e.key === 'Enter') { performSearch(); e.preventDefault(); } if (e.key === 'Escape') { closeSearchBox(); e.preventDefault(); } }); }
@@ -485,298 +516,280 @@ if(aiModal)aiModal.addEventListener("click",e=>{if(e.target===aiModal)aiModal.st
 function getCurrentChapter(){ if(!config.chapters||0===config.chapters.length)return null;let e=config.chapters[0];for(let t=config.chapters.length-1;t>=0;t--)if(currentPage>=config.chapters[t].page-1){e=config.chapters[t];break}return e}
 
 async function getAiHelp(e){
-    if(!APPS_SCRIPT_PROXY_URL) { if(aiResponseEl) aiResponseEl.textContent="AI Helper not configured: Proxy URL missing."; return; }
-    if(!aiLoadingEl||!aiResponseEl)return;
-    aiLoadingEl.style.display="block"; aiResponseEl.innerHTML=""; aiResponseEl.classList.remove('rtl-text');
-    let originalRequestBody; const n=getCurrentChapter(),o=n?n.title:"this page";
-    try{
-        let apiUrl = APPS_SCRIPT_PROXY_URL;
-        if("analyze_page"===e){
-             let a=await getImageAsBase64FromCanvas();
-             if(!a) { aiResponseEl.textContent="Could not process page image."; aiLoadingEl.style.display="none"; return; }
-             originalRequestBody={contents:[{parts:[{text:`Analyze this physics page (from chapter "${o}"). Summarize concepts,explain formulas/diagrams,and give a takeaway for a life science student.`},{inline_data:{mime_type:"image/png",data:a}}]}]};
-        } else {
-             let r;
-             switch(e){
-                 case"explain":{const i=window.prompt(`Concept from "${o}" to explain?`,"Pascal's Principle");if(!i){aiLoadingEl.style.display="none"; return;} r=`Explain "${i}" from "${o}" simply for life science students.`;}break;
-                 case"quiz":r=`Generate 2 multiple-choice questions on "${o}". Explain the correct answer (bold it).`;break;
-                 case"relate":r=`Provide 2 examples of how "${o}" applies to biology or medicine.`;break;
-                 default:aiLoadingEl.style.display="none"; return;
-             }
-             originalRequestBody={contents:[{parts:[{text:r}]}]};
-        }
+    if(!APPS_SCRIPT_PROXY_URL) { if(aiResponseEl) aiResponseEl.textContent="AI Helper not configured: Proxy URL missing."; return; }
+    if(!aiLoadingEl||!aiResponseEl)return;
+    aiLoadingEl.style.display="block"; aiResponseEl.innerHTML=""; aiResponseEl.classList.remove('rtl-text');
+    let originalRequestBody; const n=getCurrentChapter(),o=n?n.title:"this page";
+    try{
+        let apiUrl = APPS_SCRIPT_PROXY_URL;
+        if("analyze_page"===e){
+             let a=await getImageAsBase64FromCanvas();
+             if(!a) { aiResponseEl.textContent="Could not process page image."; aiLoadingEl.style.display="none"; return; }
+             originalRequestBody={contents:[{parts:[{text:`Analyze this physics page (from chapter "${o}"). Summarize concepts,explain formulas/diagrams,and give a takeaway for a life science student.`},{inline_data:{mime_type:"image/png",data:a}}]}]};
+        } else {
+             let r;
+             switch(e){
+                 case"explain":{const i=window.prompt(`Concept from "${o}" to explain?`,"Pascal's Principle");if(!i){aiLoadingEl.style.display="none"; return;} r=`Explain "${i}" from "${o}" simply for life science students.`;}break;
+                 case"quiz":r=`Generate 2 multiple-choice questions on "${o}". Explain the correct answer (bold it).`;break;
+                 case"relate":r=`Provide 2 examples of how "${o}" applies to biology or medicine.`;break;
+                 default:aiLoadingEl.style.display="none"; return;
+             }
+             originalRequestBody={contents:[{parts:[{text:r}]}]};
+        }
 
-        const fetchOptions = { method: "POST", body: JSON.stringify(originalRequestBody), headers: { 'Content-Type': 'text/plain;charset=utf-8' } };
-        const response = await fetchWithRetry(apiUrl, fetchOptions);
+        const fetchOptions = { method: "POST", body: JSON.stringify(originalRequestBody), headers: { 'Content-Type': 'text/plain;charset=utf-8' } };
+        const response = await fetchWithRetry(apiUrl, fetchOptions);
 
-        if(!response.ok){ let p= `Proxy Error (${response.status}): ${response.statusText}`; try { const errorData = await response.json(); p = (errorData.error && errorData.error.message) ? `API Error via Proxy: ${errorData.error.message}` : p; } catch(g){} throw new Error(p); }
-        const responseData = await response.json();
-        if (responseData.error && responseData.error.message) { throw new Error(`API Error via Proxy: ${responseData.error.message}`); }
-        if(!responseData.candidates || responseData.candidates.length === 0 || !responseData.candidates[0].content || !responseData.candidates[0].content.parts || responseData.candidates[0].content.parts.length === 0){ let f="Unknown"; if(responseData.candidates && responseData.candidates[0]) f=responseData.candidates[0].finishReason; console.warn("AI response missing content. Reason:",f,responseData); aiResponseEl.textContent=`Response was blocked or empty. Reason: ${f}.`;}
-        else{
-            const resultText = responseData.candidates[0].content.parts[0].text;
-            "undefined"!=typeof marked ? aiResponseEl.innerHTML = marked.parse(resultText) : aiResponseEl.innerText = resultText;
-            window.MathJax && MathJax.typesetPromise([aiResponseEl]).catch(b=>console.error("MathJax error:",b));
-        }
-    }catch(w){ console.error("AI Helper Error:",w); aiResponseEl.textContent=`Error: ${w.message}` }
-    finally{aiLoadingEl.style.display="none"}
+        if(!response.ok){ let p= `Proxy Error (${response.status}): ${response.statusText}`; try { const errorData = await response.json(); p = (errorData.error && errorData.error.message) ? `API Error via Proxy: ${errorData.error.message}` : p; } catch(g){} throw new Error(p); }
+        const responseData = await response.json();
+        if (responseData.error && responseData.error.message) { throw new Error(`API Error via Proxy: ${responseData.error.message}`); }
+        if(!responseData.candidates || responseData.candidates.length === 0 || !responseData.candidates[0].content || !responseData.candidates[0].content.parts || responseData.candidates[0].content.parts.length === 0){ let f="Unknown"; if(responseData.candidates && responseData.candidates[0]) f=responseData.candidates[0].finishReason; console.warn("AI response missing content. Reason:",f,responseData); aiResponseEl.textContent=`Response was blocked or empty. Reason: ${f}.`;}
+        else{
+            const resultText = responseData.candidates[0].content.parts[0].text;
+            "undefined"!=typeof marked ? aiResponseEl.innerHTML = marked.parse(resultText) : aiResponseEl.innerText = resultText;
+            window.MathJax && MathJax.typesetPromise([aiResponseEl]).catch(b=>console.error("MathJax error:",b));
+        }
+    }catch(w){ console.error("AI Helper Error:",w); aiResponseEl.textContent=`Error: ${w.message}` }
+    finally{aiLoadingEl.style.display="none"}
 }
 
 // --- Preference Loader ---
 function loadPreferences() {
-    try {
-        const savedPage = localStorage.getItem('flipbook-lastPage');
-        if (savedPage) {
-            let pageNum = parseInt(savedPage, 10);
-            if (!isNaN(pageNum) && pageNum >= 0 && pageNum < totalPages) {
-                currentPage = pageNum;
-            }
-        }
-        
-        const savedColor = localStorage.getItem('flipbook-lastColor'); // This is the PEN color
-        const savedMode = localStorage.getItem('flipbook-lastDrawMode');
-        if (savedMode) drawMode = savedMode;
+    try {
+        const savedPage = localStorage.getItem('flipbook-lastPage');
+        if (savedPage) {
+            let pageNum = parseInt(savedPage, 10);
+            if (!isNaN(pageNum) && pageNum >= 0 && pageNum < totalPages) {
+                currentPage = pageNum;
+            }
+        }
+        
+        const savedColor = localStorage.getItem('flipbook-lastColor'); // This is the PEN color
+        const savedMode = localStorage.getItem('flipbook-lastDrawMode');
+        if (savedMode) drawMode = savedMode;
 
-        if (savedColor && colorSwatchesContainer) {
-             const matchingSwatch = colorSwatchesContainer.querySelector(`.color-swatch[data-pen-color="${savedColor}"]`);
-             if (matchingSwatch) {
-                 if (drawMode === 'pen') {
-                    currentHighlightColor = matchingSwatch.dataset.penColor;
-                 } else { // Default to highlight
-                    currentHighlightColor = matchingSwatch.dataset.highlightColor;
-                 }
-             }
-        }
+        if (savedColor && colorSwatchesContainer) {
+             const matchingSwatch = colorSwatchesContainer.querySelector(`.color-swatch[data-pen-color="${savedColor}"]`);
+             if (matchingSwatch) {
+                 if (drawMode === 'pen') {
+                    currentHighlightColor = matchingSwatch.dataset.penColor;
+                 } else { // Default to highlight
+                    currentHighlightColor = matchingSwatch.dataset.highlightColor;
+                 }
+             }
+        }
 
-        const savedSize = localStorage.getItem('flipbook-lastBrushSize');
-        if (savedSize) currentBrushSize = savedSize;
-        
-    } catch (e) {
-        console.warn("Could not load preferences from localStorage:", e);
-    }
+        const savedSize = localStorage.getItem('flipbook-lastBrushSize');
+        if (savedSize) currentBrushSize = savedSize;
+        
+    } catch (e) {
+        console.warn("Could not load preferences from localStorage:", e);
+    }
 }
 
 // --- Initial Setup & Global Key Listener ---
 function resetPageInputTimer() {
-    if (pageInputTimer) clearTimeout(pageInputTimer);
-    pageInputTimer = setTimeout(() => {
-        if (pageInput && document.activeElement !== pageInput) {
-             pageInput.value = currentPage + 1;
-        } else if (pageInput && document.activeElement === pageInput && pageInput.value.length > 0) {
-             jumpToPage();
-             pageInput.blur();
-        } else if (pageInput) {
-             pageInput.value = currentPage + 1;
-        }
-        pageInputTimer = null;
-    }, 1500);
+    if (pageInputTimer) clearTimeout(pageInputTimer);
+    pageInputTimer = setTimeout(() => {
+        if (pageInput && document.activeElement !== pageInput) {
+             pageInput.value = currentPage + 1;
+        } else if (pageInput && document.activeElement === pageInput && pageInput.value.length > 0) {
+             jumpToPage();
+             pageInput.blur();
+        } else if (pageInput) {
+             pageInput.value = currentPage + 1;
+        }
+        pageInputTimer = null;
+    }, 1500);
 }
 
 function handleGlobalKeys(e) {
-    const activeEl = document.activeElement;
-    const isInputFocused = activeEl && (activeEl.tagName === 'INPUT' || activeEl.tagName === 'TEXTAREA');
+    const activeEl = document.activeElement;
+    const isInputFocused = activeEl && (activeEl.tagName === 'INPUT' || activeEl.tagName === 'TEXTAREA');
 
-    if (e.key === "Escape") {
-        e.preventDefault(); 
-        if (aiModal && aiModal.style.display !== 'none') aiModal.style.display = 'none';
-        else if (phetModal && phetModal.style.display !== 'none') closePhetModal();
-        else if (videoModal && videoModal.style.display !== 'none') closeVideoModal();
-        else if (indexMenu && indexMenu.style.display !== 'none') closeIndexMenu();
-        else if (searchContainer && searchContainer.style.display !== 'none') closeSearchBox();
-        else if (highlightPopup && highlightPopup.classList.contains('visible')) closeHighlightPopup();
-        else if (isInputFocused) activeEl.blur();
-        return;
-    }
+    if (e.key === "Escape") {
+        e.preventDefault(); 
+        if (aiModal && aiModal.style.display !== 'none') aiModal.style.display = 'none';
+        else if (phetModal && phetModal.style.display !== 'none') closePhetModal();
+        else if (videoModal && videoModal.style.display !== 'none') closeVideoModal();
+        // **FIX:** Use new sidebar logic
+        else if (indexSidebar && indexSidebar.classList.contains('open')) closeIndexMenuSidebar();
+        else if (searchContainer && searchContainer.style.display !== 'none') closeSearchBox();
+        else if (highlightPopup && highlightPopup.classList.contains('visible')) closeHighlightPopup();
+        else if (isInputFocused) activeEl.blur();
+        return;
+    }
 
-    if (isInputFocused) {
-        if (activeEl === pageInput && e.key === 'Enter') {
-             jumpToPage();
-             activeEl.blur();
-        }
-        return;
-    }
-    
-    const modalIsOpen = (aiModal && aiModal.style.display !== 'none') ||
-                        (phetModal && phetModal.style.display !== 'none') ||
-                        (videoModal && videoModal.style.display !== 'none');
-    if (modalIsOpen) return;
+    if (isInputFocused) {
+        if (activeEl === pageInput && e.key === 'Enter') {
+             jumpToPage();
+             activeEl.blur();
+        }
+        return;
+    }
+    
+    const modalIsOpen = (aiModal && aiModal.style.display !== 'none') ||
+                        (phetModal && phetModal.style.display !== 'none') ||
+                        (videoModal && videoModal.style.display !== 'none');
+    if (modalIsOpen) return;
 
-
-    if (e.key === "ArrowLeft") {
-        e.preventDefault(); prevPage();
-    } else if (e.key === "ArrowRight") {
-        e.preventDefault(); nextPage();
-    } else if (e.key >= "0" && e.key <= "9") {
-        e.preventDefault();
-        if (pageInput) {
-            if (document.activeElement !== pageInput || !pageInputTimer) { pageInput.value = e.key; }
-            else { pageInput.value += e.key; }
-            pageInput.focus();
-            resetPageInputTimer();
-        }
-    } else if (e.key === "Enter") {
-        e.preventDefault();
-        if (pageInput && document.activeElement === pageInput && pageInput.value !== (currentPage + 1).toString()) { jumpToPage(); }
-        if (pageInput) pageInput.blur();
-        if (pageInputTimer) { clearTimeout(pageInputTimer); pageInputTimer = null; }
-    } else if (e.key.toLowerCase() === "d") {
-        e.preventDefault();
-        if (toggleDrawModeBtn) toggleDrawModeBtn.click();
-    } else if (e.key.toLowerCase() === "s") {
-        e.preventDefault();
-        if (searchBtn && !searchBtn.disabled) toggleSearchBox();
-    } else if (e.key.toLowerCase() === "a") {
-        e.preventDefault();
-        if (aiHelperToggle) aiHelperToggle.click();
-    } else if (e.key === "Delete" || e.key === "Backspace") {
-        e.preventDefault();
-        if (document.body.classList.contains("highlight-mode")) {
-            clearCurrentHighlights();
-        }
-    }
+    if (e.key === "ArrowLeft") {
+        e.preventDefault(); prevPage();
+    } else if (e.key === "ArrowRight") {
+        e.preventDefault(); nextPage();
+    } else if (e.key >= "0" && e.key <= "9") {
+        e.preventDefault();
+        if (pageInput) {
+            if (document.activeElement !== pageInput || !pageInputTimer) { pageInput.value = e.key; }
+            else { pageInput.value += e.key; }
+            pageInput.focus();
+            resetPageInputTimer();
+        }
+    } else if (e.key === "Enter") {
+        e.preventDefault();
+        if (pageInput && document.activeElement === pageInput && pageInput.value !== (currentPage + 1).toString()) { jumpToPage(); }
+        if (pageInput) pageInput.blur();
+        if (pageInputTimer) { clearTimeout(pageInputTimer); pageInputTimer = null; }
+    } else if (e.key.toLowerCase() === "d") {
+        e.preventDefault();
+        if (toggleDrawModeBtn) toggleDrawModeBtn.click();
+    } else if (e.key.toLowerCase() === "s") {
+        e.preventDefault();
+        if (searchBtn && !searchBtn.disabled) toggleSearchBox();
+    } else if (e.key.toLowerCase() === "a") {
+        e.preventDefault();
+        if (aiHelperToggle) aiHelperToggle.click();
+    } else if (e.key === "Delete" || e.key === "Backspace") {
+        e.preventDefault();
+        if (document.body.classList.contains("highlight-mode")) {
+            clearCurrentHighlights();
+        }
+    }
 }
 
-// Add click listener for the static translation close button
-const staticTranslationCloseBtn = document.getElementById('translationCloseBtn');
-if (staticTranslationCloseBtn) {
-    staticTranslationCloseBtn.addEventListener('click', () => {
-        const overlay = document.getElementById('translationOverlay');
-        if (overlay) {
-            overlay.style.display = 'none';
-        }
-    });
+// --- NEW SIDEBAR LOGIC (MOVED FROM DOMCONTENTLOADED) ---
+const indexCloseBtn = document.getElementById('indexCloseBtn'); // Likely null, but included for completeness
+const sidebarOverlay = document.createElement('div');
+sidebarOverlay.id = 'sidebarOverlay';
+sidebarOverlay.style.position = 'fixed';
+sidebarOverlay.style.top = '0';
+sidebarOverlay.style.left = '0';
+sidebarOverlay.style.width = '100%';
+sidebarOverlay.style.height = '100%';
+sidebarOverlay.style.zIndex = '1300'; // Below sidebar (1200) but above content
+sidebarOverlay.style.background = 'rgba(0,0,0,0.18)';
+sidebarOverlay.style.opacity = '0';
+sidebarOverlay.style.pointerEvents = 'none';
+sidebarOverlay.style.transition = 'opacity 0.28s ease';
+
+function openIndexMenuSidebar() {
+    if (!indexSidebar || !indexMenu || !bookContainer) return;
+    document.body.appendChild(sidebarOverlay); // Add overlay only when needed
+    indexSidebar.classList.add('open');
+    indexMenu.setAttribute('aria-hidden', 'false');
+    indexToggle.setAttribute('aria-expanded', 'true');
+    
+    if (window.innerWidth < 768) {
+        // on mobile, it's an overlay
+        bookContainer.style.transition = 'none'; // No push
+        bookContainer.style.transform = `translateX(0px)`;
+    } else {
+      // on desktop, it pushes the content
+        const w = Math.min(indexSidebar.getBoundingClientRect().width, window.innerWidth * 0.85);
+        bookContainer.style.transition = 'margin-left 0.35s ease'; // Use the CSS transition
+        bookContainer.classList.add('shifted');
+    }
+    // show overlay
+    sidebarOverlay.style.opacity = '1';
+    sidebarOverlay.style.pointerEvents = 'auto';
 }
+
+function closeIndexMenuSidebar() {
+    if (!indexSidebar || !indexMenu || !bookContainer) return;
+    indexSidebar.classList.remove('open');
+    indexMenu.setAttribute('aria-hidden', 'true');
+    indexToggle.setAttribute('aria-expanded', 'false');
+    bookContainer.classList.remove('shifted');
+    bookContainer.style.transform = `translateX(0px)`;
+    sidebarOverlay.style.opacity = '0';
+    sidebarOverlay.style.pointerEvents = 'none';
+    // Remove overlay from DOM when not in use
+    if (sidebarOverlay.parentNode) {
+        sidebarOverlay.parentNode.removeChild(sidebarOverlay);
+    }
+}
+// --- END NEW SIDEBAR LOGIC ---
+
 
 document.addEventListener("DOMContentLoaded", async () => {
-    loadPreferences();
-    
-    // Await critical data
-    await loadBookText();
-    await loadChapters();
-    
-    const flipbookElement = document.getElementById('flipbook');
-    if (flipbookElement) {
-        flipbookElement.addEventListener("touchstart", handleTouchStartSwipe, { passive: true });
-        flipbookElement.addEventListener("touchend", handleTouchEndSwipe, { passive: true });
-    }
-    const pageCounterEl = document.getElementById('pageCounter');
-    const pageInputEl = document.getElementById('pageInput');
-    if (pageCounterEl) pageCounterEl.textContent = `Page ${currentPage + 1} / ${totalPages}`;
-    if (pageInputEl) { pageInputEl.max = totalPages; pageInputEl.value = currentPage + 1; }
-    
-    document.addEventListener("keydown", handleGlobalKeys);
+    loadPreferences();
+    
+    // Await critical data
+    await loadBookText();
+    await loadChapters();
+    
+    const flipbookElement = document.getElementById('flipbook');
+    if (flipbookElement) {
+        flipbookElement.addEventListener("touchstart", handleTouchStartSwipe, { passive: true });
+        flipbookElement.addEventListener("touchend", handleTouchEndSwipe, { passive: true });
+    }
+    const pageCounterEl = document.getElementById('pageCounter');
+    const pageInputEl = document.getElementById('pageInput');
+    if (pageCounterEl) pageCounterEl.textContent = `Page ${currentPage + 1} / ${totalPages}`;
+    if (pageInputEl) { pageInputEl.max = totalPages; pageInputEl.value = currentPage + 1; }
+    
+    document.addEventListener("keydown", handleGlobalKeys);
 
-    // Apply loaded preferences to UI
-    if (brushSizeSliderPopup) brushSizeSliderPopup.value = currentBrushSize;
-    
-    let savedColor = localStorage.getItem('flipbook-lastColor'); // This is the base/pen color
-    let activeSwatch = colorSwatchesContainer && colorSwatchesContainer.querySelector(`.color-swatch[data-pen-color="${savedColor}"]`);
-    if (!activeSwatch && colorSwatchesContainer) {
-        activeSwatch = colorSwatchesContainer.querySelector('.color-swatch'); // Fallback to first
-    }
-    setActiveColorSwatch(activeSwatch);
-    setDrawMode(drawMode); // Set the initial tool (which also sets the correct color)
+    // Apply loaded preferences to UI
+    if (brushSizeSliderPopup) brushSizeSliderPopup.value = currentBrushSize;
+    
+    let savedColor = localStorage.getItem('flipbook-lastColor'); // This is the base/pen color
+    let activeSwatch = colorSwatchesContainer && colorSwatchesContainer.querySelector(`.color-swatch[data-pen-color="${savedColor}"]`);
+    if (!activeSwatch && colorSwatchesContainer) {
+        activeSwatch = colorSwatchesContainer.querySelector('.color-swatch'); // Fallback to first
+    }
+    setActiveColorSwatch(activeSwatch);
+    setDrawMode(drawMode); // Set the initial tool (which also sets the correct color)
 
-    renderThumbs();
-    renderIndex(); // Now runs after chapters are loaded
-    renderPage(); // Render the loaded page
+    renderThumbs();
+    renderIndex(); // **FIX:** Runs after chapters are loaded, no args needed
+    renderPage(); // Render the loaded page
 
-    // --- SIDEBAR / INDEX (push-style) ---
-    // Elements
-    const indexSidebar = document.getElementById('indexSidebar');
-    const indexCloseBtn = document.getElementById('indexCloseBtn');
-    const pageWrapperEl = document.getElementById('pageWrapper');
-    // Overlay to dim background on mobile/when sidebar open
-    const sidebarOverlay = document.createElement('div');
-    sidebarOverlay.id = 'sidebarOverlay';
-    sidebarOverlay.style.position = 'fixed';
-    sidebarOverlay.style.top = '0';
-    sidebarOverlay.style.left = '0';
-    sidebarOverlay.style.width = '100%';
-    sidebarOverlay.style.height = '100%';
-    sidebarOverlay.style.zIndex = '1300';
-    sidebarOverlay.style.background = 'rgba(0,0,0,0.18)';
-    sidebarOverlay.style.opacity = '0';
-    sidebarOverlay.style.pointerEvents = 'none';
-    sidebarOverlay.style.transition = 'opacity 0.28s ease';
-    document.body.appendChild(sidebarOverlay);
+    // --- WIRE UP NEW SIDEBAR / INDEX ---
+    // Replace previous toggle wiring with sidebar-specific actions
+    if (indexToggle) {
+        indexToggle.addEventListener('click', (e) => {
+            e.stopPropagation();
+            if (indexSidebar.classList.contains('open')) closeIndexMenuSidebar();
+            else openIndexMenuSidebar();
+        });
+    }
 
-    function openIndexMenuSidebar() {
-        if (!indexSidebar || !indexMenu) return;
-        indexSidebar.classList.add('open');
-        indexMenu.setAttribute('aria-hidden', 'false');
-        indexToggle.setAttribute('aria-expanded', 'true');
-        // measure width and push content on larger screens
-        const w = Math.min(indexSidebar.getBoundingClientRect().width, window.innerWidth * 0.85);
-        if (window.innerWidth >= 768) {
-            pageWrapperEl.style.transform = `translateX(${w}px)`;
-        } else {
-            // on mobile overlay behavior (don't push)
-            pageWrapperEl.style.transform = `translateX(0px)`;
-        }
-        // show overlay
-        sidebarOverlay.style.opacity = '1';
-        sidebarOverlay.style.pointerEvents = 'auto';
-    }
+    // Close button in sidebar (if it exists)
+    if (indexCloseBtn) {
+        indexCloseBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            closeIndexMenuSidebar();
+        });
+    }
 
-    function closeIndexMenuSidebar() {
-        if (!indexSidebar || !indexMenu) return;
-        indexSidebar.classList.remove('open');
-        indexMenu.setAttribute('aria-hidden', 'true');
-        indexToggle.setAttribute('aria-expanded', 'false');
-        pageWrapperEl.style.transform = `translateX(0px)`;
-        sidebarOverlay.style.opacity = '0';
-        sidebarOverlay.style.pointerEvents = 'none';
-    }
+    // clicking overlay closes
+    sidebarOverlay.addEventListener('click', () => {
+        closeIndexMenuSidebar();
+    });
 
-    // Replace previous toggle wiring with sidebar-specific actions
-    if (indexToggle) {
-        indexToggle.addEventListener('click', (e) => {
-            e.stopPropagation();
-            if (indexSidebar.classList.contains('open')) closeIndexMenuSidebar();
-            else openIndexMenuSidebar();
-        });
-    }
+    // **FIX:** Removed duplicate click/keydown listeners
+    // The global listeners defined earlier handle this now.
 
-    // Close button in sidebar
-    if (indexCloseBtn) {
-        indexCloseBtn.addEventListener('click', (e) => {
-            e.stopPropagation();
-            closeIndexMenuSidebar();
-        });
-    }
-
-    // clicking overlay closes
-    sidebarOverlay.addEventListener('click', () => {
-        closeIndexMenuSidebar();
-    });
-
-    // close when clicking outside (desktop)
-    document.addEventListener('click', (ev) => {
-        if (indexSidebar && indexSidebar.classList.contains('open')) {
-            const t = ev.target;
-            if (!indexSidebar.contains(t) && t !== indexToggle && !indexToggle.contains(t)) {
-                closeIndexMenuSidebar();
+    // Recalculate push on resize while open
+    window.addEventListener('resize', () => {
+        if (indexSidebar && indexSidebar.classList.contains('open')) {
+            if (window.innerWidth >= 768) {
+                bookContainer.classList.add('shifted'); // Ensure class is on
+            } else {
+                bookContainer.classList.remove('shifted'); // Ensure class is off
             }
-        }
-    });
-
-    // Escape closes
-    document.addEventListener('keydown', (ev) => {
-        if (ev.key === 'Escape') {
-            if (indexSidebar && indexSidebar.classList.contains('open')) {
-                closeIndexMenuSidebar();
-            }
-        }
-    });
-
-    // Recalculate push on resize while open
-    window.addEventListener('resize', () => {
-        if (indexSidebar && indexSidebar.classList.contains('open')) {
-            const w = Math.min(indexSidebar.getBoundingClientRect().width, window.innerWidth * 0.85);
-            if (window.innerWidth >= 768) pageWrapperEl.style.transform = `translateX(${w}px)`;
-            else pageWrapperEl.style.transform = `translateX(0px)`;
-        }
-    });
+        }
+    });
 
 }); // end DOMContentLoaded
