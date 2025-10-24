@@ -1,4 +1,4 @@
-// ---------- Student IDs (robust loading) ---------
+// ---------- Student IDs (robust loading) ----------
 let ALLOWED_IDS = [];
 async function loadIDs() {
     try {
@@ -135,7 +135,7 @@ const aiCloseBtn = document.getElementById("aiCloseBtn");
 const aiResponseEl = document.getElementById("aiResponse");
 const aiLoadingEl = document.getElementById("aiLoading");
 const aiChapterTitleEl = document.getElementById("aiChapterTitle");
-// const translateAnalysisBtn = document.getElementById("translate-analysis-btn"); // Removed
+const translateAnalysisBtn = document.getElementById("translate-analysis-btn");
 
 // --- KEYBOARD SHORTCUT VARIABLES ---
 let pageInputTimer = null;
@@ -201,13 +201,20 @@ function renderPage() {
     img.onload = () => { sizeCanvasToImage(img, canvas); ctx = canvas.getContext('2d'); setupDrawingListeners(canvas); loadHighlights(currentPage); updateCursor(); setupHammer(wrap); };
     wrap.appendChild(img); wrap.appendChild(canvas);
     
-    // Removed translation overlay logic
+    // Get overlay from HTML instead of creating it
+    const overlay = document.getElementById("translationOverlay");
+    if (overlay) {
+        wrap.appendChild(overlay); // Move the existing overlay into the wrap
+    }
 
     flipbook.appendChild(wrap);
     if (counter) counter.textContent = `Page ${currentPage + 1} / ${totalPages}`; if (pageInput) pageInput.value = currentPage + 1;
     highlightThumb();
     if (typeof config !== 'undefined') { const simConfig = config.simulations && config.simulations.find(s => s.page === (currentPage + 1)); if (phetBtn) phetBtn.style.display = simConfig ? 'inline-block' : 'none'; const videoConfig = config.videos && config.videos.find(v => v.page === (currentPage + 1)); if (videoBtn) videoBtn.style.display = videoConfig ? 'inline-block' : 'none'; }
     
+    // Hide overlay on page turn
+    if (overlay) overlay.style.display = 'none';
+
     closeSearchBox(); closeHighlightPopup(); preloadImages();
     try { localStorage.setItem('flipbook-lastPage', currentPage.toString()); } catch (e) { console.warn("Could not save last page:", e); }
 }
@@ -367,7 +374,26 @@ function loadHighlights(pageNumber) {
     }
 }
 function clearCurrentHighlights() { if (!ctx) return; if (confirm("Erase all highlights on this page?")) { ctx.clearRect(0, 0, highlightCanvas.width, highlightCanvas.height); localStorage.removeItem(`flipbook-highlights-page-${currentPage}`); } }
-function updateCursor() { if (!highlightCanvas) return; const e = document.body.classList.contains("highlight-mode"); if (e) { if (drawMode === 'highlight') { highlightCanvas.style.cursor = ""; highlightCanvas.classList.add("highlight-cursor"); } else if (drawMode === 'pen') { highlightCanvas.style.cursor = "crosshair"; highlightCanvas.classList.remove("highlight-cursor"); } else { highlightCanvas.style.cursor = "cell"; highlightCanvas.classList.remove("highlight-cursor"); } } else { highlightCanvas.style.cursor = "default"; highlightCanvas.classList.remove("highlight-cursor"); } }
+function updateCursor() {
+    if (!highlightCanvas) return;
+    const e = document.body.classList.contains("highlight-mode");
+    // Clear all potential cursor classes first
+    highlightCanvas.classList.remove("highlight-cursor", "eraser-cursor");
+    if (e) {
+        if (drawMode === 'highlight') {
+            highlightCanvas.style.cursor = ""; // Let CSS class handle it
+            highlightCanvas.classList.add("highlight-cursor");
+        } else if (drawMode === 'pen') {
+            highlightCanvas.style.cursor = "crosshair";
+        } else { // Eraser
+            highlightCanvas.style.cursor = ""; // Let CSS class handle it
+            highlightCanvas.classList.add("eraser-cursor");
+        }
+    } else {
+        highlightCanvas.style.cursor = "default";
+    }
+}
+
 
 // --- Event Listeners for Highlight Buttons ---
 if (toggleDrawModeBtn) { toggleDrawModeBtn.addEventListener('click', (e) => { e.stopPropagation(); const t = document.body.classList.contains("highlight-mode"); t ? (document.body.classList.remove("highlight-mode"), toggleDrawModeBtn.classList.remove("active"), highlightSettingsBtn && highlightSettingsBtn.classList.remove("active"), closeHighlightPopup()) : (document.body.classList.add("highlight-mode"), toggleDrawModeBtn.classList.add("active"), setDrawMode(drawMode), setActiveColorSwatch(colorSwatchesContainer.querySelector(`.color-swatch[data-pen-color="${localStorage.getItem('flipbook-lastColor')}"]`) || colorSwatchesContainer.querySelector('.color-swatch'))); updateCursor(); }); }
@@ -481,8 +507,7 @@ async function getAiHelp(e){
     finally{aiLoadingEl.style.display="none"}
 }
 
-// --- Translation logic removed ---
-
+// --- Translation logic is fully removed ---
 
 // --- Preference Loader ---
 function loadPreferences() {
