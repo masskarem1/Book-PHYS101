@@ -241,16 +241,29 @@ button.active {
     justify-content: space-between;
     align-items: center;
 }
-#indexMenu button { /* MODIFIED PADDING */
-    background: none; border: none; text-align: left;
-    padding: 12px 8px; /* Increased vertical padding from 10px */
-    font-size: 0.9rem; cursor: pointer;
-    width: 100%; color: #333; border-radius: 6px;
-    white-space: normal; /* Allow text wrapping */
-    line-height: 1.4;
+#indexMenu button {
+    background: none;
+    border: none;
+    text-align: left;
+    padding: 14px 10px;        /* Slightly more vertical padding */
+    font-size: 0.95rem;
+    cursor: pointer;
+    width: 100%;
+    color: #333;
+    border-radius: 8px;        /* Softer edges */
+    white-space: normal;       /* Allow wrapping */
+    line-height: 1.6;          /* More breathing room between lines */
     border: 2px solid transparent;
     transition: background-color 0.2s, color 0.2s;
+    box-sizing: border-box;
+    margin-bottom: 8px;        /* Adds space between buttons */
 }
+
+/* Optional hover enhancement */
+#indexMenu button:hover {
+    background-color: #f5f7fa;
+}
+
 #indexMenu button:hover {
     background: rgba(0, 122, 204, 0.1);
     color: #000;
