@@ -106,7 +106,6 @@
 <!-- Main Flipbook Content Area -->
 <div id="flipbook">
     <!-- Page content (image, canvas) will be loaded here by JavaScript -->
-    <!-- The translation overlay is placed here, to be moved into .page-wrap by JS -->
 </div>
 
 <!-- Footer -->
@@ -129,11 +128,11 @@
              <button onclick="getAiHelp('quiz')">Quiz Me on Chapter</button>
              <button onclick="getAiHelp('relate')">Relate to Life Sciences</button>
              <button onclick="getAiHelp('analyze_page')">Analyze This Page</button>
-             <button onclick="translateCurrentPage()">🌐 Translate This Page</button>
+             <!-- Removed Translate Page Button -->
         </div>
         <div id="aiResponse" class="ai-response"></div>
         <div id="aiLoading" style="display: none;">Thinking...</div>
-        <button id="translate-analysis-btn" style="display: none;">🌐 Translate Analysis</button>
+        <!-- Removed Translate Analysis Button -->
     </div>
 </div>
 
@@ -143,11 +142,7 @@
 <!-- Video Modal -->
 <div id="videoModal"> <div class="video-content"> <button id="videoCloseBtn">×</button> <iframe id="videoFrame" src="about:blank" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen></iframe> </div> </div>
 
-<!-- Translation Overlay (Hidden by default, moved by JS) -->
-<div id="translationOverlay">
-    <button id="translationCloseBtn" title="Close Translation">×</button>
-    <div id="translationContent"></div>
-</div>
+<!-- Translation Overlay Removed -->
 
 <!-- Load Scripts -->
 <script src="config.js"></script>
