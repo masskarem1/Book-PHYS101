@@ -31,7 +31,7 @@ const config = {
     },
     {
       page: 48,
-      url: "https://youtube.com/shorts/-H4oOfKtPDw?si=Jv94nlu73WhiL7M1"
+      url: "https://youtu.be/eW5ICEtjN4w?si=u1JhfpFh-YZN8bT"
     }
   ]
 };
