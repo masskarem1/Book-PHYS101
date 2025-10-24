@@ -135,7 +135,7 @@ const aiCloseBtn = document.getElementById("aiCloseBtn");
 const aiResponseEl = document.getElementById("aiResponse");
 const aiLoadingEl = document.getElementById("aiLoading");
 const aiChapterTitleEl = document.getElementById("aiChapterTitle");
-const translateAnalysisBtn = document.getElementById("translate-analysis-btn");
+// Removed translateAnalysisBtn
 
 // --- KEYBOARD SHORTCUT VARIABLES ---
 let pageInputTimer = null;
@@ -201,12 +201,9 @@ function renderPage() {
     img.onload = () => { sizeCanvasToImage(img, canvas); ctx = canvas.getContext('2d'); setupDrawingListeners(canvas); loadHighlights(currentPage); updateCursor(); setupHammer(wrap); };
     wrap.appendChild(img); wrap.appendChild(canvas);
     
-    // Get overlay from HTML instead of creating it
+    // Get overlay from HTML, but DO NOT append it to wrap
     const overlay = document.getElementById("translationOverlay");
-    if (overlay) {
-        wrap.appendChild(overlay); // Move the existing overlay into the wrap
-    }
-
+    
     flipbook.appendChild(wrap);
     if (counter) counter.textContent = `Page ${currentPage + 1} / ${totalPages}`; if (pageInput) pageInput.value = currentPage + 1;
     highlightThumb();
