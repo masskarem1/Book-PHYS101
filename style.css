@@ -223,12 +223,12 @@ button.active {
     border-radius: 8px; /* Softer radius */
     box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15);
     padding: 10px; /* More internal padding */
-    width: 400px; /* MODIFICATION: Increased width */
+    width: 400px; /* Kept width */
     max-width: 90vw;
     z-index: 1200;
     max-height: 50vh; /* Allow it to be taller */
     overflow-y: auto; /* Allow scrolling */
-    overflow-x: hidden; /* MODIFICATION: Prevent horizontal scroll */
+    overflow-x: hidden; /* Prevent horizontal scroll */
 }
 .index-item {
     border-bottom: 1px solid #f0f0f0; /* Lighter border */
@@ -276,9 +276,9 @@ button.active {
 }
 .subsection-list {
     display: none; /* Hidden by default */
-    padding-left: 25px; /* MODIFICATION: Increased Indent subsections */
+    padding-left: 15px; /* MODIFICATION: Reduced Indent */
     border-left: 3px solid #007acc;
-    margin-left: 12px; /* MODIFICATION: Increased margin */
+    margin-left: 8px; /* MODIFICATION: Reduced margin */
     margin-top: 5px;
     margin-bottom: 10px;
 }
