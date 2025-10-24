@@ -223,66 +223,83 @@ function renderThumbs() { if(!thumbbar)return; thumbbar.innerHTML=""; thumbs.for
 function highlightThumb() { if(!thumbbar)return; let activeThumb = null; thumbbar.querySelectorAll("img").forEach((im, i) => { const isActive = i === currentPage; im.classList.toggle("active", isActive); if (isActive) activeThumb = im; }); if (activeThumb) { const rect = activeThumb.getBoundingClientRect(), parentRect = thumbbar.getBoundingClientRect(); if (rect.left < parentRect.left || rect.right > parentRect.right) activeThumb.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' }); } }
 
 // --- UPDATED renderIndex function ---
-function renderIndex() {
-    if (!indexMenu || !indexToggle) return;
-    indexMenu.innerHTML = ""; // Clear previous items
-
-    if (typeof config !== 'undefined' && config.chapters && config.chapters.length > 0) {
-        config.chapters.forEach(chapter => {
-            const itemWrapper = document.createElement('div');
-            itemWrapper.className = 'index-item';
-
-            const header = document.createElement('div');
-            header.className = 'index-chapter-header';
-
-            // Main chapter title button
-            const titleBtn = document.createElement('button');
-            titleBtn.className = 'chapter-title';
-            titleBtn.textContent = chapter.title;
-            titleBtn.onclick = () => goToPage(chapter.page - 1);
-            header.appendChild(titleBtn);
-            
-            let subsectionsList = null;
-
-            // If there are subsections, add a toggle button and list
-            if (chapter.subsections && chapter.subsections.length > 0) {
-                const toggleBtn = document.createElement('button');
-                toggleBtn.className = 'subsection-toggle';
-                toggleBtn.textContent = '▸'; // Collapsed state
-                header.appendChild(toggleBtn);
-                
-                subsectionsList = document.createElement('div');
-                subsectionsList.className = 'subsection-list'; // Hidden by default CSS
-
-                chapter.subsections.forEach(sub => {
-                    const subBtn = document.createElement('button');
-                    subBtn.className = 'subsection-link';
-                    subBtn.textContent = sub.title;
-                    subBtn.onclick = () => goToPage(sub.page - 1);
-                    subsectionsList.appendChild(subBtn);
-                });
-
-                // Toggle logic
-                toggleBtn.onclick = (e) => {
-                e.stopPropagation(); // Prevent title button click
-                if (!subsectionsList) return; // ✅ Added safety check
-                const isVisible = subsectionsList.classList.toggle('visible');
-                toggleBtn.textContent = isVisible ? '▾' : '▸'; // Update arrow
-                };
-
-            }
-
-            itemWrapper.appendChild(header);
-            if (subsectionsList) {
-                itemWrapper.appendChild(subsectionsList);
-            }
-            indexMenu.appendChild(itemWrapper);
-        });
-        indexToggle.style.display = 'inline-block';
-    } else {
-        indexToggle.style.display = 'none'; // Hide index button if no chapters
+function renderIndex(chapters) {
+    const indexMenu = document.getElementById("index-menu");
+    if (!indexMenu) {
+        console.error("Index menu element not found!");
+        return;
     }
+
+    indexMenu.innerHTML = ""; // Clear previous content
+
+    chapters.forEach((chapter, i) => {
+        // Main chapter container
+        const chapterDiv = document.createElement("div");
+        chapterDiv.className = "chapter";
+
+        // Chapter title and toggle
+        const chapterHeader = document.createElement("div");
+        chapterHeader.className = "chapter-header";
+
+        const toggleBtn = document.createElement("button");
+        toggleBtn.className = "toggle-btn";
+        toggleBtn.textContent = "▸"; // Arrow right by default
+
+        const titleSpan = document.createElement("span");
+        titleSpan.textContent = chapter.title;
+
+        // Append elements
+        chapterHeader.appendChild(toggleBtn);
+        chapterHeader.appendChild(titleSpan);
+        chapterDiv.appendChild(chapterHeader);
+
+        // Subsections (if any)
+        const subsectionsList = document.createElement("div");
+        subsectionsList.className = "subsections-list";
+
+        if (chapter.subsections && chapter.subsections.length > 0) {
+            chapter.subsections.forEach((sub, j) => {
+                const subDiv = document.createElement("div");
+                subDiv.className = "subsection";
+                subDiv.textContent = sub.title;
+                subDiv.onclick = () => {
+                    loadPage(sub.page);
+                    closeSidebar();
+                };
+                subsectionsList.appendChild(subDiv);
+            });
+            chapterDiv.appendChild(subsectionsList);
+        }
+
+        // ✅ Safe toggle (prevents null.classList errors)
+        toggleBtn.onclick = (e) => {
+            e.stopPropagation();
+            const list = chapterDiv.querySelector(".subsections-list");
+
+            if (!list) {
+                console.warn(`No subsections for chapter ${chapter.title}`);
+                return;
+            }
+
+            const isVisible = list.classList.toggle("visible");
+            toggleBtn.textContent = isVisible ? "▾" : "▸";
+        };
+
+        // Add click to title (load first page if no subsections)
+        titleSpan.onclick = () => {
+            if (!chapter.subsections || chapter.subsections.length === 0) {
+                loadPage(chapter.page || 1);
+                closeSidebar();
+            }
+        };
+
+        // Append to main index
+        indexMenu.appendChild(chapterDiv);
+    });
+
+    console.log("Chapters loaded successfully.");
 }
+
 // --- END updated renderIndex ---
 
 function nextPage() { if (currentPage < images.length - 1) { currentPage++; renderPage(); } }
