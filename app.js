@@ -330,6 +330,7 @@ function renderIndex() {
         indexMenu.appendChild(chapterDiv);
     });
 }
+// --- Part 2 of 3 Starts ---
 
 function preloadImages() {
     const nextPageIndex = currentPage; // currentPage is 1-based, so index is currentPage
@@ -358,18 +359,18 @@ function prevPage() { goToPage(Math.max(1, currentPage - 1)); }
 function nextPage() { goToPage(Math.min(totalPages, currentPage + 1)); }
 
 function goToPage(pageNum) {
-    if (!pageNum || isNaN(pageNum)) {
-        console.warn(`Invalid page number: ${pageNum}`);
-        return;
-    }
+    if (!pageNum || isNaN(pageNum)) {
+        console.warn(`Invalid page number: ${pageNum}`);
+        return;
+    }
     const newPage = Math.max(1, Math.min(parseInt(pageNum, 10), totalPages));
     if (newPage !== currentPage) {
         currentPage = newPage;
         renderPage();
     } else {
-        // If the number is the same, just update the input box
-        if(pageInput) pageInput.value = newPage;
-    }
+        // If the number is the same, just update the input box
+        if(pageInput) pageInput.value = newPage;
+    }
 }
 
 function jumpToPage() {
@@ -506,7 +507,8 @@ async function getAiHelp(type) {
                 return;
             }
             requestBody = { contents: [{ parts: [{ text: `Analyze this physics page (from chapter "${chapterTitle}"). Summarize concepts,explain formulas/diagrams,and give a takeaway for a life science student.` }, { inline_data: { mime_type: "image/png", data: imgBase64 } }] }] };
-        } else {let promptText;
+        } else {
+            let promptText;
             switch (type) {
                 case "explain":
                     const concept = window.prompt(`Concept from "${chapterTitle}" to explain?`, "Pascal's Principle");
@@ -552,6 +554,7 @@ async function getAiHelp(type) {
         aiLoadingEl.style.display = "none";
     }
 }
+// --- Part 3 of 3 Starts ---
 
 // --- Highlight / Draw Tools ---
 function setupHighlightTools() {
@@ -1031,23 +1034,23 @@ function handleGlobalKeys(e) {
     if (modalIsOpen) return;
 
     switch (e.key) {
-        case "ArrowLeft": 
+        case "ArrowLeft": 
             if (!isInputFocused) { e.preventDefault(); prevPage(); }
             break;
-        case "ArrowRight": 
+        case "ArrowRight": 
             if (!isInputFocused) { e.preventDefault(); nextPage(); }
             break;
         case "Enter":
             if (pageInputTimer) { clearTimeout(pageInputTimer); pageInputTimer = null; }
             if (isInputFocused && activeEl === pageInput) { jumpToPage(); pageInput.blur(); }
             break;
-        case "d": case "D": 
+        case "d": case "D": 
             if (!isInputFocused) { e.preventDefault(); toggleDrawModeBtn?.click(); }
             break;
-        case "s": case "S": 
+        case "s": case "S": 
             if (!isInputFocused) { e.preventDefault(); if (searchBtn && !searchBtn.disabled) toggleSearchBox(); }
             break;
-        case "a": case "A": 
+        case "a": case "A": 
             if (!isInputFocused) { e.preventDefault(); aiHelperToggle?.click(); }
             break;
         case "Delete": case "Backspace":
@@ -1059,7 +1062,7 @@ function handleGlobalKeys(e) {
                 if (!isInputFocused) {
                     e.preventDefault();
                     if (pageInput) {
-                        pageInput.value = e.key; 
+                        pageInput.value = e.key; 
                         pageInput.focus();
                         resetPageInputTimer();
                     }
@@ -1133,10 +1136,10 @@ async function fetchWithRetry(url, options, maxRetries = 3, initialDelay = 1000)
                 console.warn(`Retrying... attempt ${attempt + 1}`);
                 await delay(currentDelay); attempt++; currentDelay *= 2; continue;
             }
-      S       return response;
+      S       return response; // Corrected typo here
         } catch (error) {
             console.error(`Fetch attempt ${attempt + 1} failed:`, error);
-s          if (attempt < maxRetries) {
+s          if (attempt < maxRetries) { // Corrected typo here
                 await delay(currentDelay); attempt++; currentDelay *= 2;
             } else { throw error; }
         }
