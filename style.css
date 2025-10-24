@@ -78,9 +78,7 @@ body.highlight-mode #highlight-canvas {
 /* --- Translation Overlay (Removed) --- */
 
 /* --- Translation Close Button (Removed) --- */
-/* --- Translation Close Button (Removed) --- */
 
-/* --- Lock Screen --- */
 /* --- Lock Screen --- */
 #lockScreen {
     position: fixed; top: 0; left: 0; width: 100%; height: 100%;
@@ -133,7 +131,7 @@ button.active {
 /* Add rounded corners to the buttons themselves */
 .highlight-buttons-group button:first-child {
     border-top-left-radius: 6px;
-    border-left: none; border-top-left-radius: 5px; border-bottom-left-radius: 5px;
+    border-bottom-left-radius: 6px;
 }
 .highlight-buttons-group button:last-child {
     border-top-right-radius: 6px;
@@ -224,17 +222,16 @@ button.active {
     border: 1px solid #ddd;
     border-radius: 8px; /* Softer radius */
     box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15);
-    padding: 8px; /* More internal padding */
-    width: 350px; /* MODIFICATION: Increased width */
+    padding: 10px; /* More internal padding */
+    width: 400px; /* MODIFICATION: Increased width */
     max-width: 90vw;
     z-index: 1200;
-    /* backdrop-filter: blur(2px); */ /* Removed for performance, replace with light bg */
     max-height: 50vh; /* Allow it to be taller */
     overflow-y: auto; /* Allow scrolling */
     overflow-x: hidden; /* MODIFICATION: Prevent horizontal scroll */
 }
 .index-item {
-    border-bottom: 1px solid #eee;
+    border-bottom: 1px solid #f0f0f0; /* Lighter border */
 }
 .index-item:last-child {
     border-bottom: none;
@@ -246,11 +243,12 @@ button.active {
 }
 #indexMenu button {
     background: none; border: none; text-align: left;
-    padding: 8px 10px; font-size: 0.9rem; cursor: pointer;
+    padding: 10px 8px; /* More vertical padding */
+    font-size: 0.9rem; cursor: pointer;
     width: 100%; color: #333; border-radius: 6px;
     white-space: normal; /* Allow text wrapping */
     line-height: 1.4;
-    border: 2px solid transparent; /* Use 2px border for consistency */
+    border: 2px solid transparent;
     transition: background-color 0.2s, color 0.2s;
 }
 #indexMenu button:hover {
@@ -261,11 +259,12 @@ button.active {
     flex-grow: 1;
     font-weight: 600; /* Bolder */
     font-size: 0.95rem;
+    color: #000; /* Darker chapter title */
 }
 .index-chapter-header .subsection-toggle {
     flex-grow: 0;
     flex-shrink: 0;
-    width: 30px;
+    width: 35px; /* Fixed width for toggle */
     font-size: 1rem; /* Bolder arrow */
     padding: 6px 0;
     text-align: center;
@@ -277,9 +276,9 @@ button.active {
 }
 .subsection-list {
     display: none; /* Hidden by default */
-    padding-left: 20px; /* Indent subsections */
+    padding-left: 25px; /* MODIFICATION: Increased Indent subsections */
     border-left: 3px solid #007acc;
-    margin-left: 10px;
+    margin-left: 12px; /* MODIFICATION: Increased margin */
     margin-top: 5px;
     margin-bottom: 10px;
 }
@@ -287,7 +286,7 @@ button.active {
     display: block; /* Show when toggled */
 }
 .subsection-list .subsection-link {
-    font-size: 0.85rem;
+    font-size: 0.9rem; /* Slightly larger subsection font */
     color: #444;
     padding: 6px 8px;
     margin: 2px 0;
