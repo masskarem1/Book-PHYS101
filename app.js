@@ -1136,10 +1136,10 @@ async function fetchWithRetry(url, options, maxRetries = 3, initialDelay = 1000)
                 console.warn(`Retrying... attempt ${attempt + 1}`);
                 await delay(currentDelay); attempt++; currentDelay *= 2; continue;
             }
-      S       return response; // Corrected typo here
+            return response; // Corrected - Removed stray 'S'
         } catch (error) {
             console.error(`Fetch attempt ${attempt + 1} failed:`, error);
-s          if (attempt < maxRetries) { // Corrected typo here
+            if (attempt < maxRetries) { // Corrected - Removed stray 's'
                 await delay(currentDelay); attempt++; currentDelay *= 2;
             } else { throw error; }
         }
