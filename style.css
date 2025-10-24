@@ -74,13 +74,19 @@ body {
 
 /* subsection toggle */
 .index-chapter-header .subsection-toggle {
-    flex: 0 0 32px;
+    flex: 0 0 20px;       /* Keep the width you set */
     text-align: center;
     color: #007acc;
     background: transparent;
     border: none;
     font-weight: bold;
     cursor: pointer;
+
+    /* --- ADDED THESE --- */
+    font-size: 0.8em;    /* Makes the arrow ▸/▾ smaller */
+    padding: 0;          /* Removes extra space inside the button */
+    line-height: 1;      /* Helps vertically center the smaller arrow */
+    /* ----------------- */
 }
 
 /* subsection list inside sidebar */
