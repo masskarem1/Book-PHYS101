@@ -397,49 +397,58 @@ function setupToolbar() {
     // Fullscreen and Share are wired globally by HTML onclick
 }
 
-// --- Sidebar Slide Logic ---
+// --- Sidebar Slide Logic (Updated for Aria) ---
 function setupSidebarToggle() {
-    if (!indexToggle || !indexSidebar || !bookContainer) {
-        console.error("Sidebar elements not found in DOM.");
-        return;
-    }
+    if (!indexToggle || !indexSidebar || !bookContainer) {
+        console.error("Sidebar elements not found in DOM.");
+        return;
+    }
 
-    // Ensure sidebar starts hidden
-    indexSidebar.classList.remove("open");
-    bookContainer.classList.remove("shifted");
-    indexToggle.setAttribute("aria-expanded", "false");
-    indexSidebar.setAttribute("aria-hidden", "true"); // Ensure hidden initially
+    // Ensure sidebar starts hidden
+    indexSidebar.classList.remove("open");
+    bookContainer.classList.remove("shifted");
+    indexToggle.setAttribute("aria-expanded", "false");
+    indexSidebar.setAttribute("aria-hidden", "true");
+    if (indexMenu) indexMenu.setAttribute("aria-hidden", "true"); // Ensure menu starts hidden too
 
-    indexToggle.addEventListener("click", (e) => {
-        e.stopPropagation();
-        const isOpen = indexSidebar.classList.toggle("open");
-        indexToggle.setAttribute("aria-expanded", isOpen);
-        indexSidebar.setAttribute("aria-hidden", !isOpen); // Toggle aria-hidden
-        bookContainer.classList.toggle("shifted", isOpen);
-    });
+    indexToggle.addEventListener("click", (e) => {
+        e.stopPropagation();
+        const isOpen = indexSidebar.classList.toggle("open");
+        indexToggle.setAttribute("aria-expanded", isOpen);
+        indexSidebar.setAttribute("aria-hidden", !isOpen); // Toggle sidebar visibility
+        if (indexMenu) indexMenu.setAttribute("aria-hidden", !isOpen); // <<-- ALSO TOGGLE MENU VISIBILITY
+        bookContainer.classList.toggle("shifted", isOpen);
+
+        // If opening, maybe focus the first item? Optional.
+        // if (isOpen) {
+        //     indexMenu?.querySelector('button, a')?.focus();
+        // }
+    });
 }
 
 function openSidebar() {
-    if (indexSidebar && !indexSidebar.classList.contains("open")) {
-        indexSidebar.classList.add("open");
-        if (indexToggle) indexToggle.setAttribute("aria-expanded", "true");
+    if (indexSidebar && !indexSidebar.classList.contains("open")) {
+        indexSidebar.classList.add("open");
+        if (indexToggle) indexToggle.setAttribute("aria-expanded", "true");
         indexSidebar.setAttribute("aria-hidden", "false");
-        if (bookContainer) bookContainer.classList.add("shifted");
-    }
+        if (indexMenu) indexMenu.setAttribute("aria-hidden", "false"); // <<-- SET MENU VISIBLE
+        if (bookContainer) bookContainer.classList.add("shifted");
+    }
 }
 
 function closeSidebar() {
-    if (indexSidebar && indexSidebar.classList.contains("open")) {
-        indexSidebar.classList.remove("open");
-        if (indexToggle) {
-             indexToggle.setAttribute("aria-expanded", "false");
-             // --- FIX: Move focus back to the main toggle button ---
-             indexToggle.focus();
-             // --------------------------------------------------------
+    if (indexSidebar && indexSidebar.classList.contains("open")) {
+        indexSidebar.classList.remove("open");
+        if (indexToggle) {
+            indexToggle.setAttribute("aria-expanded", "false");
+            // --- Keep this fix: Move focus back to the main toggle button ---
+            indexToggle.focus();
+            // --------------------------------------------------------
         }
-        indexSidebar.setAttribute("aria-hidden", "true"); // Ensure it's marked hidden
-        if (bookContainer) bookContainer.classList.remove("shifted");
-    }
+        indexSidebar.setAttribute("aria-hidden", "true");
+        if (indexMenu) indexMenu.setAttribute("aria-hidden", "true"); // <<-- SET MENU HIDDEN
+        if (bookContainer) bookContainer.classList.remove("shifted");
+    }
 }
 // --- End Sidebar Logic ---
 
