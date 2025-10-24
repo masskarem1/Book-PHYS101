@@ -68,63 +68,6 @@ body.highlight-mode #highlight-canvas {
     cursor: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="20" height="32" viewBox="0 0 20 32"><rect x="1" y="1" width="18" height="30" fill="none" stroke="black" stroke-width="2" stroke-dasharray="4 2"/></svg>') 10 16, crosshair;
 }
 
-/* --- Translation Overlay --- */
-#translationOverlay {
-    position: absolute;
-    top: 2%;
-    left: 5%;
-    width: 90%;
-    max-height: 94%;
-    overflow: hidden; /* Hide overflow by default */
-    background: rgba(255, 255, 255, 0.95);
-    border: 1px solid #ccc;
-    border-radius: 8px;
-    padding: 10px; /* Basic padding */
-    box-sizing: border-box;
-    display: none; /* Hide by default */
-    direction: rtl; /* Right-to-left for Arabic */
-    line-height: 1.7;
-    font-size: 1.1rem;
-    box-shadow: 0 4px 15px rgba(0,0,0,0.15);
-    z-index: 2500;
-}
-
-#translationContent {
-    width: 100%;
-    height: 100%;
-    overflow-y: auto; /* Make the *content* scrollable */
-    padding: 30px 15px 15px 15px; /* Padding for content, top padding makes space for button */
-    text-align: right;
-    white-space: pre-wrap;
-    box-sizing: border-box;
-}
-
-/* --- Translation Close Button --- */
-#translationCloseBtn {
-    position: absolute;
-    top: 5px;
-    left: 50%;
-    transform: translateX(-50%);
-    width: 30px;
-    height: 30px;
-    line-height: 28px; /* Manually adjust for '×' symbol */
-    text-align: center;
-    font-size: 1.5rem; /* '×' size */
-    font-weight: bold;
-    color: #ffffff; /* White '×' */
-    background-color: #e63946; /* Red background */
-    border: 2px solid white;
-    border-radius: 50%;
-    cursor: pointer;
-    transition: background-color 0.2s, transform 0.2s;
-    z-index: 2501; /* Above overlay content */
-    padding: 0;
-}
-#translationCloseBtn:hover {
-    background-color: #d62828; /* Darker red on hover */
-    transform: translateX(-50%) scale(1.1); /* Slight zoom effect */
-}
-
 /* --- Lock Screen --- */
 #lockScreen {
     position: fixed; top: 0; left: 0; width: 100%; height: 100%;
@@ -336,12 +279,8 @@ button.active {
     direction: ltr;
     text-align: left;
 }
-#aiResponse.rtl-text {
-    direction: rtl;
-    text-align: right;
-}
-#translate-analysis-btn { background-color: #e0f0ff; color: #005fa3; border: 1px solid #007acc; margin-top: 10px;}
-#translate-analysis-btn:hover { background-color: #cce4ff; }
+/* Removed #aiResponse.rtl-text */
+/* Removed #translate-analysis-btn styles */
 
 /* --- Modals (PhET, Video) --- */
 #phetModal, #videoModal { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0, 0, 0, 0.7); display: none; justify-content: center; align-items: center; z-index: 2600; padding: 15px; box-sizing: border-box; }
@@ -354,8 +293,6 @@ button.active {
 /* --- Mobile Specific Adjustments --- */
 @media (max-width: 768px) {
     .thumbbar img { height: 60px; gap: 6px; padding: 6px;}
-    .overlay-translation { left: 4%; width: 92%; top: 3%; padding: 30px 15px 15px 15px; font-size: 1rem; }
-    .translation-close-btn { top: 3px; left: 50%; transform: translateX(-50%); width: 26px; height: 26px; line-height: 25px; font-size: 1.4rem; }
     .toolbar { gap: 6px; }
     button { padding: 6px 10px; font-size: 0.9rem; }
     #pageInput { width: 50px; font-size: 0.9rem; }
