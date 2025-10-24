@@ -85,7 +85,7 @@ body {
     border: none;
     font-weight: bold;
     cursor: pointer;
-    font-size: 0.8em;    /* Makes the arrow ▸/▾ smaller */
+    font-size: 0.95em;    /* Makes the arrow ▸/▾ smaller */
     padding: 0;          /* Removes extra space inside the button */
     line-height: 1;      /* Helps vertically center the smaller arrow */
     order: 2; /* <<< ADD THIS */
