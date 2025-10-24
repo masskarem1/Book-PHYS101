@@ -61,8 +61,6 @@ async function loadBookText() {
 // --- NEW: Function to load chapters from JSON ---
 async function loadChapters() {
     try {
-        // config.chapters is defined in config.js as an empty array
-        // We fetch the new JSON file and populate it.
         const res = await fetch("./chapters.json"); 
         if (!res.ok) throw new Error("chapters.json not found");
         config.chapters = await res.json(); // Load data directly into the config object
@@ -335,7 +333,6 @@ if(videoBtn)videoBtn.addEventListener("click",openVideoModal);
 if(videoCloseBtn)videoCloseBtn.addEventListener("click",closeVideoModal);
 if(videoModal)videoModal.addEventListener("click",e=>{e.target===videoModal&&closeVideoModal()});
 
-
 // --- HAMMER.JS SETUP (Updated for Scrolling) ---
 function setupHammer(element) {
     if (!element || typeof Hammer === 'undefined') { console.warn("Hammer.js not found or element missing."); return; }
@@ -463,7 +460,7 @@ if (searchInput) { searchInput.addEventListener('keydown', (e) => { if (e.key ==
 
 // --- AI HELPER ---
 async function getImageAsBase64FromCanvas(){ const e=document.querySelector(".page-image");if(!e||!e.complete||0===e.naturalWidth)return console.error("Image not ready"),null;try{const t=document.createElement("canvas");t.width=e.naturalWidth,t.height=e.naturalHeight;return t.getContext("2d").drawImage(e,0,0),t.toDataURL("image/png").split(",")[1]}catch(o){return console.error("Canvas error:",o),null}}
-if(aiHelperToggle)aiHelperToggle.addEventListener("click",()=>{const e=getCurrentChapter();if(aiChapterTitleEl)aiChapterTitleEl.textContent=e?e.title:"Current Page";if(aiResponseEl){aiResponseEl.innerHTML=""; aiResponseEl.classList.remove('rtl-text');} /*if(translateAnalysisBtn) translateAnalysisBtn.style.display = 'none';*/ if(aiModal)aiModal.style.display="flex"});
+if(aiHelperToggle)aiHelperToggle.addEventListener("click",()=>{const e=getCurrentChapter();if(aiChapterTitleEl)aiChapterTitleEl.textContent=e?e.title:"Current Page";if(aiResponseEl){aiResponseEl.innerHTML=""; aiResponseEl.classList.remove('rtl-text');} if(aiModal)aiModal.style.display="flex"});
 if(aiCloseBtn)aiCloseBtn.addEventListener("click",()=>{if(aiModal)aiModal.style.display="none"});
 if(aiModal)aiModal.addEventListener("click",e=>{if(e.target===aiModal)aiModal.style.display="none"});
 function getCurrentChapter(){ if(!config.chapters||0===config.chapters.length)return null;let e=config.chapters[0];for(let t=config.chapters.length-1;t>=0;t--)if(currentPage>=config.chapters[t].page-1){e=config.chapters[t];break}return e}
@@ -471,7 +468,7 @@ function getCurrentChapter(){ if(!config.chapters||0===config.chapters.length)re
 async function getAiHelp(e){
     if(!APPS_SCRIPT_PROXY_URL) { if(aiResponseEl) aiResponseEl.textContent="AI Helper not configured: Proxy URL missing."; return; }
     if(!aiLoadingEl||!aiResponseEl)return;
-    aiLoadingEl.style.display="block"; aiResponseEl.innerHTML=""; aiResponseEl.classList.remove('rtl-text'); /*if(translateAnalysisBtn) translateAnalysisBtn.style.display = 'none';*/
+    aiLoadingEl.style.display="block"; aiResponseEl.innerHTML=""; aiResponseEl.classList.remove('rtl-text');
     let originalRequestBody; const n=getCurrentChapter(),o=n?n.title:"this page";
     try{
         let apiUrl = APPS_SCRIPT_PROXY_URL;
@@ -500,14 +497,11 @@ async function getAiHelp(e){
         else{
             const resultText = responseData.candidates[0].content.parts[0].text;
             "undefined"!=typeof marked ? aiResponseEl.innerHTML = marked.parse(resultText) : aiResponseEl.innerText = resultText;
-            // if(translateAnalysisBtn && aiResponseEl.innerText.trim()) translateAnalysisBtn.style.display = 'block'; // Removed
             window.MathJax && MathJax.typesetPromise([aiResponseEl]).catch(b=>console.error("MathJax error:",b));
         }
     }catch(w){ console.error("AI Helper Error:",w); aiResponseEl.textContent=`Error: ${w.message}` }
     finally{aiLoadingEl.style.display="none"}
 }
-
-// --- Translation logic is fully removed ---
 
 // --- Preference Loader ---
 function loadPreferences() {
@@ -667,5 +661,103 @@ document.addEventListener("DOMContentLoaded", async () => {
     renderThumbs();
     renderIndex(); // Now runs after chapters are loaded
     renderPage(); // Render the loaded page
-});
 
+    // --- SIDEBAR / INDEX (push-style) ---
+    // Elements
+    const indexSidebar = document.getElementById('indexSidebar');
+    const indexCloseBtn = document.getElementById('indexCloseBtn');
+    const pageWrapperEl = document.getElementById('pageWrapper');
+    // Overlay to dim background on mobile/when sidebar open
+    const sidebarOverlay = document.createElement('div');
+    sidebarOverlay.id = 'sidebarOverlay';
+    sidebarOverlay.style.position = 'fixed';
+    sidebarOverlay.style.top = '0';
+    sidebarOverlay.style.left = '0';
+    sidebarOverlay.style.width = '100%';
+    sidebarOverlay.style.height = '100%';
+    sidebarOverlay.style.zIndex = '1300';
+    sidebarOverlay.style.background = 'rgba(0,0,0,0.18)';
+    sidebarOverlay.style.opacity = '0';
+    sidebarOverlay.style.pointerEvents = 'none';
+    sidebarOverlay.style.transition = 'opacity 0.28s ease';
+    document.body.appendChild(sidebarOverlay);
+
+    function openIndexMenuSidebar() {
+        if (!indexSidebar || !indexMenu) return;
+        indexSidebar.classList.add('open');
+        indexMenu.setAttribute('aria-hidden', 'false');
+        indexToggle.setAttribute('aria-expanded', 'true');
+        // measure width and push content on larger screens
+        const w = Math.min(indexSidebar.getBoundingClientRect().width, window.innerWidth * 0.85);
+        if (window.innerWidth >= 768) {
+            pageWrapperEl.style.transform = `translateX(${w}px)`;
+        } else {
+            // on mobile overlay behavior (don't push)
+            pageWrapperEl.style.transform = `translateX(0px)`;
+        }
+        // show overlay
+        sidebarOverlay.style.opacity = '1';
+        sidebarOverlay.style.pointerEvents = 'auto';
+    }
+
+    function closeIndexMenuSidebar() {
+        if (!indexSidebar || !indexMenu) return;
+        indexSidebar.classList.remove('open');
+        indexMenu.setAttribute('aria-hidden', 'true');
+        indexToggle.setAttribute('aria-expanded', 'false');
+        pageWrapperEl.style.transform = `translateX(0px)`;
+        sidebarOverlay.style.opacity = '0';
+        sidebarOverlay.style.pointerEvents = 'none';
+    }
+
+    // Replace previous toggle wiring with sidebar-specific actions
+    if (indexToggle) {
+        indexToggle.addEventListener('click', (e) => {
+            e.stopPropagation();
+            if (indexSidebar.classList.contains('open')) closeIndexMenuSidebar();
+            else openIndexMenuSidebar();
+        });
+    }
+
+    // Close button in sidebar
+    if (indexCloseBtn) {
+        indexCloseBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            closeIndexMenuSidebar();
+        });
+    }
+
+    // clicking overlay closes
+    sidebarOverlay.addEventListener('click', () => {
+        closeIndexMenuSidebar();
+    });
+
+    // close when clicking outside (desktop)
+    document.addEventListener('click', (ev) => {
+        if (indexSidebar && indexSidebar.classList.contains('open')) {
+            const t = ev.target;
+            if (!indexSidebar.contains(t) && t !== indexToggle && !indexToggle.contains(t)) {
+                closeIndexMenuSidebar();
+            }
+        }
+    });
+
+    // Escape closes
+    document.addEventListener('keydown', (ev) => {
+        if (ev.key === 'Escape') {
+            if (indexSidebar && indexSidebar.classList.contains('open')) {
+                closeIndexMenuSidebar();
+            }
+        }
+    });
+
+    // Recalculate push on resize while open
+    window.addEventListener('resize', () => {
+        if (indexSidebar && indexSidebar.classList.contains('open')) {
+            const w = Math.min(indexSidebar.getBoundingClientRect().width, window.innerWidth * 0.85);
+            if (window.innerWidth >= 768) pageWrapperEl.style.transform = `translateX(${w}px)`;
+            else pageWrapperEl.style.transform = `translateX(0px)`;
+        }
+    });
+
+}); // end DOMContentLoaded
