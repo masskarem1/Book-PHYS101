@@ -32,7 +32,11 @@ const config = {
     {
       page: 48,
       url: "https://youtu.be/eW5ICEtjN4w?si=u1JhfpFh-YZN8bT"
-    }
+    },
+    {
+      page: 52,
+    url: "https://youtu.be/x-UiYHyAUaM?si=9fDo4sMArhDzZdks"
+    } 
   ]
 };
 
